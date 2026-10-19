@@ -31,6 +31,7 @@ Planning and generation initially use the same underlying model with separate pr
 
 - [Implementation roadmap](docs/roadmap.md): ordered features, dependencies, acceptance criteria, and issue links.
 - [Architecture](docs/architecture.md): responsibilities, context flow, failure behavior, and model boundaries.
+- [Task and evaluation protocol (candidate_for_review)](docs/protocol/README.md): the `pick-place-v1` candidate profile ([task-v1.json](docs/protocol/task-v1.json)) and [decision record 0001](docs/decisions/0001-task-and-evaluation.md). Pending PR acceptance (review revision 5, documentary only; zero trials, not a performance result; numerical targets and heldout commitments unchanged); simulator and model are unverified candidates.
 - [Testing strategy](docs/testing.md): offline fixtures, containment, simulator tests, held-out evaluation, and evidence.
 - [Contributing](CONTRIBUTING.md): how to take a feature from planned to verified.
 - [Private GitHub Project](https://github.com/users/alokdidde/projects/4): all roadmap issues in Sequence order. Readiness distinguishes Ready, Blocked, and Deferred work.
@@ -39,13 +40,13 @@ Planning and generation initially use the same underlying model with separate pr
 
 Start with [issue 01 — freeze the first task and evaluation protocol](https://github.com/alokdidde/uzumaki/issues/1). It is the only feature initially marked Ready.
 
-The proposed first task is one rigid-object pick-and-place family. Issue 01 must freeze its task envelope, simulator, observations, budgets, evaluator, and thresholds before implementation. The first runnable slice will use deterministic fixtures, hand-authored skills, and a rule-based selector with no paid inference. Model generation and physics simulation follow in order.
+The proposed first task is one rigid-object pick-and-place family. Issue 01 proposes a candidate profile (`pick-place-v1`, not yet accepted) that freezes its task envelope, simulator, observations, budgets, evaluator, and thresholds before implementation. The first runnable slice will use deterministic fixtures, hand-authored skills, and a rule-based selector with no paid inference. Model generation and physics simulation follow in order.
 
 The MVP ends at feature 18: one reproducible simulator-backed loop that selects existing skills, generates and repairs a missing skill, evaluates it, and promotes an accepted version with preserved evidence. It does not claim general robotics competence or authorize powered robot experiments.
 
 ## Testing today
 
-There is no runtime to install or execute yet. Current validation checks the documentation, roadmap ordering/dependencies, and GitHub setup. Feature 03 introduces the locked package and executable test commands. Do not treat planned commands or unchecked issue criteria as passing tests.
+There is no runtime to install or execute yet. Current validation is documentary only (see the [protocol README](docs/protocol/README.md#documentary-commands-offline-no-network-no-install)) and checks the documentation, roadmap ordering/dependencies, and GitHub setup. Feature 03 introduces the locked package and executable test commands. Do not treat planned commands or unchecked issue criteria as passing tests.
 
 All default implementation tests will use recorded/fake providers with live network access disabled. Simulator and paid-model tests will be explicit separate suites. Generated code must run only in a restricted worker whose protection does not depend on the generated code returning.
 
