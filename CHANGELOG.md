@@ -4,6 +4,15 @@ Documentary changes to canonical contracts and protocols. Entries describe speci
 
 ## Unreleased
 
+### Added — versioned skill registry ([issue 07](https://github.com/alokdidde/uzumaki/issues/7))
+
+- `uzumaki.registry`: immutable `uzumaki.skill/1.0` artifacts (`load_skill`, `seal_skill`, `skill_digest`) with ID, integer version, SHA-256 over canonical JSON, instructions, closed input/output contracts (`check_parameters`, `check_result`), applicability, versioned tool permissions, resource bounds (`budgets()` → `Budgets`), completion semantics (success authority is always the environment evaluator) and failure semantics (`retry_on`, `stop_on`, unlisted failures return to the coordinator), plus dependency version ranges. Rejections raise `SkillError` with a fixed `reason` from `REASONS`.
+- `SkillRegistry`: thread-safe, versioned (`registry_version`, `history()`), with separate `candidate`, `validated`, `deprecated` and `rejected` states. Only `candidate→validated`, `candidate→rejected` and `validated→deprecated` are allowed. It rejects tampered, duplicate and conflicting artifacts, non-increasing versions, tools outside the declared catalog or at another version, and missing, incompatible (out of range, rejected, unvalidated, wider tool permissions) or cyclic dependencies. `snapshot()` is immutable. `pin()` returns a `PinnedSkill` with its own verified artifact and resolved validated dependency closure, which later registry changes cannot alter. `RegistrySnapshot.eligible_skills(...)` emits the contract 1.0 `eligible_skills` record.
+- `load_skill_set` loads a hand-authored `uzumaki.skillset/1.0` file offline. The fixture is `tests/fixtures/skills_pick_place_v1.json` (unsealed bodies, sealed by the tests).
+- Tests: `tests/test_registry.py`. Feature note: [docs/features/skill-registry.md](docs/features/skill-registry.md).
+
+Not changed: the provider API, the broker, sandbox, lifecycle, budget and evidence modules, `make check`, CI, the protocol and contracts 1.0. Not claimed: signatures, verified promotion evidence, rollback or persistence (feature 17 and later). Not added: a harness loop, selector, planner, evaluator, simulator adapter or live model.
+
 ### Added — restricted worker for generated candidates ([issue 06](https://github.com/alokdidde/uzumaki/issues/6))
 
 - `uzumaki.sandbox`: `RestrictedWorker(broker, limits, protected_paths=...)` runs candidate source (`run(tools, payload)`) in a fresh `python -I -S -B` child in its own session, with a scrubbed environment and only the broker pipes inherited. `uzumaki._sandbox_boot` applies rlimits (CPU, address space, file size, open files, no core), `no_new_privs`, a Landlock domain (read-only stdlib, system libraries and candidate directory; one writable scratch directory; TCP, signals and abstract UNIX sockets scoped) and an x86_64 seccomp filter (no sockets, fork, exec, namespaces, ptrace, rlimit changes, mounts, BPF, io_uring or keyrings; threads only), then verifies them before loading the candidate. Failures are `containment_failed` and the candidate never runs.
