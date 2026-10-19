@@ -18,4 +18,4 @@ Offline check: `make check` runs `ruff check`, `ruff format --check`, `mypy src`
 
 ## Limitations
 
-No runtime execution, replay of runs, sandboxing, live model support or network provider exists. The provider is a fixture replayer only. Contracts from issue 02 are not yet enforced by code. Results of `make check` are produced by CI or a separate validation run, not asserted here.
+No runtime execution, sandboxing, live model support or network provider exists. Event recording and recorded-decision replay arrived later in [issue 04](event-evidence.md). The provider is a fixture replayer only. Contracts from issue 02 are not yet enforced by code. Results of `make check` are produced by CI or a separate validation run, not asserted here.

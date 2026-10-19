@@ -56,3 +56,7 @@ Retain raw evidence in an access-controlled location with a retrieval manifest a
 ## Offline command (issue 03)
 
 `make check` runs ruff lint and format check, `mypy src`, `pytest` and an offline `python -m build --no-isolation`, using only the pinned `requirements-dev.txt` tools. Tests use the recorded provider and block sockets. See [package bootstrap](features/package-bootstrap.md).
+
+## Evidence and replay tests (issue 04)
+
+Part of the same `make check`. `tests/test_evidence.py` records a deterministic toy run with a fake clock and checks the recorded IDs, versions, observation identities, decisions, tool calls, outcome and timings. It rejects truncated (missing tail, missing middle event, cut file), reordered (swapped events, also with a rebuilt checksum chain; backwards time), corrupt (edited data, manifest identity, checksum or head; extra events; bad bytes), incomplete, malformed, oversized and version-mismatched evidence, plus undeclared redactions and false replayability claims. `tests/test_replay.py` replays recorded decisions with the provider, the fake environment and sockets disabled, compares semantic outcomes, detects divergent harness logic and version mismatches, refuses non-replayable runs, and confirms that fresh-model and environment modes are rejected without running anything. See [execution events and semantic replay](features/event-evidence.md). Replay here exercises harness logic against recorded inputs; it does not retest a model or simulator.

@@ -4,6 +4,16 @@ Documentary changes to canonical contracts and protocols. Entries describe speci
 
 ## Unreleased
 
+### Added — execution events and semantic replay ([issue 04](https://github.com/alokdidde/uzumaki/issues/4))
+
+- `uzumaki.evidence`: `EventRecorder` writes a versioned (`uzumaki.events/1.0`, contract `1.0`) event log with run/task/candidate IDs, skill and model versions, observation identities (content digests, not raw content), decisions, tool calls and results, the outcome and timings. Events are SHA-256 chained from the manifest identity. `Limits` bound event count, event bytes and bundle bytes; exceeding them is an error, never silent dropping.
+- Sensitive-key redaction at record time with declared `redacted_paths`. Redacting a replay input marks the run non-replayable with a reason.
+- `validate_bundle`, `load_bundle` and `write_bundle` reject malformed, oversized, version-mismatched, truncated, reordered, corrupt, incomplete and redaction-inconsistent evidence with fixed `EvidenceError` reasons.
+- `uzumaki.replay`: distinct `recorded_decision`, `fresh_model_reevaluation` and `environment_resimulation` modes. Only recorded-decision replay is implemented; it uses no provider or environment and compares semantic outcomes. The other modes raise `UnsupportedReplayMode`. `CLAIM_REQUIREMENTS` and `assess_claims` declare the artifacts each claim needs.
+- Tests: `tests/test_evidence.py`, `tests/test_replay.py`, the toy harness `tests/toy_harness.py` and the fixture `tests/fixtures/events_provider.json`. Feature note: [docs/features/event-evidence.md](docs/features/event-evidence.md).
+
+Not changed: the provider API, `make check`, CI, the protocol and contracts 1.0. Not added: a harness loop, the contract `execution_event`/`model_provenance` emitters, signatures, live models or simulators.
+
 ### Added — package bootstrap and offline CI ([issue 03](https://github.com/alokdidde/uzumaki/issues/3))
 
 - Stdlib-only `src/uzumaki` package with `py.typed`, pinned Python 3.12.12 and a complete pinned `requirements-dev.txt`.

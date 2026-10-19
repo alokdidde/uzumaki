@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "records": [
+    {
+      "request": {"role": "planner", "observation_id": "obs-1"},
+      "result": {"decision": "select", "skill_id": "pick-cube"}
+    },
+    {
+      "request": {"role": "planner", "observation_id": "obs-2"},
+      "result": {"decision": "abstain", "skill_id": null}
+    },
+    {
+      "request": {"role": "planner", "observation_id": "obs-3"},
+      "result": {"decision": "select", "skill_id": "pick-cube", "api_key": "sk-fixture-not-real"}
+    }
+  ]
+}
