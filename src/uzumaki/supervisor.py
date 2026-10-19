@@ -6,10 +6,13 @@ settled against it. A result is applied only while the run is ``running``, for t
 for a still-open call, before that call's deadline. Anything else is fenced: recorded by digest
 (effects are retained as evidence, never undone) and never returned to the logic.
 
-Before each call the run checks its state, wall time and budgets, so once it leaves ``running``
-no further provider or tool call is made. Cancellation takes effect at the next call boundary; an
-in-flight call is bounded by its own deadline and its result is fenced. Resources registered with
-``add_resource`` are released exactly once when the run reaches a terminal state.
+Before each call, and before applying a voluntary stop, the run checks its state and wall time
+(expired at or after ``start + wall_ms``); before each call it also checks budgets, so once it
+leaves ``running`` no further provider or tool call is made and no voluntary status is recorded
+after the deadline. A result arriving at or after its call deadline is fenced. Cancellation takes
+effect at the next call boundary; an in-flight call is bounded by its own deadline and its result
+is fenced. Resources registered with ``add_resource`` are released exactly once when the run
+reaches a terminal state.
 
 The clock is injectable (integer milliseconds) so logic tests use a fake clock. A plain provider
 cannot be preempted: its result is checked against the deadline when it returns. A provider that
@@ -97,6 +100,8 @@ class RunReport:
     attempt_id: str | None
     usage: dict[str, Any]
     history: list[dict[str, Any]] = field(default_factory=list)
+    progress_source: str | None = None
+    progress_observations: list[dict[str, Any]] = field(default_factory=list)
     diagnostics: list[dict[str, Any]] = field(default_factory=list)
     fenced: list[dict[str, Any]] = field(default_factory=list)
     post_terminal: list[dict[str, Any]] = field(default_factory=list)
@@ -187,7 +192,7 @@ class BoundedRun:
     def start(self) -> Transition:
         """``queued`` -> ``running``; starts the wall clock and opens attempt ``a1``."""
         with self._guarded():
-            transition = self._life.start()
+            transition = self._life.start(by="supervisor")
             if transition.applied:
                 self._started_ms = self._now()
                 self._open_attempt()
@@ -210,18 +215,32 @@ class BoundedRun:
     def finish(self, status: str, detail: str = "") -> Transition:
         """Voluntary stop by harness logic: ``completed``, ``abstained``, ``blocked`` or
         ``partial_progress``. Refused (and recorded) if the run already stopped or is cancelling.
+
+        At or after the wall deadline the run stops as ``timeout`` (``wall_time``) instead and the
+        voluntary status is refused with ``deadline_exceeded``. ``completed`` additionally needs
+        ``goal_reached`` observed by an independent source; the history records ``harness_logic``
+        as the requester, never an evaluator.
         """
         if status not in LOGIC_STATUSES:
             raise ValueError("harness logic may only finish with a voluntary status")
         with self._guarded():
-            return self._life.finish(status, detail)
+            if self._life.state == "running" and self._wall_expired(self._now()):
+                self._life.finish("timeout", "wall_time", by="supervisor")
+                self._life.diagnose("voluntary_stop_after_deadline", value=status)
+                return Transition(False, self._life.state, "deadline_exceeded")
+            return self._life.finish(status, detail, by="harness_logic")
 
     def fail(self, detail: str) -> Transition:
         with self._guarded():
             return self._life.finish("failed", detail)
 
-    def record_progress(self, progress: str, source: str = "environment") -> None:
-        """Record independently observed progress; kept as post-terminal evidence once stopped."""
+    def record_progress(self, progress: str, source: str = "harness_logic") -> None:
+        """Record observed progress with its source; kept as post-terminal evidence once stopped.
+
+        The default source is the harness logic itself, which cannot support ``completed``. An
+        environment or evaluator observer passes its own source. The label is the caller's
+        assertion; this library does not authenticate it.
+        """
         self._life.record_progress(progress, source)
 
     def add_resource(self, name: str, release: Callable[[], None]) -> None:
@@ -263,6 +282,8 @@ class BoundedRun:
                 attempt_id=self._attempt_id,
                 usage=self._ledger.snapshot(),
                 history=copy.deepcopy(self._life.history),
+                progress_source=self._life.progress_source,
+                progress_observations=copy.deepcopy(self._life.observations),
                 diagnostics=copy.deepcopy(self._life.diagnostics),
                 fenced=copy.deepcopy(self._fenced),
                 post_terminal=copy.deepcopy(self._life.post_terminal),
@@ -281,20 +302,20 @@ class BoundedRun:
             except RunStopped:
                 pass
             except Exception:
-                self.fail("harness_logic_error")
+                self._fail_by_supervisor("harness_logic_error")
             except BaseException:
-                self.fail("interrupted")  # still terminal and released before propagating
+                self._fail_by_supervisor("interrupted")  # terminal and released before propagating
                 raise
             else:
                 if status in LOGIC_STATUSES:
                     self.finish(status)
                 else:
-                    self.fail("invalid_logic_status")
+                    self._fail_by_supervisor("invalid_logic_status")
         with self._guarded():
             if self._life.state == "cancelling":
-                self._life.finish("cancelled", "safe_stop_reported")
+                self._life.finish("cancelled", "safe_stop_reported", by="supervisor")
             elif self._life.state == "running":
-                self._life.finish("failed", "run_not_terminated")
+                self._life.finish("failed", "run_not_terminated", by="supervisor")
         return self.report()
 
     # ----------------------------------------------------------------------------- calls
@@ -311,7 +332,7 @@ class BoundedRun:
             if size is not None:
                 reason = self._ledger.add_output(size)
                 if reason is not None and self._life.state == "running":
-                    self._life.finish("budget_exhausted", reason)
+                    self._life.finish("budget_exhausted", reason, by="supervisor")
                     return Settlement(False, "budget_exhausted")
             return settlement
 
@@ -351,6 +372,14 @@ class BoundedRun:
             raise ValueError("clock returned an invalid time")
         return now
 
+    def _fail_by_supervisor(self, detail: str) -> None:
+        with self._guarded():
+            self._life.finish("failed", detail, by="supervisor")
+
+    def _wall_expired(self, now: int) -> bool:
+        assert self._started_ms is not None
+        return now - self._started_ms >= self.budgets.wall_ms
+
     def _open_attempt(self) -> str:
         self._ledger.attempts += 1
         self._attempt_id = f"a{self._ledger.attempts}"
@@ -368,14 +397,14 @@ class BoundedRun:
         if self._life.state == "running" or (
             status == "failed" and self._life.state == "cancelling"
         ):
-            self._life.finish(status, detail)
+            self._life.finish(status, detail, by="supervisor")
         raise self._stopped()
 
     def _require_running(self) -> int:
         if self._life.state != "running" or self._started_ms is None:
             raise self._stopped()
         now = self._now()
-        if now - self._started_ms >= self.budgets.wall_ms:
+        if self._wall_expired(now):
             self._terminate("timeout", "wall_time")
         return now
 
@@ -420,7 +449,7 @@ class BoundedRun:
             return "unknown_call"
         if self._life.state != "running":
             return "not_running"
-        if now > ticket.deadline_ms:
+        if now >= ticket.deadline_ms:
             return "deadline_exceeded"
         return None
 

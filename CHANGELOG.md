@@ -13,6 +13,8 @@ Documentary changes to canonical contracts and protocols. Entries describe speci
 - `uzumaki.faults`: `TransientProviderError`, `ProviderTimeout`, `WorkerFailure`.
 - Tests: `tests/test_lifecycle.py`, `tests/test_budgets.py` and `tests/test_supervisor.py` (fake clock), and `tests/test_deadline.py` (real processes), with helpers `tests/fakes.py` and `tests/process_workers.py`. Feature note: [docs/features/lifecycle-budgets.md](docs/features/lifecycle-budgets.md).
 
+- Review repair 1 (findings r0-F1, r0-F2): a voluntary stop at or after the wall deadline now ends the run as `timeout` (`wall_time`), and results arriving exactly at a call deadline are fenced. History entries record the contract `edge` separately from the actual trigger `on`, plus `by` and `evaluated: false`, so harness stops are never labelled as evaluator events. Progress keeps its source (the default is `harness_logic`), and `completed` needs `goal_reached` observed by `environment` or `evaluator`.
+
 Not changed: the `RecordedProvider` API (still usable as a `BoundedRun` provider), the evidence log format `uzumaki.events/1.0`, `make check`, CI, the protocol and contracts 1.0. Not added: a sandboxed worker (feature 06), an evaluator, environment abort/safe-stop, retry backoff, persisted run reports, live models or simulators.
 
 ### Added — execution events and semantic replay ([issue 04](https://github.com/alokdidde/uzumaki/issues/4))

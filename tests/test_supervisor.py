@@ -26,7 +26,10 @@ def new_run(
 ) -> tuple[BoundedRun, FakeClock]:
     clock = clock or FakeClock()
     b: Budgets = budgets(**limits)
-    return BoundedRun(run_id=run_id, budgets=b, provider=provider, tools=tools, clock=clock), clock
+    run = BoundedRun(run_id=run_id, budgets=b, provider=provider, tools=tools, clock=clock)
+    if isinstance(tools, ScriptedTools):
+        tools.observer = run.record_progress  # the fake environment reports what it observed
+    return run, clock
 
 
 def assert_no_more_calls(run: BoundedRun, provider: Any, tools: Any = None) -> None:
@@ -53,10 +56,9 @@ def toy_logic(run: BoundedRun) -> str:
     decision = run.call_model("planner", {"role": "planner", "observation_id": "obs-1"})
     if decision.get("decision") != "select":
         return "abstained"
+    # Progress comes from the environment (ScriptedTools), never from this logic.
     run.call_tool("pick", {"target": "cube"}, skill_id=decision["skill_id"])
-    run.record_progress("partial")
     run.call_tool("place", {"x_m": 0.1})
-    run.record_progress("goal_reached")
     return "completed"
 
 
@@ -241,6 +243,118 @@ def test_wall_time_expiry_between_calls_is_a_timeout() -> None:
     assert (report.status, report.detail, tools.calls) == ("timeout", "wall_time", [])
 
 
+@pytest.mark.parametrize("local_work_ms", [1000, 2000])
+def test_voluntary_stop_at_or_after_the_wall_deadline_is_a_timeout(local_work_ms: int) -> None:
+    clock = FakeClock()
+
+    def place() -> ToolResult:
+        clock.advance(49_000)
+        return ToolResult("ok", {}, {})
+
+    tools = ScriptedTools([lambda: ToolResult("ok", {}, {}), place])
+    run, _ = new_run(ScriptedProvider([ok(SELECT)]), tools, clock, wall_ms=50_000)
+
+    def logic(r: BoundedRun) -> str:
+        status = toy_logic(r)  # the last call was accepted at 49_000 ms into the run
+        clock.advance(local_work_ms)  # local work reaches (1000) or passes (2000) the deadline
+        return status
+
+    report = run.execute(logic)
+    assert (report.state, report.status, report.detail) == ("completed", "timeout", "wall_time")
+    assert report.progress == "goal_reached"  # the effect is kept, but no success is recorded
+    assert report.history[-1]["by"] == "supervisor"
+    late = [d["value"] for d in report.diagnostics if d["kind"] == "voluntary_stop_after_deadline"]
+    assert late == ["completed"]
+    assert run.finish("completed").diagnostic == "lifecycle_violation"
+    assert_no_more_calls(run, None, tools)
+
+
+def test_voluntary_stop_just_before_the_wall_deadline_is_applied() -> None:
+    clock = FakeClock()
+    run, _ = new_run(clock=clock, wall_ms=50_000)
+    run.start()
+    clock.advance(49_999)
+    assert run.finish("abstained").applied
+    assert run.report().status == "abstained"
+
+
+def test_model_result_exactly_at_its_call_deadline_is_fenced() -> None:
+    clock = FakeClock()
+    late = {"decision": "select", "skill_id": "late-skill"}
+    provider = ScriptedProvider([ok(late, clock, 3000), ok({"decision": "abstain"})])
+    run, _ = new_run(provider, ScriptedTools(), clock, model_call_timeout_ms=3000)
+    report = run.execute(toy_logic)
+    assert report.status == "abstained"  # the selection at the deadline was never applied
+    assert [(f["reason"], f["call_id"]) for f in report.fenced] == [("deadline_exceeded", "m1")]
+
+
+def test_tool_result_exactly_at_the_wall_deadline_is_a_timeout() -> None:
+    clock = FakeClock()
+    tools = ScriptedTools([lambda: (clock.advance(50_000), ToolResult("ok", {}, {}))[1]])
+    run, _ = new_run(ScriptedProvider([ok(SELECT)]), tools, clock, wall_ms=50_000)
+    report = run.execute(toy_logic)
+    assert (report.status, report.detail) == ("timeout", "tool_deadline")
+    assert report.fenced[0]["reason"] == "deadline_exceeded" and len(tools.calls) == 1
+
+
+def test_submit_exactly_at_the_ticket_deadline_is_fenced() -> None:
+    clock = FakeClock()
+    run, _ = new_run(clock=clock, wall_ms=50_000)
+    run.start()
+    ticket = run.ticket("model")
+    clock.advance(ticket.deadline_ms - clock())
+    assert run.submit(ticket, {"decision": "select"}).reason == "deadline_exceeded"
+
+
+# ------------------------------------------------------------------- completion provenance
+
+
+def test_logic_self_reported_goal_cannot_complete_the_run() -> None:
+    provider = ScriptedProvider([ok(SELECT)])
+    tools = ScriptedTools(progress={})  # the environment observes nothing
+
+    def logic(r: BoundedRun) -> str:
+        toy_logic(r)
+        r.record_progress("goal_reached")  # self-report by the harness logic
+        return "completed"
+
+    run, _ = new_run(provider, tools)
+    report = run.execute(logic)
+    assert (report.state, report.detail) == ("failed", "run_not_terminated")
+    assert (report.progress, report.progress_source) == ("goal_reached", "harness_logic")
+    claims = [d for d in report.diagnostics if d["kind"] == "unsupported_completion_claim"]
+    assert claims and claims[0]["progress_source"] == "harness_logic"
+    assert all(h["on"] != "evaluator_terminal_event" for h in report.history)
+    assert report.history[-1]["by"] == "supervisor"
+
+
+def test_completed_history_records_harness_request_and_environment_progress() -> None:
+    tools = ScriptedTools()
+    run, _ = new_run(ScriptedProvider([ok(SELECT)]), tools)
+    report = run.execute(toy_logic)
+    assert report.status == "completed" and report.progress_source == "environment"
+    terminal = report.history[-1]
+    assert terminal["edge"] == "evaluator_terminal_event"
+    assert (terminal["on"], terminal["by"], terminal["evaluated"]) == (
+        "harness_stop_unevaluated",
+        "harness_logic",
+        False,
+    )
+    assert (terminal["progress"], terminal["progress_source"]) == ("goal_reached", "environment")
+    assert [(o["progress"], o["source"]) for o in report.progress_observations] == [
+        ("partial", "environment"),
+        ("goal_reached", "environment"),
+    ]
+    assert all(h["evaluated"] is False for h in report.history)
+
+
+def test_unknown_progress_source_is_a_caller_error() -> None:
+    run, _ = new_run()
+    run.start()
+    with pytest.raises(ValueError):
+        run.record_progress("goal_reached", "model")
+
+
 def test_total_output_bytes_budget() -> None:
     provider = ScriptedProvider([ok({"blob": "x" * 3000})], repeat_last=True)
     run, _ = new_run(provider, max_total_output_bytes=5000)
@@ -375,7 +489,7 @@ def test_late_result_after_cancellation_is_fenced_and_effects_are_retained() -> 
     run, _ = new_run()
     run.start()
     in_flight = run.ticket("tool")
-    run.record_progress("partial")  # the environment observed the pick happen
+    run.record_progress("partial", "environment")  # the environment observed the pick happen
     assert run.cancel().applied
     settlement = run.submit(in_flight, {"status": "ok", "result": {"picked": True}})
     assert (settlement.accepted, settlement.reason) == (False, "not_running")
@@ -426,7 +540,7 @@ def test_cancel_during_tool_call_keeps_partial_progress() -> None:
     holder: dict[str, BoundedRun] = {}
 
     def pick_then_cancelled() -> ToolResult:
-        holder["run"].record_progress("partial")
+        holder["run"].record_progress("partial", "environment")
         holder["run"].cancel()
         return ToolResult("ok", {"picked": True}, {})
 
@@ -441,14 +555,14 @@ def test_cancel_during_tool_call_keeps_partial_progress() -> None:
 def test_cancel_racing_completion_first_request_wins_both_orders() -> None:
     run, _ = new_run()
     run.start()
-    run.record_progress("goal_reached")
+    run.record_progress("goal_reached", "environment")
     assert run.finish("completed").applied
     assert run.cancel().diagnostic == "lifecycle_violation"
     assert run.report().status == "completed"
 
     run2, _ = new_run()
     run2.start()
-    run2.record_progress("goal_reached")
+    run2.record_progress("goal_reached", "environment")
     assert run2.cancel().applied
     assert run2.finish("completed").diagnostic == "lifecycle_violation"
     assert run2.complete_cancellation().applied

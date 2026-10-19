@@ -9,6 +9,8 @@ from uzumaki.budgets import Budgets
 from uzumaki.evidence import ToolResult
 
 Step = Callable[[], Any]
+# Progress the fake environment observes when a tool's effect happens.
+ENV_PROGRESS = {"pick": "partial", "place": "goal_reached"}
 
 
 class FakeClock:
@@ -45,9 +47,17 @@ class ScriptedProvider:
 
 
 class ScriptedTools:
-    def __init__(self, steps: list[Step] | None = None) -> None:
+    """Scripted tool executor that also plays the environment: once a tool returns, it reports
+    the progress it observed to ``observer`` with source ``environment`` (not the harness logic).
+    """
+
+    def __init__(
+        self, steps: list[Step] | None = None, progress: dict[str, str] | None = None
+    ) -> None:
         self.steps = list(steps or [])
         self.calls: list[tuple[str, str]] = []
+        self.progress = dict(ENV_PROGRESS if progress is None else progress)
+        self.observer: Callable[[str, str], None] | None = None
 
     def execute(
         self, call_id: str, tool: str, arguments: dict[str, Any], skill_id: str | None
@@ -55,8 +65,11 @@ class ScriptedTools:
         self.calls.append((call_id, tool))
         if self.steps:
             result: ToolResult = self.steps.pop(0)()
-            return result
-        return ToolResult("ok", {"tool": tool}, {})
+        else:
+            result = ToolResult("ok", {"tool": tool}, {})
+        if self.observer is not None and tool in self.progress:
+            self.observer(self.progress[tool], "environment")
+        return result
 
 
 def ok(result: dict[str, Any], clock: FakeClock | None = None, took_ms: int = 0) -> Step:
