@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools==78.1.0", "wheel==0.45.1"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "uzumaki"
+version = "0.1.0"
+description = "Robotics harness bootstrap: package, recorded provider and offline checks."
+readme = "README.md"
+requires-python = "==3.12.*"
+dependencies = []
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+uzumaki = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.mypy]
+strict = true
+files = ["src"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]

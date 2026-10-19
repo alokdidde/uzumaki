@@ -4,6 +4,12 @@ Documentary changes to canonical contracts and protocols. Entries describe speci
 
 ## Unreleased
 
+### Added — package bootstrap and offline CI ([issue 03](https://github.com/alokdidde/uzumaki/issues/3))
+
+- Stdlib-only `src/uzumaki` package with `py.typed`, pinned Python 3.12.12 and a complete pinned `requirements-dev.txt`.
+- `RecordedProvider` (recorded/fake, versioned JSON, no network) with safe `ValueError` failures, a deterministic fixture and unit tests.
+- `make check` (ruff, format check, mypy, pytest, offline build) and a read-only-permission CI workflow with SHA-pinned actions. See [docs/features/package-bootstrap.md](docs/features/package-bootstrap.md). No runtime execution or live model support.
+
 ### Added — harness and model contracts 1.0 ([issue 02](https://github.com/alokdidde/uzumaki/issues/2))
 
 - [docs/contracts/v1.json](docs/contracts/v1.json) adds contract version `1.0`:
