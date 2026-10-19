@@ -1,0 +1,238 @@
+{
+  "format": "uzumaki.skillset/1.0",
+  "skills": [
+    {
+      "state": "validated",
+      "evidence_ref": "hand-authored.review-1",
+      "artifact": {
+        "format": "uzumaki.skill/1.0",
+        "skill_id": "observe-scene",
+        "skill_version": 1,
+        "instructions": "Call observe once and return the latest observation identity. Do not actuate.",
+        "applicability": {
+          "summary": "Any pick-place-v1 case that needs a fresh observation before actuation.",
+          "task_protocols": ["pick-place-v1"],
+          "required_observations": []
+        },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [],
+          "properties": {}
+        },
+        "outputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["observation_id"],
+          "properties": {
+            "observation_id": {"type": "string", "maxLength": 64}
+          }
+        },
+        "tool_permissions": [{"name": "observe", "version": "1.0"}],
+        "resource_bounds": {
+          "wall_ms": 5000,
+          "model_calls": 0,
+          "steps": 1,
+          "retries": 0,
+          "attempts": 1,
+          "max_output_bytes": 4096,
+          "max_total_output_bytes": 4096
+        },
+        "completion": {"expected_progress": "none", "success_authority": "environment_evaluator"},
+        "failure": {"retry_on": [], "stop_on": ["missing_observation"], "otherwise": "return_to_coordinator"},
+        "dependencies": []
+      }
+    },
+    {
+      "state": "validated",
+      "evidence_ref": "hand-authored.review-1",
+      "artifact": {
+        "format": "uzumaki.skill/1.0",
+        "skill_id": "pick-box",
+        "skill_version": 1,
+        "instructions": "Observe, then pick the box at the observed pose estimate with the given grasp height. Abort on an unreachable pose.",
+        "applicability": {
+          "summary": "Box not held, pose estimate fresh (at most 200 ms) and inside the tabletop frame.",
+          "task_protocols": ["pick-place-v1"],
+          "required_observations": ["object_pose_estimate"]
+        },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["grasp_height_m"],
+          "properties": {
+            "grasp_height_m": {"type": "number", "minimum": 0, "maximum": 0.2, "description": "Grasp height above the tabletop."}
+          }
+        },
+        "outputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["held"],
+          "properties": {
+            "held": {"type": "boolean"}
+          }
+        },
+        "tool_permissions": [
+          {"name": "observe", "version": "1.0"},
+          {"name": "pick", "version": "1.0"},
+          {"name": "abort", "version": "1.0"}
+        ],
+        "resource_bounds": {
+          "wall_ms": 30000,
+          "model_calls": 0,
+          "steps": 6,
+          "retries": 1,
+          "attempts": 1,
+          "max_output_bytes": 4096,
+          "max_total_output_bytes": 16384
+        },
+        "completion": {"expected_progress": "partial", "success_authority": "environment_evaluator"},
+        "failure": {"retry_on": ["misgrasp"], "stop_on": ["unreachable_target", "ambiguous_goal"], "otherwise": "return_to_coordinator"},
+        "dependencies": []
+      }
+    },
+    {
+      "state": "validated",
+      "evidence_ref": "hand-authored.review-1",
+      "artifact": {
+        "format": "uzumaki.skill/1.0",
+        "skill_id": "place-box",
+        "skill_version": 1,
+        "instructions": "Observe, then place the held box at the observed target pose and release it.",
+        "applicability": {
+          "summary": "Box held, target pose fresh (at most 200 ms) and inside the tabletop frame.",
+          "task_protocols": ["pick-place-v1"],
+          "required_observations": ["target_pose"]
+        },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [],
+          "properties": {
+            "approach": {"type": "string", "maxLength": 16, "enum": ["vertical", "angled"]}
+          }
+        },
+        "outputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["released"],
+          "properties": {
+            "released": {"type": "boolean"}
+          }
+        },
+        "tool_permissions": [
+          {"name": "observe", "version": "1.0"},
+          {"name": "place", "version": "1.0"},
+          {"name": "abort", "version": "1.0"}
+        ],
+        "resource_bounds": {
+          "wall_ms": 30000,
+          "model_calls": 0,
+          "steps": 6,
+          "retries": 1,
+          "attempts": 1,
+          "max_output_bytes": 4096,
+          "max_total_output_bytes": 16384
+        },
+        "completion": {"expected_progress": "goal_reached", "success_authority": "environment_evaluator"},
+        "failure": {"retry_on": ["placement_failure"], "stop_on": ["unreachable_target"], "otherwise": "return_to_coordinator"},
+        "dependencies": []
+      }
+    },
+    {
+      "state": "validated",
+      "evidence_ref": "hand-authored.review-1",
+      "artifact": {
+        "format": "uzumaki.skill/1.0",
+        "skill_id": "pick-and-place",
+        "skill_version": 1,
+        "instructions": "Run pick-box, then place-box. Return control to the coordinator after release or on any unlisted failure.",
+        "applicability": {
+          "summary": "Full pick-place-v1 case: box on the table, target declared, both poses fresh.",
+          "task_protocols": ["pick-place-v1"],
+          "required_observations": ["object_pose_estimate", "target_pose"]
+        },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["grasp_height_m"],
+          "properties": {
+            "grasp_height_m": {"type": "number", "minimum": 0, "maximum": 0.2}
+          }
+        },
+        "outputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["released"],
+          "properties": {
+            "released": {"type": "boolean"}
+          }
+        },
+        "tool_permissions": [
+          {"name": "observe", "version": "1.0"},
+          {"name": "pick", "version": "1.0"},
+          {"name": "place", "version": "1.0"},
+          {"name": "abort", "version": "1.0"}
+        ],
+        "resource_bounds": {
+          "wall_ms": 60000,
+          "model_calls": 0,
+          "steps": 12,
+          "retries": 2,
+          "attempts": 3,
+          "max_output_bytes": 4096,
+          "max_total_output_bytes": 32768
+        },
+        "completion": {"expected_progress": "goal_reached", "success_authority": "environment_evaluator"},
+        "failure": {"retry_on": ["misgrasp", "placement_failure"], "stop_on": ["unreachable_target", "ambiguous_goal"], "otherwise": "return_to_coordinator"},
+        "dependencies": [
+          {"skill_id": "pick-box", "min_version": 1, "max_version": 1},
+          {"skill_id": "place-box", "min_version": 1, "max_version": 1}
+        ]
+      }
+    },
+    {
+      "state": "candidate",
+      "evidence_ref": null,
+      "artifact": {
+        "format": "uzumaki.skill/1.0",
+        "skill_id": "push-box",
+        "skill_version": 1,
+        "instructions": "Untested candidate: push the box toward the target without grasping.",
+        "applicability": {
+          "summary": "Candidate only; not eligible until validated.",
+          "task_protocols": ["pick-place-v1"],
+          "required_observations": ["object_pose_estimate", "target_pose"]
+        },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [],
+          "properties": {}
+        },
+        "outputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [],
+          "properties": {}
+        },
+        "tool_permissions": [
+          {"name": "observe", "version": "1.0"},
+          {"name": "place", "version": "1.0"}
+        ],
+        "resource_bounds": {
+          "wall_ms": 30000,
+          "model_calls": 0,
+          "steps": 6,
+          "retries": 0,
+          "attempts": 1,
+          "max_output_bytes": 4096,
+          "max_total_output_bytes": 16384
+        },
+        "completion": {"expected_progress": "goal_reached", "success_authority": "environment_evaluator"},
+        "failure": {"retry_on": [], "stop_on": [], "otherwise": "return_to_coordinator"},
+        "dependencies": []
+      }
+    }
+  ]
+}
