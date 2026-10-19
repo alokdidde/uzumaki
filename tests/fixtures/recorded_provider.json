@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0",
+  "records": [
+    {
+      "request": {"role": "planner", "input": "fixture"},
+      "result": {"decision": "abstain", "reason": "fixture"}
+    },
+    {
+      "request": {"role": "generator", "input": "fixture"},
+      "result": {"decision": "abstain", "reason": "fixture", "tags": ["a", "b"]}
+    }
+  ]
+}

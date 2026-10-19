@@ -52,3 +52,7 @@ Retain raw evidence in an access-controlled location with a retrieval manifest a
 - Reported metrics recompute from retained evidence and identify scope/limits.
 - Reviewer can reproduce the documented command from a clean checkout.
 - Issue links evidence and actual commands; Project status changes only after acceptance.
+
+## Offline command (issue 03)
+
+`make check` runs ruff lint and format check, `mypy src`, `pytest` and an offline `python -m build --no-isolation`, using only the pinned `requirements-dev.txt` tools. Tests use the recorded provider and block sockets. See [package bootstrap](features/package-bootstrap.md).
