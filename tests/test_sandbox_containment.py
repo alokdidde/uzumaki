@@ -514,6 +514,85 @@ for name, (nr, *args) in raw.items():
         victim.wait()
 
 
+def scheduling_state(pid: int) -> tuple[Any, ...]:
+    """Nice value, policy, static priority, CPU affinity and I/O priority of a host process."""
+    import ctypes
+
+    libc = ctypes.CDLL(None, use_errno=True)
+    return (
+        os.getpriority(os.PRIO_PROCESS, pid),
+        os.sched_getscheduler(pid),
+        os.sched_getparam(pid).sched_priority,
+        frozenset(os.sched_getaffinity(pid)),
+        libc.syscall(252, 1, pid),  # ioprio_get(IOPRIO_WHO_PROCESS, pid)
+    )
+
+
+def test_host_process_priority_scheduling_and_affinity_cannot_be_changed(worker: Any) -> None:
+    victim = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"])
+    parent = os.getpid()  # the process that owns the watchdog and kill authority
+    try:
+        before = {"victim": scheduling_state(victim.pid), "parent": scheduling_state(parent)}
+        p_nice, p_policy, _, p_cpus, p_ioprio = before["parent"]
+        p_mask = sum(1 << cpu for cpu in p_cpus)
+        cpu = min(before["victim"][3])
+        nobody = 0x7FFFFFF0  # a UID/PGID with no processes: unfiltered, these return ESRCH
+        # Against the parent, the values are its current ones, so a regression changes nothing
+        # on the host; against the disposable victim, they are the real attack values.
+        source = candidate(
+            f"""
+import struct
+libc = ctypes.CDLL(None, use_errno=True)
+def raw(nr, *args):
+    ctypes.set_errno(0)
+    rc = libc.syscall(nr, *args)
+    return 'denied:errno%d' % ctypes.get_errno() if rc < 0 else 'allowed:%d' % rc
+def attr(policy, nice):  # struct sched_attr, version 1 (48 bytes)
+    packed = struct.pack('<IIQiIQQQ', 48, policy, 0, nice, 0, 0, 0, 0)
+    return ctypes.create_string_buffer(packed, 48)
+def mask(bits):
+    return ctypes.create_string_buffer(bits.to_bytes(128, 'little'), 128)
+param = ctypes.c_int(0)
+out['renice_user'] = raw(141, 2, {nobody}, 19)
+out['renice_pgrp'] = raw(141, 1, {nobody}, 19)
+out['renice_self'] = raw(141, 0, 0, 19)
+out['renice_victim'] = raw(141, 0, {victim.pid}, 19)
+out['renice_parent'] = raw(141, 0, {parent}, {p_nice})
+out['setparam_victim'] = raw(142, {victim.pid}, ctypes.byref(param))
+out['setparam_parent'] = raw(142, {parent}, ctypes.byref(param))
+out['scheduler_victim'] = raw(144, {victim.pid}, 5, ctypes.byref(param))  # SCHED_IDLE
+out['scheduler_parent'] = raw(144, {parent}, {p_policy}, ctypes.byref(param))
+out['affinity_victim'] = raw(203, {victim.pid}, 128, mask(1 << {cpu}))
+out['affinity_parent'] = raw(203, {parent}, 128, mask({p_mask}))
+out['ioprio_victim'] = raw(251, 1, {victim.pid}, 3 << 13)  # IOPRIO_CLASS_IDLE
+out['ioprio_parent'] = raw(251, 1, {parent}, {p_ioprio})
+out['ioprio_user'] = raw(251, 3, {nobody}, 3 << 13)
+out['setattr_victim'] = raw(314, {victim.pid}, attr(5, 19), 0)
+out['setattr_parent'] = raw(314, {parent}, attr({p_policy}, {p_nice}), 0)
+out['lib_renice'] = attempt(lambda: os.setpriority(os.PRIO_PROCESS, {victim.pid}, 19))
+out['lib_affinity'] = attempt(lambda: os.sched_setaffinity({victim.pid}, {{{cpu}}}))
+idle = os.sched_param(0)
+out['lib_scheduler'] = attempt(lambda: os.sched_setscheduler({victim.pid}, os.SCHED_IDLE, idle))
+"""
+        )
+        report = worker()(source)
+        assert report.status == "returned", report
+        assert report.tree_clean
+        names = ("lib_renice", "lib_affinity", "lib_scheduler")
+        library = {name: report.result.pop(name) for name in names}
+        assert library == dict.fromkeys(names, "denied:PermissionError")
+        # errno 1 for every call, including the ones that would otherwise fail with ESRCH: the
+        # denial comes from the seccomp filter, not from the kernel's same-UID check.
+        assert report.result == dict.fromkeys(report.result, "denied:errno1")
+        assert len(report.result) == 16
+        assert scheduling_state(victim.pid) == before["victim"]
+        assert scheduling_state(parent) == before["parent"]
+        assert victim.poll() is None
+    finally:
+        victim.kill()
+        victim.wait()
+
+
 @pytest.mark.parametrize(
     "loop",
     ["while True:\n        pass", "while True:\n        time.sleep(1)"],

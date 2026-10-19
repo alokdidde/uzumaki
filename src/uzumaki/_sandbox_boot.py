@@ -5,7 +5,8 @@ session with a scrubbed environment and only the broker pipes open. Before it re
 code it applies, in order: resource limits, ``no_new_privs``, a Landlock domain (filesystem
 allowlist, TCP denied, signals and abstract UNIX sockets scoped to the domain) and a seccomp
 filter (no sockets, no new processes or exec, no namespace, ptrace, rlimit or mount changes, no
-file metadata changes or xattr reads, no file watches, no SysV IPC or POSIX message queues). It
+file metadata changes or xattr reads, no file watches, no SysV IPC or POSIX message queues, no
+priority, scheduling-policy, CPU-affinity or I/O-priority changes). It
 then checks that the restrictions hold and reports ``ready``. Only after that does it load and
 run the candidate. Everything here is stdlib-only and self-contained, because the child cannot
 read the harness package once restricted.
@@ -142,14 +143,28 @@ _SYS_IPC = {
     "mq_notify": 244,
     "mq_getsetattr": 245,
 }
+# The worker shares the host's UID and PID namespace. These calls need only a matching UID (no
+# ptrace check), so Landlock does not mediate them: a candidate could renice, reschedule or
+# re-pin the watchdog parent or every process of the user, and unprivileged processes cannot
+# undo that. They are denied for every target, the worker itself included.
+_SYS_SCHED = {
+    "setpriority": 141,
+    "sched_setparam": 142,
+    "sched_setscheduler": 144,
+    "sched_setaffinity": 203,
+    "ioprio_set": 251,
+    "sched_setattr": 314,
+}
 _SYS.update(_SYS_METADATA)
 _SYS.update(_SYS_WATCH)
 _SYS.update(_SYS_IPC)
+_SYS.update(_SYS_SCHED)
 _SYS_LANDLOCK_CREATE_RULESET = 444
 _SYS_LANDLOCK_ADD_RULE = 445
 _SYS_LANDLOCK_RESTRICT_SELF = 446
 _DENIED = tuple(n for n in _SYS if n not in ("clone", "clone3"))
 _IPC_STAT = 2
+_PRIO_INVALID = 99  # not PRIO_PROCESS/PGRP/USER: setpriority rejects it with EINVAL
 
 _PR_GET_SECCOMP = 21
 _PR_SET_SECCOMP = 22
@@ -363,10 +378,11 @@ def _verify(probes: list[str]) -> None:
             continue
         os.close(fd)
         raise ContainmentError("filesystem_not_restricted")
-    # Side-effect free: unfiltered, these fail with ENOENT and EINVAL instead of EPERM.
+    # Side-effect free: unfiltered, these fail with ENOENT, EINVAL and EINVAL instead of EPERM.
     self_checks: tuple[tuple[str, int, tuple[Any, ...]], ...] = (
         ("metadata_not_restricted", _SYS["chmod"], (b"", 0)),
         ("ipc_not_restricted", _SYS["msgctl"], (-1, _IPC_STAT, None)),
+        ("scheduling_not_restricted", _SYS["setpriority"], (_PRIO_INVALID, 0, 0)),
     )
     for code, nr, args in self_checks:
         ctypes.set_errno(0)

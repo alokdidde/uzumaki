@@ -118,7 +118,8 @@ def test_host_and_bootstrap_agree_on_the_minimum_landlock_abi() -> None:
     assert f"MIN_LANDLOCK_ABI = {MIN_LANDLOCK_ABI}\n" in source
 
 
-# x86_64 numbers Landlock cannot mediate: metadata changes, xattrs, watches and persistent IPC.
+# x86_64 numbers Landlock cannot mediate: metadata changes, xattrs, watches, persistent IPC and
+# scheduling changes to other same-UID processes.
 # fmt: off
 UNMEDIATED_BY_LANDLOCK = {
     "chmod": 90, "fchmod": 91, "chown": 92, "fchown": 93, "lchown": 94, "utime": 132,
@@ -134,6 +135,9 @@ UNMEDIATED_BY_LANDLOCK = {
     "shmdt": 67, "msgget": 68, "msgsnd": 69, "msgrcv": 70, "msgctl": 71, "semtimedop": 220,
     "mq_open": 240, "mq_unlink": 241, "mq_timedsend": 242, "mq_timedreceive": 243,
     "mq_notify": 244, "mq_getsetattr": 245,
+    # Same-UID checks only (no ptrace hook), so Landlock's ptrace and signal scoping miss them.
+    "setpriority": 141, "sched_setparam": 142, "sched_setscheduler": 144,
+    "sched_setaffinity": 203, "ioprio_set": 251, "sched_setattr": 314,
 }
 # fmt: on
 
