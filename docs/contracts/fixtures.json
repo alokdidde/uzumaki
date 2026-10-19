@@ -1,0 +1,2438 @@
+{
+ "$comment": "Concrete offline fixtures for contract 1.0. Inputs only; expected reasons are specifications checked by the trusted offline checker, not test-pass reports. Development-case (dev-001/dev-002) geometry and synthetic values only; no heldout material.",
+ "contract_version": "1.0",
+ "valid": [
+  {
+   "id": "valid-task-context-dev001",
+   "record": "task_context",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "task_context",
+    "payload": {
+     "context_id": "ctx-dev001-1",
+     "task_id": "pick-place-v1",
+     "case_id": "dev-001",
+     "assembled_at_ms": 10050,
+     "observed_facts": [
+      {
+       "fact_id": "f-obj",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "object_pose_estimate",
+       "value": {
+        "x_m": -0.121093,
+        "y_m": 0.118386,
+        "z_m": 0.027307,
+        "yaw_deg": -16.832461
+       }
+      },
+      {
+       "fact_id": "f-tgt",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "target_pose",
+       "value": {
+        "x_m": 0.116093,
+        "y_m": 0.133576,
+        "z_m": 0.027307,
+        "yaw_deg": 0
+       }
+      },
+      {
+       "fact_id": "f-grip",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "gripper_state",
+       "value": "open_empty"
+      }
+     ],
+     "inferred_judgments": [
+      {
+       "judgment_id": "j-1",
+       "author_role": "retrieval",
+       "statement": "Box appears reachable from the left approach.",
+       "confidence": null,
+       "basis_ids": [
+        "f-obj"
+       ],
+       "authoritative": false
+      }
+     ],
+     "objectives": [
+      {
+       "objective_id": "obj-1",
+       "kind": "place_box_at_target",
+       "target_pose": {
+        "x_m": 0.116093,
+        "y_m": 0.133576,
+        "z_m": 0.027307,
+        "yaw_deg": 0
+       },
+       "xy_tolerance_m": 0.02,
+       "yaw_tolerance_deg": 10,
+       "settle_s": 0.5,
+       "speed_m_per_s_at_most": 0.01,
+       "require_released_object": true,
+       "mandatory_invariant_violations": 0,
+       "source": "task_protocol"
+      }
+     ],
+     "constraints": {
+      "protocol_version": "pick-place-v1",
+      "attempts_per_case": 3,
+      "wall_ms_per_case": 120000,
+      "model_calls_per_case": 20,
+      "max_observation_age_ms": 200,
+      "allowed_tools": [
+       "observe",
+       "pick",
+       "place",
+       "abort"
+      ],
+      "source": "task_protocol"
+     },
+     "hints": [
+      {
+       "hint_id": "h-1",
+       "source": "skill_documentation",
+       "text": "Grasp along the shorter box axis.",
+       "trust": "untrusted_data"
+      }
+     ],
+     "partial_progress": {
+      "level": "unknown",
+      "source": "not_assessed",
+      "evidence_ref": null
+     }
+    }
+   }
+  },
+  {
+   "id": "valid-observation-fresh",
+   "record": "observation",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "observation",
+    "payload": {
+     "observation_id": "obs-dev001-a1-1",
+     "task_id": "pick-place-v1",
+     "case_id": "dev-001",
+     "run_id": "run-0001",
+     "attempt_id": "att-1",
+     "clock_domain": "harness_monotonic",
+     "captured_at_ms": 10000,
+     "received_at_ms": 10040,
+     "source": "environment_observe",
+     "observed_facts": [
+      {
+       "fact_id": "f-obj",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "object_pose_estimate",
+       "value": {
+        "x_m": -0.121093,
+        "y_m": 0.118386,
+        "z_m": 0.027307,
+        "yaw_deg": -16.832461
+       }
+      },
+      {
+       "fact_id": "f-tgt",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "target_pose",
+       "value": {
+        "x_m": 0.116093,
+        "y_m": 0.133576,
+        "z_m": 0.027307,
+        "yaw_deg": 0
+       }
+      },
+      {
+       "fact_id": "f-grip",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "gripper_state",
+       "value": "open_empty"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "valid-observation-age-exactly-200ms",
+   "record": "observation",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "observation",
+    "payload": {
+     "observation_id": "obs-dev001-a1-2",
+     "task_id": "pick-place-v1",
+     "case_id": "dev-001",
+     "run_id": "run-0001",
+     "attempt_id": "att-1",
+     "clock_domain": "harness_monotonic",
+     "captured_at_ms": 10000,
+     "received_at_ms": 10200,
+     "source": "environment_observe",
+     "observed_facts": [
+      {
+       "fact_id": "f-obj",
+       "observation_id": "obs-dev001-a1-2",
+       "field": "object_pose_estimate",
+       "value": {
+        "x_m": -0.121093,
+        "y_m": 0.118386,
+        "z_m": 0.027307,
+        "yaw_deg": -16.832461
+       }
+      },
+      {
+       "fact_id": "f-tgt",
+       "observation_id": "obs-dev001-a1-2",
+       "field": "target_pose",
+       "value": {
+        "x_m": 0.116093,
+        "y_m": 0.133576,
+        "z_m": 0.027307,
+        "yaw_deg": 0
+       }
+      },
+      {
+       "fact_id": "f-grip",
+       "observation_id": "obs-dev001-a1-2",
+       "field": "gripper_state",
+       "value": "open_empty"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "valid-observation-no-facts-unknown",
+   "record": "observation",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "observation",
+    "payload": {
+     "observation_id": "obs-dev002-a1-1",
+     "task_id": "pick-place-v1",
+     "case_id": "dev-002",
+     "run_id": "run-0001",
+     "attempt_id": "att-1",
+     "clock_domain": "harness_monotonic",
+     "captured_at_ms": 10000,
+     "received_at_ms": 10040,
+     "source": "environment_observe",
+     "observed_facts": []
+    }
+   }
+  },
+  {
+   "id": "valid-eligible-skills-registry-v1",
+   "record": "eligible_skills",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "eligible_skills",
+    "payload": {
+     "eligible_set_id": "elig-dev001-1",
+     "registry_version": 1,
+     "based_on_observation_id": "obs-dev001-a1-1",
+     "computed_at_ms": 10045,
+     "access": "read_only",
+     "skills": [
+      {
+       "skill_id": "pick-box",
+       "skill_version": 1,
+       "content_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+       "parameter_schema_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+       "tool_permissions": [
+        "observe",
+        "pick"
+       ],
+       "applicability": "Single rigid box on tabletop, gripper empty."
+      },
+      {
+       "skill_id": "place-box",
+       "skill_version": 1,
+       "content_sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+       "parameter_schema_sha256": "4444444444444444444444444444444444444444444444444444444444444444",
+       "tool_permissions": [
+        "observe",
+        "place"
+       ],
+       "applicability": "Box held, declared reachable target."
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "valid-planner-select",
+   "record": "planner_decision",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "planner_decision",
+    "payload": {
+     "decision_id": "dec-1",
+     "task_id": "pick-place-v1",
+     "decision": "select",
+     "skill_id": "pick-box",
+     "skill_version": 1,
+     "eligible_set_id": "elig-dev001-1",
+     "registry_version": 1,
+     "parameters": {
+      "approach": "top"
+     },
+     "abstain_reason": null,
+     "rationale": "Gripper is empty and a fresh object pose is available.",
+     "based_on_observation_id": "obs-dev001-a1-1",
+     "provenance_id": "prov-1"
+    }
+   }
+  },
+  {
+   "id": "valid-planner-abstain",
+   "record": "planner_decision",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "planner_decision",
+    "payload": {
+     "decision_id": "dec-2",
+     "task_id": "pick-place-v1",
+     "decision": "abstain",
+     "skill_id": null,
+     "skill_version": null,
+     "eligible_set_id": "elig-dev001-1",
+     "registry_version": 1,
+     "parameters": {},
+     "abstain_reason": "no_eligible_skill",
+     "rationale": "No eligible skill handles a held box with an unknown target.",
+     "based_on_observation_id": "obs-dev001-a1-1",
+     "provenance_id": "prov-1"
+    }
+   }
+  },
+  {
+   "id": "valid-candidate-artifact-untrusted",
+   "record": "candidate_artifact",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "candidate_artifact",
+    "payload": {
+     "artifact_id": "art-1",
+     "sha256": "d3a79781fc4010df09caf383d1ab557228cc7734a7c05c63a144deedcf778b06",
+     "format": "constrained_program_text",
+     "content": "def run(tools):\n    return tools.observe()\n",
+     "parent_artifact_ids": [],
+     "repair_round": 0,
+     "provenance_id": "prov-2",
+     "trust": "untrusted",
+     "authorization": false
+    }
+   }
+  },
+  {
+   "id": "valid-event-queued-to-running",
+   "record": "execution_event",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "execution_event",
+    "payload": {
+     "case_id": "dev-001",
+     "run_id": "run-0001",
+     "attempt_id": null,
+     "event_id": "ev-1",
+     "seq": 0,
+     "event_kind": "state_transition",
+     "monotonic_ms": 9000,
+     "lifecycle_from": "queued",
+     "lifecycle_to": "running",
+     "tool": null,
+     "subject_id": null,
+     "rejection_reason": null,
+     "progress": {
+      "level": "unknown",
+      "source": "not_assessed",
+      "evidence_ref": null
+     }
+    }
+   }
+  },
+  {
+   "id": "valid-event-running-to-cancelling-partial-progress",
+   "record": "execution_event",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "execution_event",
+    "payload": {
+     "case_id": "dev-001",
+     "run_id": "run-0001",
+     "attempt_id": "att-1",
+     "event_id": "ev-7",
+     "seq": 6,
+     "event_kind": "state_transition",
+     "monotonic_ms": 14000,
+     "lifecycle_from": "running",
+     "lifecycle_to": "cancelling",
+     "tool": null,
+     "subject_id": null,
+     "rejection_reason": null,
+     "progress": {
+      "level": "partial",
+      "source": "environment_evaluator",
+      "evidence_ref": "evid-progress-1"
+     }
+    }
+   }
+  },
+  {
+   "id": "valid-event-late-result-fenced",
+   "record": "execution_event",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "execution_event",
+    "payload": {
+     "case_id": "dev-001",
+     "run_id": "run-0001",
+     "attempt_id": "att-1",
+     "event_id": "ev-9",
+     "seq": 8,
+     "event_kind": "late_result_fenced",
+     "monotonic_ms": 15200,
+     "lifecycle_from": null,
+     "lifecycle_to": null,
+     "tool": "pick",
+     "subject_id": "req-pick-2",
+     "rejection_reason": "lifecycle_violation",
+     "progress": {
+      "level": "partial",
+      "source": "environment_evaluator",
+      "evidence_ref": "evid-progress-1"
+     }
+    }
+   }
+  },
+  {
+   "id": "valid-event-admission-rejected-version-skew",
+   "record": "execution_event",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "execution_event",
+    "payload": {
+     "case_id": "dev-001",
+     "run_id": "run-0001",
+     "attempt_id": "att-1",
+     "event_id": "ev-4",
+     "seq": 3,
+     "event_kind": "admission_rejected",
+     "monotonic_ms": 10100,
+     "lifecycle_from": null,
+     "lifecycle_to": null,
+     "tool": "pick",
+     "subject_id": "dec-3",
+     "rejection_reason": "eligible_set_version_skew",
+     "progress": {
+      "level": "unknown",
+      "source": "not_assessed",
+      "evidence_ref": null
+     }
+    }
+   }
+  },
+  {
+   "id": "valid-event-candidate-execution-refused",
+   "record": "execution_event",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "execution_event",
+    "payload": {
+     "case_id": "dev-001",
+     "run_id": "run-0001",
+     "attempt_id": "att-1",
+     "event_id": "ev-5",
+     "seq": 4,
+     "event_kind": "admission_rejected",
+     "monotonic_ms": 10200,
+     "lifecycle_from": null,
+     "lifecycle_to": null,
+     "tool": null,
+     "subject_id": "art-1",
+     "rejection_reason": "unauthorized_operation",
+     "progress": {
+      "level": "unknown",
+      "source": "not_assessed",
+      "evidence_ref": null
+     }
+    }
+   }
+  },
+  {
+   "id": "valid-outcome-cancelled-model-claim-ignored",
+   "record": "outcome",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "outcome",
+    "payload": {
+     "case_id": "dev-001",
+     "run_id": "run-0001",
+     "primary": "cancelled",
+     "progress": "partial",
+     "lifecycle_state": "cancelled",
+     "invariant_evidence": "complete",
+     "invariant_violation_count": 0,
+     "evaluator_evidence_refs": [
+      {
+       "ref": "evid-run-0001",
+       "sha256": "5555555555555555555555555555555555555555555555555555555555555555"
+      }
+     ],
+     "model_claims": [
+      {
+       "role": "planner",
+       "claim": "Task complete.",
+       "authoritative": false
+      }
+     ],
+     "authoritative_source": "environment_evaluator"
+    }
+   }
+  },
+  {
+   "id": "valid-outcome-missing-invariant-evidence",
+   "record": "outcome",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "outcome",
+    "payload": {
+     "case_id": "dev-001",
+     "run_id": "run-0002",
+     "primary": "evaluation_failure",
+     "progress": "none",
+     "lifecycle_state": "failed",
+     "invariant_evidence": "missing",
+     "invariant_violation_count": null,
+     "evaluator_evidence_refs": [
+      {
+       "ref": "evid-run-0002",
+       "sha256": "5555555555555555555555555555555555555555555555555555555555555555"
+      }
+     ],
+     "model_claims": [],
+     "authoritative_source": "environment_evaluator"
+    }
+   }
+  },
+  {
+   "id": "valid-provenance-usage-unknown",
+   "record": "model_provenance",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "model_provenance",
+    "payload": {
+     "provenance_id": "prov-1",
+     "provider": "recorded-fake",
+     "model": "claude-sonnet-5-5",
+     "reported_model": null,
+     "role": "planner",
+     "replay_mode": "recorded",
+     "prompt_sha256": "6666666666666666666666666666666666666666666666666666666666666666",
+     "input_sha256": "7777777777777777777777777777777777777777777777777777777777777777",
+     "output_sha256": "8888888888888888888888888888888888888888888888888888888888888888",
+     "requested_at_ms": 10060,
+     "latency_ms": null,
+     "usage": {
+      "status": "unknown",
+      "input_tokens": null,
+      "output_tokens": null,
+      "cost_usd": null
+     }
+    }
+   }
+  },
+  {
+   "id": "valid-provenance-usage-reported",
+   "record": "model_provenance",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "model_provenance",
+    "payload": {
+     "provenance_id": "prov-2",
+     "provider": "recorded-fake",
+     "model": "claude-sonnet-5-5",
+     "reported_model": null,
+     "role": "generator",
+     "replay_mode": "recorded",
+     "prompt_sha256": "6666666666666666666666666666666666666666666666666666666666666666",
+     "input_sha256": "7777777777777777777777777777777777777777777777777777777777777777",
+     "output_sha256": "8888888888888888888888888888888888888888888888888888888888888888",
+     "requested_at_ms": 10060,
+     "latency_ms": null,
+     "usage": {
+      "status": "reported",
+      "input_tokens": 1200,
+      "output_tokens": 300,
+      "cost_usd": null
+     }
+    }
+   }
+  },
+  {
+   "id": "valid-event-actuation-before-observe-rejected",
+   "record": "execution_event",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "execution_event",
+    "payload": {
+     "case_id": "dev-001",
+     "run_id": "run-0003",
+     "attempt_id": null,
+     "event_id": "ev-1",
+     "seq": 1,
+     "event_kind": "admission_rejected",
+     "monotonic_ms": 5000,
+     "lifecycle_from": null,
+     "lifecycle_to": null,
+     "tool": "pick",
+     "subject_id": "dec-9",
+     "rejection_reason": "actuation_before_observe",
+     "progress": {
+      "level": "unknown",
+      "source": "not_assessed",
+      "evidence_ref": null
+     }
+    }
+   }
+  },
+  {
+   "id": "valid-outcome-completed-goal-reached",
+   "record": "outcome",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "outcome",
+    "payload": {
+     "case_id": "dev-001",
+     "run_id": "run-0004",
+     "primary": "completed",
+     "progress": "goal_reached",
+     "lifecycle_state": "completed",
+     "invariant_evidence": "complete",
+     "invariant_violation_count": 0,
+     "evaluator_evidence_refs": [
+      {
+       "ref": "evid-run-0004",
+       "sha256": "6666666666666666666666666666666666666666666666666666666666666666"
+      }
+     ],
+     "model_claims": [],
+     "authoritative_source": "environment_evaluator"
+    }
+   }
+  },
+  {
+   "id": "valid-event-malformed-pick-before-observe-rejected",
+   "record": "execution_event",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "execution_event",
+    "payload": {
+     "case_id": "dev-001",
+     "run_id": "run-0005",
+     "attempt_id": null,
+     "event_id": "ev-1",
+     "seq": 1,
+     "event_kind": "admission_rejected",
+     "monotonic_ms": 5000,
+     "lifecycle_from": null,
+     "lifecycle_to": null,
+     "tool": "pick",
+     "subject_id": null,
+     "rejection_reason": "actuation_before_observe",
+     "progress": {
+      "level": "unknown",
+      "source": "not_assessed",
+      "evidence_ref": null
+     }
+    }
+   }
+  },
+  {
+   "id": "valid-outcome-malformed-pick-before-observe-missing-observation",
+   "record": "outcome",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "outcome",
+    "payload": {
+     "case_id": "dev-001",
+     "run_id": "run-0005",
+     "primary": "missing_observation",
+     "progress": "none",
+     "lifecycle_state": "completed",
+     "invariant_evidence": "complete",
+     "invariant_violation_count": 0,
+     "evaluator_evidence_refs": [
+      {
+       "ref": "evid-run-0005",
+       "sha256": "7777777777777777777777777777777777777777777777777777777777777777"
+      }
+     ],
+     "model_claims": [],
+     "authoritative_source": "environment_evaluator"
+    }
+   }
+  },
+  {
+   "id": "valid-outcome-collision-with-violation",
+   "record": "outcome",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "outcome",
+    "payload": {
+     "case_id": "dev-001",
+     "run_id": "run-0006",
+     "primary": "collision",
+     "progress": "partial",
+     "lifecycle_state": "completed",
+     "invariant_evidence": "complete",
+     "invariant_violation_count": 1,
+     "evaluator_evidence_refs": [
+      {
+       "ref": "evid-run-0006",
+       "sha256": "6666666666666666666666666666666666666666666666666666666666666666"
+      }
+     ],
+     "model_claims": [],
+     "authoritative_source": "environment_evaluator"
+    }
+   }
+  }
+ ],
+ "invalid": [
+  {
+   "id": "malformed-non-object-array",
+   "record": "observation",
+   "input": [
+    {
+     "observation_id": "obs-dev001-a1-1",
+     "task_id": "pick-place-v1",
+     "case_id": "dev-001",
+     "run_id": "run-0001",
+     "attempt_id": "att-1",
+     "clock_domain": "harness_monotonic",
+     "captured_at_ms": 10000,
+     "received_at_ms": 10040,
+     "source": "environment_observe",
+     "observed_facts": [
+      {
+       "fact_id": "f-obj",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "object_pose_estimate",
+       "value": {
+        "x_m": -0.121093,
+        "y_m": 0.118386,
+        "z_m": 0.027307,
+        "yaw_deg": -16.832461
+       }
+      },
+      {
+       "fact_id": "f-tgt",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "target_pose",
+       "value": {
+        "x_m": 0.116093,
+        "y_m": 0.133576,
+        "z_m": 0.027307,
+        "yaw_deg": 0
+       }
+      },
+      {
+       "fact_id": "f-grip",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "gripper_state",
+       "value": "open_empty"
+      }
+     ]
+    }
+   ],
+   "reason": "malformed",
+   "description": "A JSON array instead of an envelope object."
+  },
+  {
+   "id": "malformed-non-object-string",
+   "record": "planner_decision",
+   "input": "select pick-box",
+   "reason": "malformed",
+   "description": "Free text instead of a structured record (model output that is not JSON object)."
+  },
+  {
+   "id": "malformed-time-as-string",
+   "record": "observation",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "observation",
+    "payload": {
+     "observation_id": "obs-dev001-a1-1",
+     "task_id": "pick-place-v1",
+     "case_id": "dev-001",
+     "run_id": "run-0001",
+     "attempt_id": "att-1",
+     "clock_domain": "harness_monotonic",
+     "captured_at_ms": "10000",
+     "received_at_ms": 10040,
+     "source": "environment_observe",
+     "observed_facts": [
+      {
+       "fact_id": "f-obj",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "object_pose_estimate",
+       "value": {
+        "x_m": -0.121093,
+        "y_m": 0.118386,
+        "z_m": 0.027307,
+        "yaw_deg": -16.832461
+       }
+      },
+      {
+       "fact_id": "f-tgt",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "target_pose",
+       "value": {
+        "x_m": 0.116093,
+        "y_m": 0.133576,
+        "z_m": 0.027307,
+        "yaw_deg": 0
+       }
+      },
+      {
+       "fact_id": "f-grip",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "gripper_state",
+       "value": "open_empty"
+      }
+     ]
+    }
+   },
+   "reason": "malformed",
+   "description": "captured_at_ms is a string; times are nonnegative integers."
+  },
+  {
+   "id": "malformed-negative-time",
+   "record": "observation",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "observation",
+    "payload": {
+     "observation_id": "obs-dev001-a1-1",
+     "task_id": "pick-place-v1",
+     "case_id": "dev-001",
+     "run_id": "run-0001",
+     "attempt_id": "att-1",
+     "clock_domain": "harness_monotonic",
+     "captured_at_ms": -5,
+     "received_at_ms": 10040,
+     "source": "environment_observe",
+     "observed_facts": [
+      {
+       "fact_id": "f-obj",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "object_pose_estimate",
+       "value": {
+        "x_m": -0.121093,
+        "y_m": 0.118386,
+        "z_m": 0.027307,
+        "yaw_deg": -16.832461
+       }
+      },
+      {
+       "fact_id": "f-tgt",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "target_pose",
+       "value": {
+        "x_m": 0.116093,
+        "y_m": 0.133576,
+        "z_m": 0.027307,
+        "yaw_deg": 0
+       }
+      },
+      {
+       "fact_id": "f-grip",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "gripper_state",
+       "value": "open_empty"
+      }
+     ]
+    }
+   },
+   "reason": "malformed",
+   "description": "captured_at_ms is negative."
+  },
+  {
+   "id": "malformed-wrong-clock-domain",
+   "record": "observation",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "observation",
+    "payload": {
+     "observation_id": "obs-dev001-a1-1",
+     "task_id": "pick-place-v1",
+     "case_id": "dev-001",
+     "run_id": "run-0001",
+     "attempt_id": "att-1",
+     "clock_domain": "wall_clock",
+     "captured_at_ms": 10000,
+     "received_at_ms": 10040,
+     "source": "environment_observe",
+     "observed_facts": [
+      {
+       "fact_id": "f-obj",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "object_pose_estimate",
+       "value": {
+        "x_m": -0.121093,
+        "y_m": 0.118386,
+        "z_m": 0.027307,
+        "yaw_deg": -16.832461
+       }
+      },
+      {
+       "fact_id": "f-tgt",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "target_pose",
+       "value": {
+        "x_m": 0.116093,
+        "y_m": 0.133576,
+        "z_m": 0.027307,
+        "yaw_deg": 0
+       }
+      },
+      {
+       "fact_id": "f-grip",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "gripper_state",
+       "value": "open_empty"
+      }
+     ]
+    }
+   },
+   "reason": "malformed",
+   "description": "Times not in the single harness_monotonic clock domain."
+  },
+  {
+   "id": "malformed-fact-null-value",
+   "record": "observation",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "observation",
+    "payload": {
+     "observation_id": "obs-dev001-a1-1",
+     "task_id": "pick-place-v1",
+     "case_id": "dev-001",
+     "run_id": "run-0001",
+     "attempt_id": "att-1",
+     "clock_domain": "harness_monotonic",
+     "captured_at_ms": 10000,
+     "received_at_ms": 10040,
+     "source": "environment_observe",
+     "observed_facts": [
+      {
+       "fact_id": "f-obj",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "object_pose_estimate",
+       "value": null
+      }
+     ]
+    }
+   },
+   "reason": "malformed",
+   "description": "Missing pose expressed as null instead of omitting the fact; never guessed or filled."
+  },
+  {
+   "id": "malformed-wrong-kind",
+   "record": "planner_decision",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "observation",
+    "payload": {
+     "decision_id": "dec-1",
+     "task_id": "pick-place-v1",
+     "decision": "select",
+     "skill_id": "pick-box",
+     "skill_version": 1,
+     "eligible_set_id": "elig-dev001-1",
+     "registry_version": 1,
+     "parameters": {
+      "approach": "top"
+     },
+     "abstain_reason": null,
+     "rationale": "Gripper is empty and a fresh object pose is available.",
+     "based_on_observation_id": "obs-dev001-a1-1",
+     "provenance_id": "prov-1"
+    }
+   },
+   "reason": "malformed",
+   "description": "Envelope kind does not match the record."
+  },
+  {
+   "id": "malformed-planner-mutates-registry",
+   "record": "planner_decision",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "planner_decision",
+    "payload": {
+     "decision_id": "dec-1",
+     "task_id": "pick-place-v1",
+     "decision": "select",
+     "skill_id": "pick-box",
+     "skill_version": 1,
+     "eligible_set_id": "elig-dev001-1",
+     "registry_version": 1,
+     "parameters": {
+      "approach": "top"
+     },
+     "abstain_reason": null,
+     "rationale": "Gripper is empty and a fresh object pose is available.",
+     "based_on_observation_id": "obs-dev001-a1-1",
+     "provenance_id": "prov-1",
+     "register_skill": {
+      "skill_id": "pick-box",
+      "skill_version": 2
+     }
+    }
+   },
+   "reason": "malformed",
+   "description": "Authority violation: planner adds a register_skill field; closed payload rejects it."
+  },
+  {
+   "id": "malformed-eligible-skills-writable",
+   "record": "eligible_skills",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "eligible_skills",
+    "payload": {
+     "eligible_set_id": "elig-dev001-1",
+     "registry_version": 1,
+     "based_on_observation_id": "obs-dev001-a1-1",
+     "computed_at_ms": 10045,
+     "access": "read_write",
+     "skills": [
+      {
+       "skill_id": "pick-box",
+       "skill_version": 1,
+       "content_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+       "parameter_schema_sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+       "tool_permissions": [
+        "observe",
+        "pick"
+       ],
+       "applicability": "Single rigid box on tabletop, gripper empty."
+      },
+      {
+       "skill_id": "place-box",
+       "skill_version": 1,
+       "content_sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+       "parameter_schema_sha256": "4444444444444444444444444444444444444444444444444444444444444444",
+       "tool_permissions": [
+        "observe",
+        "place"
+       ],
+       "applicability": "Box held, declared reachable target."
+      }
+     ]
+    }
+   },
+   "reason": "malformed",
+   "description": "Authority violation: eligible-skill view claims write access."
+  },
+  {
+   "id": "malformed-candidate-authorizes-execution",
+   "record": "candidate_artifact",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "candidate_artifact",
+    "payload": {
+     "artifact_id": "art-1",
+     "sha256": "d3a79781fc4010df09caf383d1ab557228cc7734a7c05c63a144deedcf778b06",
+     "format": "constrained_program_text",
+     "content": "def run(tools):\n    return tools.observe()\n",
+     "parent_artifact_ids": [],
+     "repair_round": 0,
+     "provenance_id": "prov-2",
+     "trust": "untrusted",
+     "authorization": true
+    }
+   },
+   "reason": "malformed",
+   "description": "Authority violation: generator artifact claims execution authorization."
+  },
+  {
+   "id": "malformed-candidate-trusted",
+   "record": "candidate_artifact",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "candidate_artifact",
+    "payload": {
+     "artifact_id": "art-1",
+     "sha256": "d3a79781fc4010df09caf383d1ab557228cc7734a7c05c63a144deedcf778b06",
+     "format": "constrained_program_text",
+     "content": "def run(tools):\n    return tools.observe()\n",
+     "parent_artifact_ids": [],
+     "repair_round": 0,
+     "provenance_id": "prov-2",
+     "trust": "trusted",
+     "authorization": false
+    }
+   },
+   "reason": "malformed",
+   "description": "Generator artifact claims to be trusted."
+  },
+  {
+   "id": "malformed-outcome-model-self-report",
+   "record": "outcome",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "outcome",
+    "payload": {
+     "case_id": "dev-001",
+     "run_id": "run-0001",
+     "primary": "cancelled",
+     "progress": "partial",
+     "lifecycle_state": "cancelled",
+     "invariant_evidence": "complete",
+     "invariant_violation_count": 0,
+     "evaluator_evidence_refs": [
+      {
+       "ref": "evid-run-0001",
+       "sha256": "5555555555555555555555555555555555555555555555555555555555555555"
+      }
+     ],
+     "model_claims": [
+      {
+       "role": "planner",
+       "claim": "Task complete.",
+       "authoritative": false
+      }
+     ],
+     "authoritative_source": "planner"
+    }
+   },
+   "reason": "malformed",
+   "description": "Authority violation: success sourced from model self-report."
+  },
+  {
+   "id": "malformed-outcome-unknown-primary",
+   "record": "outcome",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "outcome",
+    "payload": {
+     "case_id": "dev-001",
+     "run_id": "run-0001",
+     "primary": "success",
+     "progress": "partial",
+     "lifecycle_state": "cancelled",
+     "invariant_evidence": "complete",
+     "invariant_violation_count": 0,
+     "evaluator_evidence_refs": [
+      {
+       "ref": "evid-run-0001",
+       "sha256": "5555555555555555555555555555555555555555555555555555555555555555"
+      }
+     ],
+     "model_claims": [
+      {
+       "role": "planner",
+       "claim": "Task complete.",
+       "authoritative": false
+      }
+     ],
+     "authoritative_source": "environment_evaluator"
+    }
+   },
+   "reason": "malformed",
+   "description": "Primary outcome outside the frozen 15 pick-place-v1 outcomes."
+  },
+  {
+   "id": "malformed-outcome-missing-evidence-read-as-zero",
+   "record": "outcome",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "outcome",
+    "payload": {
+     "case_id": "dev-001",
+     "run_id": "run-0001",
+     "primary": "cancelled",
+     "progress": "partial",
+     "lifecycle_state": "cancelled",
+     "invariant_evidence": "missing",
+     "invariant_violation_count": 0,
+     "evaluator_evidence_refs": [
+      {
+       "ref": "evid-run-0001",
+       "sha256": "5555555555555555555555555555555555555555555555555555555555555555"
+      }
+     ],
+     "model_claims": [
+      {
+       "role": "planner",
+       "claim": "Task complete.",
+       "authoritative": false
+      }
+     ],
+     "authoritative_source": "environment_evaluator"
+    }
+   },
+   "reason": "malformed",
+   "description": "Missing invariant evidence read as zero violations."
+  },
+  {
+   "id": "malformed-judgment-promoted-authoritative",
+   "record": "task_context",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "task_context",
+    "payload": {
+     "context_id": "ctx-dev001-1",
+     "task_id": "pick-place-v1",
+     "case_id": "dev-001",
+     "assembled_at_ms": 10050,
+     "observed_facts": [
+      {
+       "fact_id": "f-obj",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "object_pose_estimate",
+       "value": {
+        "x_m": -0.121093,
+        "y_m": 0.118386,
+        "z_m": 0.027307,
+        "yaw_deg": -16.832461
+       }
+      },
+      {
+       "fact_id": "f-tgt",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "target_pose",
+       "value": {
+        "x_m": 0.116093,
+        "y_m": 0.133576,
+        "z_m": 0.027307,
+        "yaw_deg": 0
+       }
+      },
+      {
+       "fact_id": "f-grip",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "gripper_state",
+       "value": "open_empty"
+      }
+     ],
+     "inferred_judgments": [
+      {
+       "judgment_id": "j-1",
+       "author_role": "retrieval",
+       "statement": "Box appears reachable from the left approach.",
+       "confidence": null,
+       "basis_ids": [
+        "f-obj"
+       ],
+       "authoritative": true
+      }
+     ],
+     "objectives": [
+      {
+       "objective_id": "obj-1",
+       "kind": "place_box_at_target",
+       "target_pose": {
+        "x_m": 0.116093,
+        "y_m": 0.133576,
+        "z_m": 0.027307,
+        "yaw_deg": 0
+       },
+       "xy_tolerance_m": 0.02,
+       "yaw_tolerance_deg": 10,
+       "settle_s": 0.5,
+       "speed_m_per_s_at_most": 0.01,
+       "require_released_object": true,
+       "mandatory_invariant_violations": 0,
+       "source": "task_protocol"
+      }
+     ],
+     "constraints": {
+      "protocol_version": "pick-place-v1",
+      "attempts_per_case": 3,
+      "wall_ms_per_case": 120000,
+      "model_calls_per_case": 20,
+      "max_observation_age_ms": 200,
+      "allowed_tools": [
+       "observe",
+       "pick",
+       "place",
+       "abort"
+      ],
+      "source": "task_protocol"
+     },
+     "hints": [
+      {
+       "hint_id": "h-1",
+       "source": "skill_documentation",
+       "text": "Grasp along the shorter box axis.",
+       "trust": "untrusted_data"
+      }
+     ],
+     "partial_progress": {
+      "level": "unknown",
+      "source": "not_assessed",
+      "evidence_ref": null
+     }
+    }
+   },
+   "reason": "malformed",
+   "description": "Inferred judgment claims authority."
+  },
+  {
+   "id": "malformed-hint-as-objective-source",
+   "record": "task_context",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "task_context",
+    "payload": {
+     "context_id": "ctx-dev001-1",
+     "task_id": "pick-place-v1",
+     "case_id": "dev-001",
+     "assembled_at_ms": 10050,
+     "observed_facts": [
+      {
+       "fact_id": "f-obj",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "object_pose_estimate",
+       "value": {
+        "x_m": -0.121093,
+        "y_m": 0.118386,
+        "z_m": 0.027307,
+        "yaw_deg": -16.832461
+       }
+      },
+      {
+       "fact_id": "f-tgt",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "target_pose",
+       "value": {
+        "x_m": 0.116093,
+        "y_m": 0.133576,
+        "z_m": 0.027307,
+        "yaw_deg": 0
+       }
+      },
+      {
+       "fact_id": "f-grip",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "gripper_state",
+       "value": "open_empty"
+      }
+     ],
+     "inferred_judgments": [
+      {
+       "judgment_id": "j-1",
+       "author_role": "retrieval",
+       "statement": "Box appears reachable from the left approach.",
+       "confidence": null,
+       "basis_ids": [
+        "f-obj"
+       ],
+       "authoritative": false
+      }
+     ],
+     "objectives": [
+      {
+       "objective_id": "obj-1",
+       "kind": "place_box_at_target",
+       "target_pose": {
+        "x_m": 0.116093,
+        "y_m": 0.133576,
+        "z_m": 0.027307,
+        "yaw_deg": 0
+       },
+       "xy_tolerance_m": 0.02,
+       "yaw_tolerance_deg": 10,
+       "settle_s": 0.5,
+       "speed_m_per_s_at_most": 0.01,
+       "require_released_object": true,
+       "mandatory_invariant_violations": 0,
+       "source": "retrieval"
+      }
+     ],
+     "constraints": {
+      "protocol_version": "pick-place-v1",
+      "attempts_per_case": 3,
+      "wall_ms_per_case": 120000,
+      "model_calls_per_case": 20,
+      "max_observation_age_ms": 200,
+      "allowed_tools": [
+       "observe",
+       "pick",
+       "place",
+       "abort"
+      ],
+      "source": "task_protocol"
+     },
+     "hints": [
+      {
+       "hint_id": "h-1",
+       "source": "skill_documentation",
+       "text": "Grasp along the shorter box axis.",
+       "trust": "untrusted_data"
+      }
+     ],
+     "partial_progress": {
+      "level": "unknown",
+      "source": "not_assessed",
+      "evidence_ref": null
+     }
+    }
+   },
+   "reason": "malformed",
+   "description": "Objective authored by retrieval instead of the task protocol."
+  },
+  {
+   "id": "malformed-progress-from-model",
+   "record": "task_context",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "task_context",
+    "payload": {
+     "context_id": "ctx-dev001-1",
+     "task_id": "pick-place-v1",
+     "case_id": "dev-001",
+     "assembled_at_ms": 10050,
+     "observed_facts": [
+      {
+       "fact_id": "f-obj",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "object_pose_estimate",
+       "value": {
+        "x_m": -0.121093,
+        "y_m": 0.118386,
+        "z_m": 0.027307,
+        "yaw_deg": -16.832461
+       }
+      },
+      {
+       "fact_id": "f-tgt",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "target_pose",
+       "value": {
+        "x_m": 0.116093,
+        "y_m": 0.133576,
+        "z_m": 0.027307,
+        "yaw_deg": 0
+       }
+      },
+      {
+       "fact_id": "f-grip",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "gripper_state",
+       "value": "open_empty"
+      }
+     ],
+     "inferred_judgments": [
+      {
+       "judgment_id": "j-1",
+       "author_role": "retrieval",
+       "statement": "Box appears reachable from the left approach.",
+       "confidence": null,
+       "basis_ids": [
+        "f-obj"
+       ],
+       "authoritative": false
+      }
+     ],
+     "objectives": [
+      {
+       "objective_id": "obj-1",
+       "kind": "place_box_at_target",
+       "target_pose": {
+        "x_m": 0.116093,
+        "y_m": 0.133576,
+        "z_m": 0.027307,
+        "yaw_deg": 0
+       },
+       "xy_tolerance_m": 0.02,
+       "yaw_tolerance_deg": 10,
+       "settle_s": 0.5,
+       "speed_m_per_s_at_most": 0.01,
+       "require_released_object": true,
+       "mandatory_invariant_violations": 0,
+       "source": "task_protocol"
+      }
+     ],
+     "constraints": {
+      "protocol_version": "pick-place-v1",
+      "attempts_per_case": 3,
+      "wall_ms_per_case": 120000,
+      "model_calls_per_case": 20,
+      "max_observation_age_ms": 200,
+      "allowed_tools": [
+       "observe",
+       "pick",
+       "place",
+       "abort"
+      ],
+      "source": "task_protocol"
+     },
+     "hints": [
+      {
+       "hint_id": "h-1",
+       "source": "skill_documentation",
+       "text": "Grasp along the shorter box axis.",
+       "trust": "untrusted_data"
+      }
+     ],
+     "partial_progress": {
+      "level": "goal_reached",
+      "source": "not_assessed",
+      "evidence_ref": null
+     }
+    }
+   },
+   "reason": "malformed",
+   "description": "Progress asserted without evaluator source/evidence."
+  },
+  {
+   "id": "malformed-usage-unknown-guessed-zero",
+   "record": "model_provenance",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "model_provenance",
+    "payload": {
+     "provenance_id": "prov-1",
+     "provider": "recorded-fake",
+     "model": "claude-sonnet-5-5",
+     "reported_model": null,
+     "role": "planner",
+     "replay_mode": "recorded",
+     "prompt_sha256": "6666666666666666666666666666666666666666666666666666666666666666",
+     "input_sha256": "7777777777777777777777777777777777777777777777777777777777777777",
+     "output_sha256": "8888888888888888888888888888888888888888888888888888888888888888",
+     "requested_at_ms": 10060,
+     "latency_ms": null,
+     "usage": {
+      "status": "unknown",
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cost_usd": 0
+     }
+    }
+   },
+   "reason": "malformed",
+   "description": "Unknown usage guessed as zero."
+  },
+  {
+   "id": "missing-schema-version",
+   "record": "observation",
+   "input": {
+    "kind": "observation",
+    "payload": {
+     "observation_id": "obs-dev001-a1-1",
+     "task_id": "pick-place-v1",
+     "case_id": "dev-001",
+     "run_id": "run-0001",
+     "attempt_id": "att-1",
+     "clock_domain": "harness_monotonic",
+     "captured_at_ms": 10000,
+     "received_at_ms": 10040,
+     "source": "environment_observe",
+     "observed_facts": [
+      {
+       "fact_id": "f-obj",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "object_pose_estimate",
+       "value": {
+        "x_m": -0.121093,
+        "y_m": 0.118386,
+        "z_m": 0.027307,
+        "yaw_deg": -16.832461
+       }
+      },
+      {
+       "fact_id": "f-tgt",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "target_pose",
+       "value": {
+        "x_m": 0.116093,
+        "y_m": 0.133576,
+        "z_m": 0.027307,
+        "yaw_deg": 0
+       }
+      },
+      {
+       "fact_id": "f-grip",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "gripper_state",
+       "value": "open_empty"
+      }
+     ]
+    }
+   },
+   "reason": "missing",
+   "description": "Envelope has no schema_version."
+  },
+  {
+   "id": "missing-received-at",
+   "record": "observation",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "observation",
+    "payload": {
+     "observation_id": "obs-dev001-a1-1",
+     "task_id": "pick-place-v1",
+     "case_id": "dev-001",
+     "run_id": "run-0001",
+     "attempt_id": "att-1",
+     "clock_domain": "harness_monotonic",
+     "captured_at_ms": 10000,
+     "source": "environment_observe",
+     "observed_facts": [
+      {
+       "fact_id": "f-obj",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "object_pose_estimate",
+       "value": {
+        "x_m": -0.121093,
+        "y_m": 0.118386,
+        "z_m": 0.027307,
+        "yaw_deg": -16.832461
+       }
+      },
+      {
+       "fact_id": "f-tgt",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "target_pose",
+       "value": {
+        "x_m": 0.116093,
+        "y_m": 0.133576,
+        "z_m": 0.027307,
+        "yaw_deg": 0
+       }
+      },
+      {
+       "fact_id": "f-grip",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "gripper_state",
+       "value": "open_empty"
+      }
+     ]
+    }
+   },
+   "reason": "missing",
+   "description": "Observation lacks received_at_ms."
+  },
+  {
+   "id": "missing-payload",
+   "record": "outcome",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "outcome"
+   },
+   "reason": "missing",
+   "description": "Envelope has no payload."
+  },
+  {
+   "id": "missing-planner-skill-id-key",
+   "record": "planner_decision",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "planner_decision",
+    "payload": {
+     "decision_id": "dec-1",
+     "task_id": "pick-place-v1",
+     "decision": "select",
+     "skill_version": 1,
+     "eligible_set_id": "elig-dev001-1",
+     "registry_version": 1,
+     "parameters": {
+      "approach": "top"
+     },
+     "abstain_reason": null,
+     "rationale": "Gripper is empty and a fresh object pose is available.",
+     "based_on_observation_id": "obs-dev001-a1-1",
+     "provenance_id": "prov-1"
+    }
+   },
+   "reason": "missing",
+   "description": "skill_id key absent (null is required for abstain, absence is never allowed)."
+  },
+  {
+   "id": "missing-usage",
+   "record": "model_provenance",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "model_provenance",
+    "payload": {
+     "provenance_id": "prov-1",
+     "provider": "recorded-fake",
+     "model": "claude-sonnet-5-5",
+     "reported_model": null,
+     "role": "planner",
+     "replay_mode": "recorded",
+     "prompt_sha256": "6666666666666666666666666666666666666666666666666666666666666666",
+     "input_sha256": "7777777777777777777777777777777777777777777777777777777777777777",
+     "output_sha256": "8888888888888888888888888888888888888888888888888888888888888888",
+     "requested_at_ms": 10060,
+     "latency_ms": null
+    }
+   },
+   "reason": "missing",
+   "description": "Provenance lacks usage; unknown must be explicit."
+  },
+  {
+   "id": "stale-observation-250ms",
+   "record": "observation",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "observation",
+    "payload": {
+     "observation_id": "obs-dev001-a1-1",
+     "task_id": "pick-place-v1",
+     "case_id": "dev-001",
+     "run_id": "run-0001",
+     "attempt_id": "att-1",
+     "clock_domain": "harness_monotonic",
+     "captured_at_ms": 10000,
+     "received_at_ms": 10250,
+     "source": "environment_observe",
+     "observed_facts": [
+      {
+       "fact_id": "f-obj",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "object_pose_estimate",
+       "value": {
+        "x_m": -0.121093,
+        "y_m": 0.118386,
+        "z_m": 0.027307,
+        "yaw_deg": -16.832461
+       }
+      },
+      {
+       "fact_id": "f-tgt",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "target_pose",
+       "value": {
+        "x_m": 0.116093,
+        "y_m": 0.133576,
+        "z_m": 0.027307,
+        "yaw_deg": 0
+       }
+      },
+      {
+       "fact_id": "f-grip",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "gripper_state",
+       "value": "open_empty"
+      }
+     ]
+    }
+   },
+   "reason": "stale",
+   "description": "received_at_ms - captured_at_ms = 250 > 200."
+  },
+  {
+   "id": "stale-observation-201ms",
+   "record": "observation",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "observation",
+    "payload": {
+     "observation_id": "obs-dev001-a1-1",
+     "task_id": "pick-place-v1",
+     "case_id": "dev-001",
+     "run_id": "run-0001",
+     "attempt_id": "att-1",
+     "clock_domain": "harness_monotonic",
+     "captured_at_ms": 10000,
+     "received_at_ms": 10201,
+     "source": "environment_observe",
+     "observed_facts": [
+      {
+       "fact_id": "f-obj",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "object_pose_estimate",
+       "value": {
+        "x_m": -0.121093,
+        "y_m": 0.118386,
+        "z_m": 0.027307,
+        "yaw_deg": -16.832461
+       }
+      },
+      {
+       "fact_id": "f-tgt",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "target_pose",
+       "value": {
+        "x_m": 0.116093,
+        "y_m": 0.133576,
+        "z_m": 0.027307,
+        "yaw_deg": 0
+       }
+      },
+      {
+       "fact_id": "f-grip",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "gripper_state",
+       "value": "open_empty"
+      }
+     ]
+    }
+   },
+   "reason": "stale",
+   "description": "Boundary: 201 ms is stale; 200 ms is fresh."
+  },
+  {
+   "id": "contradictory-received-before-captured",
+   "record": "observation",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "observation",
+    "payload": {
+     "observation_id": "obs-dev001-a1-1",
+     "task_id": "pick-place-v1",
+     "case_id": "dev-001",
+     "run_id": "run-0001",
+     "attempt_id": "att-1",
+     "clock_domain": "harness_monotonic",
+     "captured_at_ms": 10000,
+     "received_at_ms": 9990,
+     "source": "environment_observe",
+     "observed_facts": [
+      {
+       "fact_id": "f-obj",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "object_pose_estimate",
+       "value": {
+        "x_m": -0.121093,
+        "y_m": 0.118386,
+        "z_m": 0.027307,
+        "yaw_deg": -16.832461
+       }
+      },
+      {
+       "fact_id": "f-tgt",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "target_pose",
+       "value": {
+        "x_m": 0.116093,
+        "y_m": 0.133576,
+        "z_m": 0.027307,
+        "yaw_deg": 0
+       }
+      },
+      {
+       "fact_id": "f-grip",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "gripper_state",
+       "value": "open_empty"
+      }
+     ]
+    }
+   },
+   "reason": "contradictory",
+   "description": "received_at_ms precedes captured_at_ms in the same clock domain."
+  },
+  {
+   "id": "contradictory-select-null-skill",
+   "record": "planner_decision",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "planner_decision",
+    "payload": {
+     "decision_id": "dec-1",
+     "task_id": "pick-place-v1",
+     "decision": "select",
+     "skill_id": null,
+     "skill_version": 1,
+     "eligible_set_id": "elig-dev001-1",
+     "registry_version": 1,
+     "parameters": {
+      "approach": "top"
+     },
+     "abstain_reason": null,
+     "rationale": "Gripper is empty and a fresh object pose is available.",
+     "based_on_observation_id": "obs-dev001-a1-1",
+     "provenance_id": "prov-1"
+    }
+   },
+   "reason": "contradictory",
+   "description": "decision select with null skill_id."
+  },
+  {
+   "id": "contradictory-abstain-with-skill",
+   "record": "planner_decision",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "planner_decision",
+    "payload": {
+     "decision_id": "dec-2",
+     "task_id": "pick-place-v1",
+     "decision": "abstain",
+     "skill_id": "pick-box",
+     "skill_version": null,
+     "eligible_set_id": "elig-dev001-1",
+     "registry_version": 1,
+     "parameters": {},
+     "abstain_reason": "no_eligible_skill",
+     "rationale": "No eligible skill handles a held box with an unknown target.",
+     "based_on_observation_id": "obs-dev001-a1-1",
+     "provenance_id": "prov-1"
+    }
+   },
+   "reason": "contradictory",
+   "description": "decision abstain with a non-null skill_id."
+  },
+  {
+   "id": "oversized-candidate-content",
+   "record": "candidate_artifact",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "candidate_artifact",
+    "payload": {
+     "artifact_id": "art-big",
+     "sha256": "156c38442089c1323d3e3ba549a6ac24341c47e8b6367bec4740c9b8c865826e",
+     "format": "constrained_program_text",
+     "content": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+     "parent_artifact_ids": [],
+     "repair_round": 0,
+     "provenance_id": "prov-2",
+     "trust": "untrusted",
+     "authorization": false
+    }
+   },
+   "reason": "oversized",
+   "description": "Literal 65,536-character content string; canonical record exceeds 65,536 bytes. Otherwise schema-valid."
+  },
+  {
+   "id": "unsupported-version-2.0",
+   "record": "observation",
+   "input": {
+    "schema_version": "2.0",
+    "kind": "observation",
+    "payload": {
+     "observation_id": "obs-dev001-a1-1",
+     "task_id": "pick-place-v1",
+     "case_id": "dev-001",
+     "run_id": "run-0001",
+     "attempt_id": "att-1",
+     "clock_domain": "harness_monotonic",
+     "captured_at_ms": 10000,
+     "received_at_ms": 10040,
+     "source": "environment_observe",
+     "observed_facts": [
+      {
+       "fact_id": "f-obj",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "object_pose_estimate",
+       "value": {
+        "x_m": -0.121093,
+        "y_m": 0.118386,
+        "z_m": 0.027307,
+        "yaw_deg": -16.832461
+       }
+      },
+      {
+       "fact_id": "f-tgt",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "target_pose",
+       "value": {
+        "x_m": 0.116093,
+        "y_m": 0.133576,
+        "z_m": 0.027307,
+        "yaw_deg": 0
+       }
+      },
+      {
+       "fact_id": "f-grip",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "gripper_state",
+       "value": "open_empty"
+      }
+     ]
+    }
+   },
+   "reason": "unsupported_version",
+   "description": "Future major version."
+  },
+  {
+   "id": "unsupported-version-1.1",
+   "record": "planner_decision",
+   "input": {
+    "schema_version": "1.1",
+    "kind": "planner_decision",
+    "payload": {
+     "decision_id": "dec-1",
+     "task_id": "pick-place-v1",
+     "decision": "select",
+     "skill_id": "pick-box",
+     "skill_version": 1,
+     "eligible_set_id": "elig-dev001-1",
+     "registry_version": 1,
+     "parameters": {
+      "approach": "top"
+     },
+     "abstain_reason": null,
+     "rationale": "Gripper is empty and a fresh object pose is available.",
+     "based_on_observation_id": "obs-dev001-a1-1",
+     "provenance_id": "prov-1"
+    }
+   },
+   "reason": "unsupported_version",
+   "description": "Minor version; no best-effort parse."
+  },
+  {
+   "id": "unsupported-version-number",
+   "record": "outcome",
+   "input": {
+    "schema_version": 1.0,
+    "kind": "outcome",
+    "payload": {
+     "case_id": "dev-001",
+     "run_id": "run-0001",
+     "primary": "cancelled",
+     "progress": "partial",
+     "lifecycle_state": "cancelled",
+     "invariant_evidence": "complete",
+     "invariant_violation_count": 0,
+     "evaluator_evidence_refs": [
+      {
+       "ref": "evid-run-0001",
+       "sha256": "5555555555555555555555555555555555555555555555555555555555555555"
+      }
+     ],
+     "model_claims": [
+      {
+       "role": "planner",
+       "claim": "Task complete.",
+       "authoritative": false
+      }
+     ],
+     "authoritative_source": "environment_evaluator"
+    }
+   },
+   "reason": "unsupported_version",
+   "description": "Numeric 1.0 is not the string \"1.0\"; no coercion."
+  },
+  {
+   "id": "malformed-outcome-rejected-run-claims-success",
+   "record": "outcome",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "outcome",
+    "payload": {
+     "case_id": "dev-001",
+     "run_id": "run-0004",
+     "primary": "completed",
+     "progress": "goal_reached",
+     "lifecycle_state": "rejected",
+     "invariant_evidence": "complete",
+     "invariant_violation_count": 0,
+     "evaluator_evidence_refs": [
+      {
+       "ref": "evid-run-0004",
+       "sha256": "6666666666666666666666666666666666666666666666666666666666666666"
+      }
+     ],
+     "model_claims": [],
+     "authoritative_source": "environment_evaluator"
+    }
+   },
+   "reason": "malformed",
+   "description": "Lifecycle rejected (no effects) but primary completed and progress goal_reached: violates lifecycle_to_primary and rejected -> progress none."
+  },
+  {
+   "id": "malformed-outcome-failed-run-claims-success",
+   "record": "outcome",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "outcome",
+    "payload": {
+     "case_id": "dev-001",
+     "run_id": "run-0004",
+     "primary": "completed",
+     "progress": "goal_reached",
+     "lifecycle_state": "failed",
+     "invariant_evidence": "complete",
+     "invariant_violation_count": 0,
+     "evaluator_evidence_refs": [
+      {
+       "ref": "evid-run-0004",
+       "sha256": "6666666666666666666666666666666666666666666666666666666666666666"
+      }
+     ],
+     "model_claims": [],
+     "authoritative_source": "environment_evaluator"
+    }
+   },
+   "reason": "malformed",
+   "description": "Lifecycle failed but primary completed: failed allows only evaluation_failure."
+  },
+  {
+   "id": "malformed-outcome-completed-with-violation",
+   "record": "outcome",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "outcome",
+    "payload": {
+     "case_id": "dev-001",
+     "run_id": "run-0004",
+     "primary": "completed",
+     "progress": "goal_reached",
+     "lifecycle_state": "completed",
+     "invariant_evidence": "complete",
+     "invariant_violation_count": 1,
+     "evaluator_evidence_refs": [
+      {
+       "ref": "evid-run-0004",
+       "sha256": "6666666666666666666666666666666666666666666666666666666666666666"
+      }
+     ],
+     "model_claims": [],
+     "authoritative_source": "environment_evaluator"
+    }
+   },
+   "reason": "malformed",
+   "description": "Primary completed with invariant_violation_count 1 contradicts profile.completion.mandatory_invariant_violations 0."
+  },
+  {
+   "id": "malformed-outcome-completed-evidence-missing",
+   "record": "outcome",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "outcome",
+    "payload": {
+     "case_id": "dev-001",
+     "run_id": "run-0004",
+     "primary": "completed",
+     "progress": "goal_reached",
+     "lifecycle_state": "completed",
+     "invariant_evidence": "missing",
+     "invariant_violation_count": null,
+     "evaluator_evidence_refs": [
+      {
+       "ref": "evid-run-0004",
+       "sha256": "6666666666666666666666666666666666666666666666666666666666666666"
+      }
+     ],
+     "model_claims": [],
+     "authoritative_source": "environment_evaluator"
+    }
+   },
+   "reason": "malformed",
+   "description": "Primary completed with missing invariant evidence (count null): completion cannot be verified, so the primary must be evaluation_failure."
+  },
+  {
+   "id": "malformed-outcome-completed-progress-partial",
+   "record": "outcome",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "outcome",
+    "payload": {
+     "case_id": "dev-001",
+     "run_id": "run-0004",
+     "primary": "completed",
+     "progress": "partial",
+     "lifecycle_state": "completed",
+     "invariant_evidence": "complete",
+     "invariant_violation_count": 0,
+     "evaluator_evidence_refs": [
+      {
+       "ref": "evid-run-0004",
+       "sha256": "6666666666666666666666666666666666666666666666666666666666666666"
+      }
+     ],
+     "model_claims": [],
+     "authoritative_source": "environment_evaluator"
+    }
+   },
+   "reason": "malformed",
+   "description": "Primary completed with progress partial."
+  },
+  {
+   "id": "malformed-outcome-cancelled-primary-in-completed-run",
+   "record": "outcome",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "outcome",
+    "payload": {
+     "case_id": "dev-001",
+     "run_id": "run-0004",
+     "primary": "cancelled",
+     "progress": "partial",
+     "lifecycle_state": "completed",
+     "invariant_evidence": "complete",
+     "invariant_violation_count": 0,
+     "evaluator_evidence_refs": [
+      {
+       "ref": "evid-run-0004",
+       "sha256": "6666666666666666666666666666666666666666666666666666666666666666"
+      }
+     ],
+     "model_claims": [],
+     "authoritative_source": "environment_evaluator"
+    }
+   },
+   "reason": "malformed",
+   "description": "Lifecycle completed with primary cancelled: cancellation primaries belong to lifecycle cancelled."
+  },
+  {
+   "id": "missing-objective-release-condition",
+   "record": "task_context",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "task_context",
+    "payload": {
+     "context_id": "ctx-dev001-1",
+     "task_id": "pick-place-v1",
+     "case_id": "dev-001",
+     "assembled_at_ms": 10050,
+     "observed_facts": [
+      {
+       "fact_id": "f-obj",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "object_pose_estimate",
+       "value": {
+        "x_m": -0.121093,
+        "y_m": 0.118386,
+        "z_m": 0.027307,
+        "yaw_deg": -16.832461
+       }
+      },
+      {
+       "fact_id": "f-tgt",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "target_pose",
+       "value": {
+        "x_m": 0.116093,
+        "y_m": 0.133576,
+        "z_m": 0.027307,
+        "yaw_deg": 0
+       }
+      },
+      {
+       "fact_id": "f-grip",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "gripper_state",
+       "value": "open_empty"
+      }
+     ],
+     "inferred_judgments": [
+      {
+       "judgment_id": "j-1",
+       "author_role": "retrieval",
+       "statement": "Box appears reachable from the left approach.",
+       "confidence": null,
+       "basis_ids": [
+        "f-obj"
+       ],
+       "authoritative": false
+      }
+     ],
+     "objectives": [
+      {
+       "objective_id": "obj-1",
+       "kind": "place_box_at_target",
+       "target_pose": {
+        "x_m": 0.116093,
+        "y_m": 0.133576,
+        "z_m": 0.027307,
+        "yaw_deg": 0
+       },
+       "xy_tolerance_m": 0.02,
+       "yaw_tolerance_deg": 10,
+       "settle_s": 0.5,
+       "speed_m_per_s_at_most": 0.01,
+       "mandatory_invariant_violations": 0,
+       "source": "task_protocol"
+      }
+     ],
+     "constraints": {
+      "protocol_version": "pick-place-v1",
+      "attempts_per_case": 3,
+      "wall_ms_per_case": 120000,
+      "model_calls_per_case": 20,
+      "max_observation_age_ms": 200,
+      "allowed_tools": [
+       "observe",
+       "pick",
+       "place",
+       "abort"
+      ],
+      "source": "task_protocol"
+     },
+     "hints": [
+      {
+       "hint_id": "h-1",
+       "source": "skill_documentation",
+       "text": "Grasp along the shorter box axis.",
+       "trust": "untrusted_data"
+      }
+     ],
+     "partial_progress": {
+      "level": "unknown",
+      "source": "not_assessed",
+      "evidence_ref": null
+     }
+    }
+   },
+   "reason": "missing",
+   "description": "Objective omits require_released_object: an incomplete success criterion is rejected, never defaulted."
+  },
+  {
+   "id": "malformed-objective-speed-relaxed",
+   "record": "task_context",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "task_context",
+    "payload": {
+     "context_id": "ctx-dev001-1",
+     "task_id": "pick-place-v1",
+     "case_id": "dev-001",
+     "assembled_at_ms": 10050,
+     "observed_facts": [
+      {
+       "fact_id": "f-obj",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "object_pose_estimate",
+       "value": {
+        "x_m": -0.121093,
+        "y_m": 0.118386,
+        "z_m": 0.027307,
+        "yaw_deg": -16.832461
+       }
+      },
+      {
+       "fact_id": "f-tgt",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "target_pose",
+       "value": {
+        "x_m": 0.116093,
+        "y_m": 0.133576,
+        "z_m": 0.027307,
+        "yaw_deg": 0
+       }
+      },
+      {
+       "fact_id": "f-grip",
+       "observation_id": "obs-dev001-a1-1",
+       "field": "gripper_state",
+       "value": "open_empty"
+      }
+     ],
+     "inferred_judgments": [
+      {
+       "judgment_id": "j-1",
+       "author_role": "retrieval",
+       "statement": "Box appears reachable from the left approach.",
+       "confidence": null,
+       "basis_ids": [
+        "f-obj"
+       ],
+       "authoritative": false
+      }
+     ],
+     "objectives": [
+      {
+       "objective_id": "obj-1",
+       "kind": "place_box_at_target",
+       "target_pose": {
+        "x_m": 0.116093,
+        "y_m": 0.133576,
+        "z_m": 0.027307,
+        "yaw_deg": 0
+       },
+       "xy_tolerance_m": 0.02,
+       "yaw_tolerance_deg": 10,
+       "settle_s": 0.5,
+       "speed_m_per_s_at_most": 0.05,
+       "require_released_object": true,
+       "mandatory_invariant_violations": 0,
+       "source": "task_protocol"
+      }
+     ],
+     "constraints": {
+      "protocol_version": "pick-place-v1",
+      "attempts_per_case": 3,
+      "wall_ms_per_case": 120000,
+      "model_calls_per_case": 20,
+      "max_observation_age_ms": 200,
+      "allowed_tools": [
+       "observe",
+       "pick",
+       "place",
+       "abort"
+      ],
+      "source": "task_protocol"
+     },
+     "hints": [
+      {
+       "hint_id": "h-1",
+       "source": "skill_documentation",
+       "text": "Grasp along the shorter box axis.",
+       "trust": "untrusted_data"
+      }
+     ],
+     "partial_progress": {
+      "level": "unknown",
+      "source": "not_assessed",
+      "evidence_ref": null
+     }
+    }
+   },
+   "reason": "malformed",
+   "description": "Objective relaxes speed_m_per_s_at_most to 0.05; objectives are frozen protocol constants."
+  },
+  {
+   "id": "malformed-outcome-collision-zero-violations",
+   "record": "outcome",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "outcome",
+    "payload": {
+     "case_id": "dev-001",
+     "run_id": "run-0006",
+     "primary": "collision",
+     "progress": "partial",
+     "lifecycle_state": "completed",
+     "invariant_evidence": "complete",
+     "invariant_violation_count": 0,
+     "evaluator_evidence_refs": [
+      {
+       "ref": "evid-run-0006",
+       "sha256": "6666666666666666666666666666666666666666666666666666666666666666"
+      }
+     ],
+     "model_claims": [],
+     "authoritative_source": "environment_evaluator"
+    }
+   },
+   "reason": "malformed",
+   "description": "Primary collision with complete invariant evidence and invariant_violation_count 0: collision is a mandatory-invariant (forbidden contact) violation, so complete evidence must count at least 1."
+  },
+  {
+   "id": "malformed-outcome-invariant-violation-zero-violations",
+   "record": "outcome",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "outcome",
+    "payload": {
+     "case_id": "dev-001",
+     "run_id": "run-0007",
+     "primary": "invariant_violation",
+     "progress": "none",
+     "lifecycle_state": "completed",
+     "invariant_evidence": "complete",
+     "invariant_violation_count": 0,
+     "evaluator_evidence_refs": [
+      {
+       "ref": "evid-run-0007",
+       "sha256": "6666666666666666666666666666666666666666666666666666666666666666"
+      }
+     ],
+     "model_claims": [],
+     "authoritative_source": "environment_evaluator"
+    }
+   },
+   "reason": "malformed",
+   "description": "Primary invariant_violation with complete invariant evidence and invariant_violation_count 0 contradicts its own primary."
+  }
+ ]
+}
