@@ -43,6 +43,6 @@ Freeze baselines, budgets, splits, metrics and thresholds before evaluating a cl
 
 ## Open choices
 
-Issue 01 selects the initial task, simulator, deployment environment, model-provider candidate and evaluation envelope. Feature 03 pins the concrete Python toolchain and dependencies; feature 06 pins a tested worker isolation mechanism; feature 12 chooses one candidate representation. None of these choices implies a complete SDK, universal robot interface, physical safety qualification, or foundation-model training commitment.
+Issue 01 proposes, as a `candidate_for_review` pending PR acceptance ([protocol](protocol/README.md), [decision 0001](decisions/0001-task-and-evaluation.md)), the initial task, simulator, deployment environment, model-provider candidate (MuJoCo 3.14.0 and `claude-sonnet-5-5`, both unverified) and evaluation envelope. Feature 03 pins the concrete Python toolchain and dependencies; feature 06 pins a tested worker isolation mechanism; feature 12 chooses one candidate representation. None of these choices implies a complete SDK, universal robot interface, physical safety qualification, or foundation-model training commitment.
 
 The [roadmap](roadmap.md) controls sequence; the [testing strategy](testing.md) controls evidence expectations.

@@ -2,6 +2,8 @@
 
 This is a test plan, not a report of passing implementation tests. Issue 01 freezes task-specific metrics and thresholds; issue 03 introduces runnable package/CI commands and documents them here. No model API, dependency install, or powered hardware is required to review this bootstrap.
 
+The candidate task profile and thresholds are in the [protocol](protocol/README.md) (`candidate_for_review`, unmeasured). Today's checks are documentary (diff whitespace check, JSON inspection, the external protocol checker, manual review criteria in that README); they are not the executable tests described below, which start with feature 03.
+
 ## Acceptance protocol
 
 Before implementing a feature, record its workload, pinned inputs and environment, acceptance criteria, failure cases, metrics, immutable thresholds, clean-checkout reproduction commands, and retained evidence location. Document protocol changes and rerun affected checks; never weaken a valid check to turn a failure into a pass. Every feature has specific acceptance and test cases in [the roadmap](roadmap.md) and its issue.

@@ -1,0 +1,612 @@
+{
+  "profile": {
+    "version": "pick-place-v1",
+    "status": "candidate_for_review",
+    "task_family": "single rigid box tabletop pick-and-place in simulation; no hardware",
+    "runtime_candidate": {
+      "simulator": "MuJoCo",
+      "version": "3.14.0",
+      "python_family": "3.12",
+      "provider": "Anthropic",
+      "model": "claude-sonnet-5-5",
+      "verified": false
+    },
+    "observations": {
+      "fields": [
+        "timestamp",
+        "object_pose_estimate",
+        "target_pose",
+        "gripper_state",
+        "tool_result"
+      ],
+      "max_age_seconds": 0.2,
+      "privileged_evaluator_state_visible_to_candidate": false
+    },
+    "tools": [
+      "observe",
+      "pick",
+      "place",
+      "abort"
+    ],
+    "completion": {
+      "xy_error_m_at_most": 0.02,
+      "yaw_error_deg_at_most": 10,
+      "settled_seconds_at_least": 0.5,
+      "speed_m_per_s_at_most": 0.01,
+      "require_released_object": true,
+      "mandatory_invariant_violations": 0
+    },
+    "budgets": {
+      "attempts_per_case": 3,
+      "wall_seconds_per_case": 120,
+      "model_calls_per_case": 20
+    },
+    "outcomes": [
+      "abstained",
+      "ambiguous_goal",
+      "budget_exhausted",
+      "cancelled",
+      "collision",
+      "completed",
+      "misgrasp",
+      "missing_observation",
+      "partial_progress",
+      "placement_failure",
+      "timeout",
+      "unreachable_target"
+    ],
+    "development_cases": [
+      {
+        "id": "dev-001",
+        "seed": "1001",
+        "box_size_m": 0.054613,
+        "initial_xy_m": [
+          -0.121093,
+          0.118386
+        ],
+        "target_xy_m": [
+          0.116093,
+          0.133576
+        ],
+        "initial_yaw_deg": -16.832461
+      },
+      {
+        "id": "dev-002",
+        "seed": "1002",
+        "box_size_m": 0.04553,
+        "initial_xy_m": [
+          -0.085142,
+          0.062836
+        ],
+        "target_xy_m": [
+          0.098784,
+          0.071695
+        ],
+        "initial_yaw_deg": -23.699624
+      },
+      {
+        "id": "dev-003",
+        "seed": "1003",
+        "box_size_m": 0.031535,
+        "initial_xy_m": [
+          -0.053449,
+          -0.061066
+        ],
+        "target_xy_m": [
+          0.089459,
+          -0.114969
+        ],
+        "initial_yaw_deg": -2.375005
+      },
+      {
+        "id": "dev-004",
+        "seed": "1004",
+        "box_size_m": 0.053462,
+        "initial_xy_m": [
+          -0.060652,
+          0.02959
+        ],
+        "target_xy_m": [
+          0.135355,
+          0.044644
+        ],
+        "initial_yaw_deg": 10.226027
+      },
+      {
+        "id": "dev-005",
+        "seed": "1005",
+        "box_size_m": 0.04647,
+        "initial_xy_m": [
+          -0.130535,
+          -0.099562
+        ],
+        "target_xy_m": [
+          0.089156,
+          -0.068784
+        ],
+        "initial_yaw_deg": -43.100336
+      },
+      {
+        "id": "dev-006",
+        "seed": "1006",
+        "box_size_m": 0.034349,
+        "initial_xy_m": [
+          -0.109911,
+          0.131946
+        ],
+        "target_xy_m": [
+          0.099754,
+          0.045609
+        ],
+        "initial_yaw_deg": 14.195264
+      },
+      {
+        "id": "dev-007",
+        "seed": "1007",
+        "box_size_m": 0.054047,
+        "initial_xy_m": [
+          -0.144551,
+          0.078052
+        ],
+        "target_xy_m": [
+          0.058034,
+          0.044741
+        ],
+        "initial_yaw_deg": 6.356883
+      },
+      {
+        "id": "dev-008",
+        "seed": "1008",
+        "box_size_m": 0.030863,
+        "initial_xy_m": [
+          -0.117417,
+          0.125361
+        ],
+        "target_xy_m": [
+          0.055212,
+          0.138882
+        ],
+        "initial_yaw_deg": 43.402229
+      },
+      {
+        "id": "dev-009",
+        "seed": "1009",
+        "box_size_m": 0.031221,
+        "initial_xy_m": [
+          -0.136258,
+          0.1081
+        ],
+        "target_xy_m": [
+          0.142904,
+          0.028401
+        ],
+        "initial_yaw_deg": 15.231241
+      },
+      {
+        "id": "dev-010",
+        "seed": "1010",
+        "box_size_m": 0.05017,
+        "initial_xy_m": [
+          -0.146163,
+          0.07013
+        ],
+        "target_xy_m": [
+          0.065059,
+          0.072145
+        ],
+        "initial_yaw_deg": -33.669252
+      },
+      {
+        "id": "dev-011",
+        "seed": "1011",
+        "box_size_m": 0.051564,
+        "initial_xy_m": [
+          -0.147229,
+          0.143512
+        ],
+        "target_xy_m": [
+          0.149663,
+          -0.049887
+        ],
+        "initial_yaw_deg": 11.614274
+      },
+      {
+        "id": "dev-012",
+        "seed": "1012",
+        "box_size_m": 0.037375,
+        "initial_xy_m": [
+          -0.137725,
+          -0.083149
+        ],
+        "target_xy_m": [
+          0.133032,
+          -0.093971
+        ],
+        "initial_yaw_deg": -6.496349
+      },
+      {
+        "id": "dev-013",
+        "seed": "1013",
+        "box_size_m": 0.058237,
+        "initial_xy_m": [
+          -0.070548,
+          0.062484
+        ],
+        "target_xy_m": [
+          0.076461,
+          -0.104866
+        ],
+        "initial_yaw_deg": 39.080907
+      },
+      {
+        "id": "dev-014",
+        "seed": "1014",
+        "box_size_m": 0.057448,
+        "initial_xy_m": [
+          -0.142601,
+          0.001943
+        ],
+        "target_xy_m": [
+          0.144247,
+          0.019019
+        ],
+        "initial_yaw_deg": 29.847108
+      },
+      {
+        "id": "dev-015",
+        "seed": "1015",
+        "box_size_m": 0.047447,
+        "initial_xy_m": [
+          -0.071937,
+          -0.135696
+        ],
+        "target_xy_m": [
+          0.124978,
+          -0.038837
+        ],
+        "initial_yaw_deg": -11.68009
+      },
+      {
+        "id": "dev-016",
+        "seed": "1016",
+        "box_size_m": 0.034633,
+        "initial_xy_m": [
+          -0.146748,
+          -0.129116
+        ],
+        "target_xy_m": [
+          0.091846,
+          -0.039692
+        ],
+        "initial_yaw_deg": -38.913144
+      },
+      {
+        "id": "dev-017",
+        "seed": "1017",
+        "box_size_m": 0.050946,
+        "initial_xy_m": [
+          -0.055199,
+          0.06509
+        ],
+        "target_xy_m": [
+          0.141021,
+          0.098657
+        ],
+        "initial_yaw_deg": 3.268647
+      },
+      {
+        "id": "dev-018",
+        "seed": "1018",
+        "box_size_m": 0.054323,
+        "initial_xy_m": [
+          -0.050034,
+          0.028125
+        ],
+        "target_xy_m": [
+          0.106698,
+          0.090548
+        ],
+        "initial_yaw_deg": 10.564295
+      },
+      {
+        "id": "dev-019",
+        "seed": "1019",
+        "box_size_m": 0.053548,
+        "initial_xy_m": [
+          -0.104867,
+          -0.054846
+        ],
+        "target_xy_m": [
+          0.132916,
+          0.031189
+        ],
+        "initial_yaw_deg": -44.566549
+      },
+      {
+        "id": "dev-020",
+        "seed": "1020",
+        "box_size_m": 0.05151,
+        "initial_xy_m": [
+          -0.063576,
+          0.035456
+        ],
+        "target_xy_m": [
+          0.067989,
+          -0.064896
+        ],
+        "initial_yaw_deg": 15.37822
+      }
+    ],
+    "heldout": {
+      "count": 40,
+      "manifest_sha256": "2f1d7c2439979ba725f697d270824d3b4e30329a488d01fca80fc84a09738a24",
+      "custodian": "alokdidde",
+      "storage": "controller-only evaluator state; backed up privately",
+      "cases": [
+        {
+          "id": "heldout-001",
+          "seed_sha256": "be1db703adeca211d5ef5ee1b145be7480be12cd5df629e66aac41b45fc4b059"
+        },
+        {
+          "id": "heldout-002",
+          "seed_sha256": "e670871ea7f07ef28c03d6400c7e57093bb04da440dea4b4cdb724720c7e6470"
+        },
+        {
+          "id": "heldout-003",
+          "seed_sha256": "b7919d2b3db4169161b49ad0d00fbd43ebd53adbbdd2f8a6b3e4780ea3978707"
+        },
+        {
+          "id": "heldout-004",
+          "seed_sha256": "ce2f2508cd54f37446332dc5c939aec6117e577fbc261c8ccaed05f9c22cd439"
+        },
+        {
+          "id": "heldout-005",
+          "seed_sha256": "c86cd90b9d3121222e7b05541880fe9d631ada88f3333aa6005bffe820ec5630"
+        },
+        {
+          "id": "heldout-006",
+          "seed_sha256": "ce231b27a12231637507ef492905122a0825ba2c0eff260812ffab7f4df32070"
+        },
+        {
+          "id": "heldout-007",
+          "seed_sha256": "a50275f0679bc9e08babfe9d8253176ab9ef1e93d66e037296f99e44b3ec44a0"
+        },
+        {
+          "id": "heldout-008",
+          "seed_sha256": "8e643c4a20647431bfe37ba2ca97199216ccf1fdab1feebcee1a1bc8a56bfcfd"
+        },
+        {
+          "id": "heldout-009",
+          "seed_sha256": "d8060f328294873cbc7dfdd9f00e6574ba14b82cb26b8735e91374cb2852cf1a"
+        },
+        {
+          "id": "heldout-010",
+          "seed_sha256": "59e9a7d3ebd2c17c68c2301c221ee062aa7beb9a5053b1d884f3e7c3cbee4d47"
+        },
+        {
+          "id": "heldout-011",
+          "seed_sha256": "3b0a11a6a8411a41d2929d3e82898a43a2107eb3448c10e723aa62403e666068"
+        },
+        {
+          "id": "heldout-012",
+          "seed_sha256": "40fe5eb84e4a65d27e416c34644c660ad25fe6b844380b99f035c935fe2816ed"
+        },
+        {
+          "id": "heldout-013",
+          "seed_sha256": "1383f78ae07a7521d63ea31bf908aecf7e009ac8c1cb9ecebd8c5805dbe9229b"
+        },
+        {
+          "id": "heldout-014",
+          "seed_sha256": "fdbe654e8f364498fb582fb73b35c0cad89c9f8f0804aa4c89e2d60607da92ef"
+        },
+        {
+          "id": "heldout-015",
+          "seed_sha256": "05451a3c31d4673119412c477d5c6367512a0bc0fd9cd9177857b4e55a9d6041"
+        },
+        {
+          "id": "heldout-016",
+          "seed_sha256": "6f9921cf2617e21ad637c32f92ac2e08602ebbd6c1019af98f02c27ec994a4de"
+        },
+        {
+          "id": "heldout-017",
+          "seed_sha256": "33b8211c3b5008d23aa5350243a66891d5497274703c4847a30a2293a1929690"
+        },
+        {
+          "id": "heldout-018",
+          "seed_sha256": "3acaeafb5d71f873ab3c28f3c7d732eddb2b7fd91db57d8a01236e0e06889304"
+        },
+        {
+          "id": "heldout-019",
+          "seed_sha256": "bf4a8b7146a3bbb18913dc73a097bda4c967f5772148c160ae7cf0031f41ae33"
+        },
+        {
+          "id": "heldout-020",
+          "seed_sha256": "7875ea2dc0d0f8219f2c21d32ca7d27764565030d401da64cad5d9d52e8ddaaa"
+        },
+        {
+          "id": "heldout-021",
+          "seed_sha256": "504bab78479dcd429092f94e9c72b269446e5fc2176122ccd5e0b5c174671318"
+        },
+        {
+          "id": "heldout-022",
+          "seed_sha256": "bbc1d54bc54d8cea6564931767bb89a504a1f1f01824e2150687ca3b2aae42d9"
+        },
+        {
+          "id": "heldout-023",
+          "seed_sha256": "3551791e0952578d41a1e45b1e7e366e3a7c6ef81e558e3d91c5ca64e64aa8db"
+        },
+        {
+          "id": "heldout-024",
+          "seed_sha256": "af46afdf6caf4bb95a3334c1edcf782598b81f2041bb6fbb0bc513b4f7c75979"
+        },
+        {
+          "id": "heldout-025",
+          "seed_sha256": "42eb685e715d9ab40abef6b66365b3fd02d0511a71b5937cbaa84bab6216ecae"
+        },
+        {
+          "id": "heldout-026",
+          "seed_sha256": "a581de418edc301c8eb9994030b9216655b29642ee898c879a6c251e959d4118"
+        },
+        {
+          "id": "heldout-027",
+          "seed_sha256": "93771f147ac1a9913a0d501932a233c5f01b18b98ee16f726fdc90c6fcfbbbd0"
+        },
+        {
+          "id": "heldout-028",
+          "seed_sha256": "5ae5a738b2f9d93d354489e93644bb3b19a27db4d432f6b754b84a6d3c50afa3"
+        },
+        {
+          "id": "heldout-029",
+          "seed_sha256": "97534a7de25df33a2d4723fb8daf7c915dd869e1beff9ebaa4f254b50a7193fd"
+        },
+        {
+          "id": "heldout-030",
+          "seed_sha256": "0c13ceea4a3b88f69b3bf50160809e7588e5ef9e2df6af94d240faef73d8a919"
+        },
+        {
+          "id": "heldout-031",
+          "seed_sha256": "43f2b39e1313bcbc48b90600ec2e4c530e22cb9c5d380ca7b1e4a874b092a579"
+        },
+        {
+          "id": "heldout-032",
+          "seed_sha256": "2ee4aab608791e2b37555b20bb3cce6e665a8ea12a7bd7663dee199fb9f4f055"
+        },
+        {
+          "id": "heldout-033",
+          "seed_sha256": "ff86eb4aea1803926633faf8362494784cd4b4f77649bc4e30ee5fceb547b8cb"
+        },
+        {
+          "id": "heldout-034",
+          "seed_sha256": "b9588b88f373abde3c1b33f98cae63af9fb637030538a1add68794de1cc441d7"
+        },
+        {
+          "id": "heldout-035",
+          "seed_sha256": "f5a961938ee2a0abd13939b0eacd485b38d7f38c8a3e239572c7b65bf13700f1"
+        },
+        {
+          "id": "heldout-036",
+          "seed_sha256": "fd2f4b4485d95bb8b285ff72730e2334849532ac3ce03fab89470b2469f16241"
+        },
+        {
+          "id": "heldout-037",
+          "seed_sha256": "9f86225581fd4ac5b2119fc9d7e32183d5ce1ff154727acafdf9cc6e0ad18f0c"
+        },
+        {
+          "id": "heldout-038",
+          "seed_sha256": "b0745621b83a2d3ba2816ded66b61e2de2ed75098162647de7a8c9f8331a6dcc"
+        },
+        {
+          "id": "heldout-039",
+          "seed_sha256": "50664b53cd3ac43460e609f34df3d76e344b9c3ab33a8854ac575a4e54de0ee4"
+        },
+        {
+          "id": "heldout-040",
+          "seed_sha256": "1adae5e071eaa0ea13fe0fe794f71c56746fe0f5f0b7bd13e6604b2887904b49"
+        }
+      ]
+    },
+    "baseline": "hand-authored observe/pick/place skills with rule-based selection; same cases and budgets",
+    "acceptance": {
+      "successes_at_least": 32,
+      "cases": 40,
+      "baseline_gain_at_least": 4,
+      "mandatory_invariant_violations": 0,
+      "confidence_interval": "Wilson 95% report only"
+    },
+    "non_goals": [
+      "physical hardware",
+      "training weights",
+      "multiple objects",
+      "unrestricted tool execution",
+      "live inference in default checks"
+    ]
+  },
+  "failure_cases": [
+    {
+      "id": "fc-01-completed-reference",
+      "input": "dev-001 as generated: box 0.054613 m at (-0.121093, 0.118386), yaw -16.832461 deg, target (0.116093, 0.133576); fresh observation, reachable target.",
+      "outcome": "completed",
+      "expected_evidence": "Independent evaluator log shows final xy error <= 0.02 m, yaw error <= 10 deg, speed <= 0.01 m/s for >= 0.5 s, object released, 0 invariant violations. Model self-report alone is insufficient."
+    },
+    {
+      "id": "fc-02-ambiguous-goal",
+      "input": "Goal text 'put the box over there' with no target_pose field, or two conflicting target_pose values in one observation.",
+      "outcome": "ambiguous_goal",
+      "expected_evidence": "Candidate returns a clarification request or abstains without calling pick/place; event log has zero actuating tool calls; evaluator records no object motion."
+    },
+    {
+      "id": "fc-03-abstained",
+      "input": "Goal is well-formed but the candidate declares no eligible skill or insufficient confidence and issues no actuating call before deadline.",
+      "outcome": "abstained",
+      "expected_evidence": "Recorded abstention decision with reason; zero pick/place calls; counted as non-success in the denominator."
+    },
+    {
+      "id": "fc-04-missing-observation",
+      "input": "observe returns tool_result error or omits object_pose_estimate (e.g. simulated dropout of the pose field).",
+      "outcome": "missing_observation",
+      "expected_evidence": "Tool result records absent field; candidate either re-observes within budget or stops; no pick issued on a pose that was never observed."
+    },
+    {
+      "id": "fc-05-stale-observation",
+      "input": "Observation timestamp older than 0.2 s relative to the call to pick (e.g. 0.35 s old after a delayed model call).",
+      "outcome": "missing_observation",
+      "expected_evidence": "Harness rejects the actuating call with a stale-observation tool_result carrying observation age; evaluator records no object motion from that call. A fresh observe is required before retry."
+    },
+    {
+      "id": "fc-06-unreachable-target",
+      "input": "target_xy outside the arm workspace, e.g. (0.40, 0.00) m, versus the generated target_x range [0.05, 0.15].",
+      "outcome": "unreachable_target",
+      "expected_evidence": "place returns a reachability failure or candidate declines; object not moved to target; evaluator xy error remains > 0.02 m; no collision recorded."
+    },
+    {
+      "id": "fc-07-partial-progress",
+      "input": "Pick succeeds and object is lifted, but the deadline or model-call budget ends before place.",
+      "outcome": "partial_progress",
+      "expected_evidence": "Evaluator state shows object grasped or displaced from initial pose but not released at target; completion conditions unmet; partial effects are not reversed and are reported as such."
+    },
+    {
+      "id": "fc-08-misgrasp",
+      "input": "pick reports gripper closed but object remains at initial pose or slips during lift (e.g. gripper_state closed on a width below the box size).",
+      "outcome": "misgrasp",
+      "expected_evidence": "gripper_state and evaluator object pose disagree with the pick tool_result; evaluator records object not held."
+    },
+    {
+      "id": "fc-09-placement-failure",
+      "input": "Object released with final xy error 0.035 m (> 0.02 m) or yaw error 25 deg (> 10 deg), or still moving at speed > 0.01 m/s at the end of the settle window.",
+      "outcome": "placement_failure",
+      "expected_evidence": "Evaluator-measured final pose and speed exceed completion thresholds; require_released_object may be true yet the case is not completed."
+    },
+    {
+      "id": "fc-10-collision",
+      "input": "Planned motion contacts a non-target body or drives the box against the table edge, violating a mandatory invariant.",
+      "outcome": "collision",
+      "expected_evidence": "Evaluator contact log names the bodies; mandatory_invariant_violations > 0; case cannot be completed even if the final pose is within tolerance."
+    },
+    {
+      "id": "fc-11-timeout",
+      "input": "Wall time reaches 120 s while a pick/place call or model call is still pending.",
+      "outcome": "timeout",
+      "expected_evidence": "Harness deadline event at 120 s; late result is fenced by run and attempt id and ignored; counted as failure in the denominator."
+    },
+    {
+      "id": "fc-12-budget-exhausted",
+      "input": "Three attempts used without completion, or 20 model calls reached before 120 s.",
+      "outcome": "budget_exhausted",
+      "expected_evidence": "Event log shows attempt count 3 or model call count 20 with no completed outcome; no further actuating calls after the budget."
+    },
+    {
+      "id": "fc-13-cancelled",
+      "input": "Goal withdrawn or abort invoked mid-motion after pick began.",
+      "outcome": "cancelled",
+      "expected_evidence": "abort tool_result and cancellation event with run and attempt ids; late results fenced; evaluator reports the physical state actually reached rather than claiming reversal."
+    }
+  ],
+  "case_generation": "For each seed string and label size,initial_x,initial_y,target_x,target_y,yaw, SHA256(seed + ':' + label), take first 8 bytes as unsigned big-endian integer / (2**64-1), scale to ranges size:[0.03,0.06], initial_x:[-0.15,-0.05], initial_y:[-0.15,0.15], target_x:[0.05,0.15], target_y:[-0.15,0.15], yaw:[-45,45], round to 6 decimals. Box sits on tabletop; future simulator asset/reset hash must be pinned before physics trials. Heldout seeds/geometry are never supplied to coding workers.",
+  "documentation": {
+    "status_note": "candidate_for_review pending PR acceptance; not accepted, not frozen as final, issue 01 not Done.",
+    "failure_case_note": "Inputs are illustrative documentary scenarios, not protected seeds or measured outcomes. Every outcome name is drawn from profile.outcomes; no runtime or evaluator exists yet.",
+    "decision_record": "docs/decisions/0001-task-and-evaluation.md",
+    "protocol_readme": "docs/protocol/README.md",
+    "unmeasured_targets_note": "profile.acceptance values are task-specific targets, not measured results."
+  }
+}
