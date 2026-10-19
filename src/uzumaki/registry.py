@@ -622,7 +622,17 @@ def _acyclic(closure: Mapping[str, Skill]) -> bool:
 
 
 class RegistrySnapshot:
-    """Immutable view of the registry at one ``registry_version``."""
+    """Immutable view of the registry at one ``registry_version``.
+
+    Its attributes are fixed at construction: setting or deleting any attribute (including
+    ``registry_version``) raises ``AttributeError``, and the stored maps are read-only proxies.
+    """
+
+    __slots__ = ("_registry_version", "_skills", "_states")
+
+    _registry_version: int
+    _skills: Mapping[tuple[str, int], Skill]
+    _states: Mapping[tuple[str, int], str]
 
     def __init__(
         self,
@@ -630,9 +640,19 @@ class RegistrySnapshot:
         skills: Mapping[tuple[str, int], Skill],
         states: Mapping[tuple[str, int], str],
     ) -> None:
-        self.registry_version = registry_version
-        self._skills = MappingProxyType(dict(skills))
-        self._states = MappingProxyType(dict(states))
+        object.__setattr__(self, "_registry_version", registry_version)
+        object.__setattr__(self, "_skills", MappingProxyType(dict(skills)))
+        object.__setattr__(self, "_states", MappingProxyType(dict(states)))
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        raise AttributeError("RegistrySnapshot is immutable")
+
+    def __delattr__(self, name: str) -> None:
+        raise AttributeError("RegistrySnapshot is immutable")
+
+    @property
+    def registry_version(self) -> int:
+        return self._registry_version
 
     def keys(self) -> tuple[tuple[str, int], ...]:
         return tuple(sorted(self._skills))

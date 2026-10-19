@@ -785,6 +785,36 @@ def test_eligible_view_is_bounded_and_checks_its_identifiers() -> None:
     )
 
 
+def test_snapshot_and_registry_versions_cannot_be_reassigned() -> None:
+    registry = SkillRegistry()
+    registry.register(sealed("observe-scene"))
+    registry.validate("observe-scene", 1, evidence_ref="review-1")
+    snapshot = registry.snapshot()
+    version = snapshot.registry_version
+    keys = snapshot.keys()
+    for name, value in (
+        ("registry_version", 999),
+        ("_registry_version", 999),
+        ("_skills", {}),
+        ("_states", {}),
+        ("extra", 1),
+    ):
+        with pytest.raises(AttributeError):
+            setattr(snapshot, name, value)
+    for name in ("registry_version", "_registry_version", "_skills", "_states"):
+        with pytest.raises(AttributeError):
+            delattr(snapshot, name)
+    with pytest.raises(TypeError):
+        snapshot._states[("observe-scene", 1)] = "rejected"  # type: ignore[index]
+    with pytest.raises(AttributeError):
+        registry.registry_version = 999  # type: ignore[misc]
+    assert snapshot.registry_version == version
+    assert snapshot.keys() == keys
+    assert snapshot.state("observe-scene", 1) == "validated"
+    pinned = snapshot.pin("observe-scene", run_id="run-1")
+    assert pinned.registry_version == version
+
+
 # --- input and output contracts -------------------------------------------------------------
 
 
