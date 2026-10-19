@@ -2,7 +2,7 @@
 
 This is a test plan, not a report of passing implementation tests. Issue 01 freezes task-specific metrics and thresholds; issue 03 introduces runnable package/CI commands and documents them here. No model API, dependency install, or powered hardware is required to review this bootstrap.
 
-The candidate task profile and thresholds are in the [protocol](protocol/README.md) (`candidate_for_review`, unmeasured). Today's checks are documentary (diff whitespace check, JSON inspection, the external protocol checker, manual review criteria in that README; the profile is revision 2, `candidate_for_review`); they are not the executable tests described below, which start with feature 03.
+The candidate task profile and thresholds are in the [protocol](protocol/README.md) (`candidate_for_review`, unmeasured). Today's checks are documentary (diff whitespace check, JSON inspection, the external protocol checker, manual review criteria in that README; the profile is review revision 3, `candidate_for_review`, pending PR acceptance); they are not the executable tests described below, which start with feature 03.
 
 ## Acceptance protocol
 

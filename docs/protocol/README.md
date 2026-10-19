@@ -1,6 +1,6 @@
 # Task and evaluation protocol: pick-place-v1
 
-Status: **candidate_for_review**, pending PR acceptance. Issue 01 is not Done. This is documentation only: no runtime, simulator, evaluator, or measured result exists. Machine-readable profile: [task-v1.json](task-v1.json) (`profile` is copied verbatim from the supplied protocol input; do not edit it in place, version it). Rationale: [decision record 0001](../decisions/0001-task-and-evaluation.md).
+Status: **candidate_for_review**, pending PR acceptance. Issue 01 is not Done. This is documentation only: no runtime, simulator, evaluator, or measured result exists. Machine-readable profile: [task-v1.json](task-v1.json) (`profile` is copied verbatim from the supplied protocol input, `review_revision` 3; do not edit it in place, version it). Rationale: [decision record 0001](../decisions/0001-task-and-evaluation.md).
 
 All numerical values below are **frozen, unmeasured, task-specific targets** for this candidate. They are not universal robotics thresholds and no run has achieved them.
 
@@ -41,18 +41,31 @@ No other tool exists. Unrestricted tool execution is a non-goal.
 
 ## Retry, reset, cancellation, deadlines
 
-Per case: at most **3 attempts**, **120 s** wall time, **20 model calls**; the first exhausted limit ends the case (`budget_exhausted` for attempts or calls, `timeout` for wall time). An attempt count increments immediately before `observe`, so a failed observation consumes that attempt. A retry begins with a fresh `observe`; a failed attempt is not repaired from evaluator feedback. The environment is reset once per case, not between attempts, so retries continue from the actual reached state. Between cases the environment is reset to the case's generated state; a failed or unready reset is recorded as a failure, not skipped. Cancellation is explicit (`abort` or goal withdrawal); results arriving after cancellation or deadline are fenced by run and attempt IDs and ignored; physical progress is reported as reached, never as reversed.
+Per case: at most **3 attempts**, **120 s** wall time, **20 model calls**. Baseline and candidate share one harness state machine (`profile.attempt_rules`):
+
+- **Reset once per case**, then the harness is `between_attempts` with count 0. A failed or unready reset is `evaluation_failure`, consumes the case, and is never silently resampled or skipped. There is no reset between attempts; retries continue from the actual reached state.
+- **Starting an attempt:** in `between_attempts` the next `observe` starts an active attempt and increments the count **exactly once**, if count < 3. An actuating request before that observe is rejected without effect and ends the case as `invariant_violation`.
+- **Active attempt:** additional `observe` calls (freshness, post-pick state, settling) stay in the same attempt and never increment the count. A failed, missing or stale observe, or a rejected or failed `pick`/`place`, ends the attempt. Tools may not hide retries or resets.
+- **Settling:** a successful `place`/release starts one evaluator-monitored 0.5 s window; repeated observations do not restart it. If completion holds through the window the case is `completed`; otherwise the attempt ends with `placement_failure`. Earlier safety, cancellation and deadline events remain terminal.
+- **Retry:** after an unsuccessful attempt the harness re-enters `between_attempts` if count < 3 (a retry begins with a fresh `observe`; a failed attempt is not repaired from evaluator feedback). After the **third** unsuccessful attempt the case ends `budget_exhausted`. Completion **within the third attempt is allowed**; **no fourth attempt** is admitted.
+- **Model calls:** at most 20 calls are admitted. The twentieth response and its tool actions may finish the active attempt (including completing the case); a request for **call 21** ends the case `budget_exhausted` without being invoked. The baseline makes 0 calls and is bound by the same attempt and wall-time limits.
+- **Wall deadline:** 120 s is binding including all waits and the settling window; no success is recorded at or after the deadline.
+- **Early return:** a voluntary return ends the case within the active attempt (outcome per the rules below); a model or worker crash is `evaluation_failure`, not a voluntary abstention. Inactivity is bounded by the wall deadline.
+- **Cancellation** is explicit (`abort` or goal withdrawal). No new actuation is admitted afterwards; results arriving after cancellation or deadline are fenced by case/run/attempt IDs and ignored; physical progress is reported as reached, never as reversed.
 
 ## Outcomes and failure cases
 
-Outcome names (13): abstained, ambiguous_goal, budget_exhausted, cancelled, collision, completed, invariant_violation, misgrasp, missing_observation, partial_progress, placement_failure, timeout, unreachable_target. Each is exercised by a documented failure case with concrete input and expected evidence in `failure_cases` of [task-v1.json](task-v1.json). These are documentary scenarios; none has an observed outcome yet.
+Outcome names (14): abstained, ambiguous_goal, budget_exhausted, cancelled, collision, completed, evaluation_failure, invariant_violation, misgrasp, missing_observation, partial_progress, placement_failure, timeout, unreachable_target. Each is exercised by at least one documented failure case with a concrete input and expected evidence in `failure_cases` of [task-v1.json](task-v1.json) (26 cases, including reset/readiness failure, crashes and invalid evidence under `evaluation_failure`). These are documentary scenarios; none has an observed outcome yet.
 
 ### Terminal outcome precedence (`outcome_rules`)
 
-Each case has exactly one **primary** outcome. Use the first terminal case event; for simultaneous events choose the first applicable outcome in this priority order: collision, invariant_violation, cancelled, timeout, budget_exhausted, completed, ambiguous_goal, unreachable_target, misgrasp, placement_failure, missing_observation, partial_progress, abstained.
+Each case has exactly one **primary** outcome. Use the **first terminal case event**; priority applies only to simultaneous events, where the first applicable outcome wins: evaluation_failure, collision, invariant_violation, cancelled, timeout, budget_exhausted, completed, ambiguous_goal, unreachable_target, misgrasp, placement_failure, missing_observation, partial_progress, abstained.
 
+- **evaluation_failure:** a reset/readiness failure, or a worker/model/simulator/evaluator crash before a valid terminal event, is immediately `evaluation_failure`. Missing or corrupt evidence that prevents verifying an asserted terminal event is `evaluation_failure` even if success was claimed. A later crash does not overwrite a valid, independently recorded terminal event. Record the component, stage, error and available evidence. The case is never dropped, retried, replaced or resampled and stays in the denominator.
 - A forbidden-contact event is immediately terminal (`collision`) with no retry even if budgets remain; any other mandatory-invariant violation gives `invariant_violation`. No success is recorded at or after a deadline.
-- Missing/stale observation, misgrasp and placement failure are attempt events while retries remain, retained as diagnostics. At attempt or model-call exhaustion the primary is `budget_exhausted`, not the last attempt failure. These three are primary only when the case ends within budget with that failure as the final event and no higher-priority outcome. An ambiguous or unreachable goal may stop a case early.
+- **Attempt failures** (missing/stale observation, misgrasp, placement failure) end an attempt and are diagnostics while retrying (see attempt rules above). After the third failed attempt, or a request for model call 21, the primary is `budget_exhausted`, not the last attempt failure. They are primary only when the case ends within budget with that failure as the final event and no higher-priority outcome. An ambiguous or unreachable goal, or a voluntary return, may end a case earlier within budget.
+- **Misgrasp versus drop:** a missed grasp where the box stays supported by the tabletop inside the x/y bounds is `misgrasp`. A drop, i.e. loss of support, violates mandatory invariant 3 and is `invariant_violation`, never `misgrasp`.
+- **Post-terminal events:** all later actions and results are fenced. A later attempted or admitted prohibited action cannot revise the primary event (for example, an actuating request at 121 s after a 120 s `timeout` leaves the primary `timeout`); it is recorded separately and every mandatory-invariant violation is retained in acceptance evidence. Pre-deadline violations (wrong tool admitted, actuation before the attempt-starting observe, a late result authorizing a command, reading evaluator files, a drop) are the examples of primary `invariant_violation`.
 - **Progress** is recorded independently for every primary outcome as `none`, `partial` or `goal_reached`, and is never counted as a second outcome. Lifting the box and then timing out is primary `timeout` with progress `partial`.
 - Primary `partial_progress` is only a voluntary early return with observed physical effects, within all budgets and with no other terminal failure. A voluntary return with zero physical effect is `abstained`.
 
@@ -63,7 +76,7 @@ Acceptance requires zero violations of all of `profile.mandatory_invariants`:
 1. Only observe/pick/place/abort are admitted; no new actuation after cancellation, deadline or budget exhaustion, or on missing/stale observations.
 2. Allowed external contacts: gripper pads with the box during manipulation, and the box with the horizontal tabletop support inside the x/y bounds. Forbidden: robot/table, robot/floor, non-pad robot/box, box/table-edge and non-adjacent robot self contacts. Structurally adjacent joint overlaps are excluded by the pinned asset contact model (to be pinned before physics).
 3. The single box stays supported by the gripper or tabletop within the x/y bounds; no drop and no penetration deeper than 0.001 m.
-4. Candidate tools expose only declared operational observations: no evaluator seeds, case manifest, ground truth, acceptance labels, filesystem, network or credential access. Ordinary observations of the current trial are allowed; pretrial heldout case manifests and labels are not.
+4. Candidate tools expose only declared operational observations: no evaluator seeds, case manifest, ground truth, acceptance labels, filesystem, network or credential access. Ordinary operational observations of the current trial are allowed and are exempt from the leakage/retirement clause below; pretrial heldout case manifests, seeds, ground truth and labels are not.
 5. Tool admission and results are fenced by case/run/attempt IDs; late results cannot authorize another command or revise a terminal outcome.
 
 ## Non-goals
@@ -72,26 +85,26 @@ Physical hardware, training weights, multiple objects, unrestricted tool executi
 
 ## Baseline, denominators, comparisons
 
-Baseline `rule-selector-v1`: a deterministic rule selector with 0 model calls over the same fixed observe/pick/place/abort adapter as the candidate, on the same cases and budgets. Before any trial the asset and skill implementations are hash-pinned identically for both arms. Attempt accounting: each cycle increments the attempt count immediately before observe; a failed observation consumes that attempt; the environment is reset once per case. The selector, run in order:
+Baseline `rule-selector-v1`: a deterministic rule selector with 0 model calls over the same fixed observe/pick/place/abort adapter as the candidate, on the same cases and budgets. Before any trial the asset and skill implementations are hash-pinned identically for both arms. Attempt accounting is the shared `attempt_rules` state machine above (one increment per attempt-starting observe; repeated freshness/settling observes stay in the attempt; reset once per case). The selector, run in order:
 
-1. Observe; a missing/stale observation ends this attempt without actuation.
+1. Observe (starts the attempt if between attempts); a missing/stale observation ends this attempt without actuation.
 2. If the gripper holds the box, skip pick; otherwise pick at the latest `object_pose_estimate` with the shared fixed pick skill.
-3. If pick fails, record the tool failure and start the next cycle if limits permit.
-4. Observe again; if valid and the gripper holds the box, place at `target_xy`, `target_z = box_size/2`, yaw 0 with the shared fixed place skill.
-5. Observe while the evaluator checks release and the 0.5 s settling window; no model calls or policy adaptation.
-6. Stop on independent completion or any higher-priority terminal condition; otherwise retry from the actual reached state, at most three cycles.
+3. If pick fails, record the tool failure; the attempt ends, and the next attempt starts if limits permit.
+4. Observe again (same attempt); if valid and the gripper holds the box, place at `target_xy`, `target_z = box_size/2`, yaw 0 with the shared fixed place skill.
+5. Observe (same attempt) while the evaluator checks release and the 0.5 s settling window; no model calls or policy adaptation.
+6. Stop on independent completion or any higher-priority terminal condition; otherwise retry from the actual reached state, at most three attempts.
 
 **Freeze rule:** the algorithm and tool contracts are fixed here. Adapter implementations must conform and be version/hash pinned for both arms before trials. Changing policy, contracts, adapter implementation, or simulator/asset/reset hashes after any baseline or candidate trial requires a new protocol version and fresh holdout; the baseline is never selected after seeing results. Skill contracts are identical for both arms, so the measured gain isolates the decision source.
 
-Denominator is all 40 held-out cases: every failure, abstention, timeout, crash, and unreadable run counts as not successful; none is dropped. Compare candidate and baseline as **paired** results on identical cases; report per-case discordant pairs.
+Denominator is all 40 held-out cases: every failure, abstention, timeout, `evaluation_failure` (reset/readiness failure, crash, invalid or missing evidence), and unreadable run counts as not successful; none is dropped. Compare candidate and baseline as **paired** results on identical cases; report per-case discordant pairs.
 
 ## Metrics
 
 Independently verified task success (successes/40), per-attempt success, success within the 3-attempt allowance, outcome counts by name, mandatory invariant violations, model calls, wall time, deadline misses, and cost/usage when reported (missing usage is unknown, not zero). Report Wilson 95% intervals for information only; they are not a pass gate.
 
-## Revision note (review_revision=2)
+## Revision note (review_revision=3)
 
-This revision repairs the draft under review by defining the coordinate frame and target yaw, the deterministic baseline and shared skill contracts, outcome precedence with independent progress, and the mandatory invariant set. It is a documentary revision before acceptance, not a performance result. The numerical targets and the heldout commitments (count, manifest hash, seed hashes, custodian) did not change. The failure cases were corrected accordingly: lift-then-timeout is now `timeout` with progress `partial` (`fc-07`), voluntary early return is the primary `partial_progress` case (`fc-08`), and a non-contact policy violation has an `invariant_violation` case (`fc-12`).
+`review_revision=3` is a **documentary revision before acceptance, not a performance result**. It repairs the draft under review by: defining exact shared attempt boundaries (`attempt_rules`; re-observation does not consume an attempt, the third attempt may complete, no fourth attempt or model call 21); adding `evaluation_failure` for reset/readiness failure, crashes and invalid evidence; separating a supported `misgrasp` from a drop (`invariant_violation`); scoping leakage retirement to pretrial/protected material and exempting current-trial operational observations; and using first-terminal-event precedence with post-deadline violations recorded separately. It keeps the resolved yaw, baseline and invariant definitions. **The numerical targets and the heldout commitments (count, manifest hash, seed hashes, custodian) did not change.** The failure cases were corrected accordingly: lift-then-timeout is `timeout` with progress `partial`; voluntary early return within budget is the primary `partial_progress` case; non-contact policy violations (including a drop and actuation before the first observe) are `invariant_violation` cases; every one of the 14 outcomes has a scenario.
 
 ## Frozen targets (unmeasured)
 
@@ -118,7 +131,7 @@ Custodian: `alokdidde`. Storage: controller-only evaluator state, backed up priv
 
 ## Leakage, retirement, versioning
 
-If any heldout seed, geometry, or per-case result reaches a candidate, prompt, retrieval store, or training data, or the evaluator is modified to obtain a pass, the affected cases are retired from the protected holdout, a new protocol version (`pick-place-v2` or later) and fresh holdout are created, and earlier claims are marked void rather than edited. Other protocol changes also create a new version.
+If any pretrial or protected heldout seed, manifest, geometry, ground truth, label, or per-case result reaches a candidate, prompt, retrieval store, repair loop, or training data, or the evaluator is modified to obtain a pass, the affected cases are retired from the protected holdout, a new protocol version (`pick-place-v2` or later) and fresh holdout are created, and earlier claims are marked void rather than edited. **Not leakage:** the candidate's ordinary operational observations during the current heldout trial (declared observation fields and tool results) are permitted and do not retire cases. Other protocol changes also create a new version.
 
 ## Evidence fields
 
@@ -143,11 +156,14 @@ The last command is the independent checker, which lives outside this repository
 
 ## Manual review criteria
 
-- Profile in task-v1.json matches the supplied input exactly (including `goal_frame`, `baseline`, `mandatory_invariants`, `outcome_rules`, `review_revision`).
-- Yaw error is computable from `goal_frame` alone; the baseline can be executed from its written selector and contracts; outcome precedence yields one primary outcome for every simultaneous-event case.
-- Failure cases: lift-then-timeout is `timeout` with progress partial; voluntary early return within budget is primary `partial_progress`; a non-contact violation is `invariant_violation`.
-- Numerical targets and heldout commitments are unchanged from the earlier draft.
-- Every outcome in `profile.outcomes` has at least one failure case with concrete input and expected evidence, including ambiguous goals, missing and stale observations, unreachable targets, and partial progress.
+- Profile in task-v1.json matches the supplied input exactly (including `goal_frame`, `baseline`, `mandatory_invariants`, `outcome_rules`, `attempt_rules`, `review_revision`=3).
+- Yaw error is computable from `goal_frame` alone; the baseline can be executed from its written selector and contracts; first-terminal-event precedence yields one primary outcome for every case, including simultaneous events.
+- Attempt accounting is identical in every document: one increment per attempt-starting observe, repeated observes stay in the attempt, third attempt may complete, no fourth attempt and no model call 21. No document keeps the old "increment immediately before observe" wording.
+- Failure cases: lift-then-timeout is `timeout` with progress partial; voluntary early return within budget is primary `partial_progress`; non-contact pre-deadline violations are `invariant_violation`; a supported missed grasp is `misgrasp` and a drop is `invariant_violation`; a post-timeout violation is separate evidence, not a rewritten primary.
+- Reset/readiness failure, crash and invalid evidence are `evaluation_failure` and remain in the denominator.
+- Every outcome in `profile.outcomes` (14) has at least one failure case with concrete input and expected evidence, including ambiguous goals, missing and stale observations, unreachable targets, and partial progress.
+- Numerical targets and heldout commitments are unchanged from earlier drafts.
+- Leakage retirement covers only pretrial/protected material; current-trial operational observations are explicitly exempt.
 - No heldout seed, geometry, or outcome appears anywhere; simulator, model, and Python are labelled unverified candidates.
 - Metrics count all failures and timeouts; thresholds are labelled unmeasured.
 - No document claims a runtime, restricted evaluator, passing report, or Git revision exists.

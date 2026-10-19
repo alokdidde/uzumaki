@@ -13,9 +13,9 @@ Issue 01 requires one rigid-object pick-and-place task, a simulator and model-pr
 - **Language:** CPython 3.12 family. The exact toolchain lock belongs to feature 03.
 - **Runtime model:** `claude-sonnet-5-5` from Anthropic, one model for both planner and generator roles with separate contexts. **UNVERIFIED**: availability, behavior, and cost are untested. Supplied reference (not fetched here): <https://code.claude.com/docs/en/model-config>.
 
-## Revision 2 (pre-acceptance)
+## Revision 3 (pre-acceptance)
 
-`review_revision=2` repairs the draft after review: it adds the tabletop frame and constant target yaw 0 (`goal_frame`), the deterministic `rule-selector-v1` baseline with shared skill contracts, the mandatory invariant set, and single-primary outcome precedence with independent progress. This is a documentary revision before acceptance, not a performance result. The numerical targets and heldout commitments are unchanged; the decision above is unchanged and remains a candidate.
+`review_revision=3` repairs the draft after review. It states the shared attempt state machine (`attempt_rules`: starting an attempt increments once, repeated observes stay in it, the third attempt may complete, no fourth attempt or model call 21 is admitted, for baseline and candidate alike), adds `evaluation_failure` for reset/readiness failure, crashes and invalid evidence (always kept in the denominator), separates a supported `misgrasp` from a drop (`invariant_violation`), uses first-terminal-event precedence with post-deadline violations recorded as separate evidence, and scopes leakage retirement to pretrial/protected material while exempting ordinary current-trial operational observations. It retains the tabletop frame with constant target yaw 0 (`goal_frame`), the deterministic `rule-selector-v1` baseline and shared skill contracts, and the mandatory invariant set. This is a documentary revision before acceptance, **not a performance result**. The numerical targets and heldout commitments are unchanged; the decision above is unchanged and remains a candidate.
 
 ## Alternatives considered
 

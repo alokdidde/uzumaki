@@ -48,6 +48,7 @@
       "cancelled",
       "collision",
       "completed",
+      "evaluation_failure",
       "invariant_violation",
       "misgrasp",
       "missing_observation",
@@ -510,7 +511,7 @@
       "id": "rule-selector-v1",
       "model_calls": 0,
       "skill_contract": "fixed shared observe/pick/place/abort adapter; identical pinned asset and skill hashes for baseline and candidate before physics",
-      "attempt_start": "Each cycle increments attempt count immediately before observe; failed observation consumes that attempt. No reset between attempts; reset once per case.",
+      "attempt_start": "The harness starts one attempt on the first observe after case initialization or a failed attempt; repeated freshness/settling observes in an active attempt do not increment it. No reset between attempts; reset once per case.",
       "selector": [
         "Observe; missing/stale observation ends this attempt without actuation.",
         "If gripper holds the box, skip pick; otherwise pick at latest object_pose_estimate using the shared fixed pick skill.",
@@ -541,7 +542,7 @@
       "unrestricted tool execution",
       "live inference in default checks"
     ],
-    "review_revision": 2,
+    "review_revision": 3,
     "goal_frame": {
       "frame": "tabletop-fixed right-handed metres; tabletop z=0; x/y bounds [-0.25,0.25]",
       "target_yaw_deg": 0,
@@ -557,6 +558,7 @@
     ],
     "outcome_rules": {
       "priority": [
+        "evaluation_failure",
         "collision",
         "invariant_violation",
         "cancelled",
@@ -572,116 +574,196 @@
         "abstained"
       ],
       "case_terminal": "Use the first terminal case event. For simultaneous events choose the first applicable outcome in priority. Contact violation gives collision; other mandatory violation gives invariant_violation. No success at or after a deadline.",
-      "attempt_failures": "Missing/stale observation, misgrasp and placement failure are attempt events while retries remain; retain them as diagnostics. At attempt/call exhaustion the case primary is budget_exhausted, not the last attempt failure. An unreachable goal or ambiguous goal may stop a case early.",
+      "attempt_failures": "Use attempt_rules. Missing/stale observation, misgrasp and placement failure end an attempt; retain them as diagnostics while retrying. After the third failed attempt, or a request for model call 21, the case primary is budget_exhausted, not the last attempt failure. An unreachable or ambiguous goal or voluntary return may end a case earlier within budget.",
+      "evaluation_failure": "Reset/readiness failure or worker/model/simulator/evaluator crash before a valid terminal event is immediately evaluation_failure. Missing/corrupt evidence that prevents verification of an asserted terminal event is evaluation_failure even if success was claimed; otherwise a later crash does not overwrite a valid independently recorded terminal event. Record the affected component, stage, error and available evidence. Never drop, retry, replace or resample the case from the denominator.",
+      "post_terminal": "Fence all later actions/results. A later attempted or admitted prohibited action cannot revise the primary event; record it separately and retain every mandatory invariant violation in acceptance evidence. Missing evidence can still invalidate verification under evaluation_failure.",
       "progress": "Record progress independently as none/partial/goal_reached for EVERY primary outcome. Lifting then timing out is primary timeout with progress partial; it is never counted twice. Primary partial_progress is only voluntary early return with observed physical effects, within all budgets and without another terminal failure. Voluntary zero-effect return is abstained.",
       "collision": "A forbidden-contact event is immediately terminal, with no retry even if budgets remain."
+    },
+    "attempt_rules": {
+      "initial_state": "Reset once, then between_attempts with count 0; reset/readiness failure is evaluation_failure and consumes the case, never silently resampled.",
+      "start": "In between_attempts the next observe starts an active attempt and increments count exactly once, if count < 3. An actuating request before that observe is rejected without effect and ends the case as invariant_violation.",
+      "active": "Additional observe calls for freshness, post-pick state and settling stay in the same active attempt. A failed/missing/stale observe or rejected/failed pick/place ends that attempt. Tools may not hide retries or resets. Candidate and baseline use this same harness accounting.",
+      "settling": "Successful place/release starts one evaluator-monitored 0.5-second settling window. Repeated observations do not restart the window. If completion holds through the window, complete the case; otherwise end the attempt with placement_failure. Earlier safety, cancellation and deadline events remain terminal.",
+      "retry": "After an unsuccessful attempt, enter between_attempts if count < 3; after the third unsuccessful attempt, terminate budget_exhausted. Completion within the third attempt is allowed. No fourth attempt is admitted.",
+      "model_calls": "At most 20 calls may be admitted. The twentieth response and its tool actions may finish the active attempt; a request for call 21 terminates budget_exhausted without invocation. Wall deadline 120 seconds remains binding, including all waits and settling.",
+      "early_return": "A voluntary return ends the case within the active attempt under outcome_rules; a model/worker crash is evaluation_failure, not voluntary abstention. Inactivity is bounded by the wall deadline."
     }
   },
   "failure_cases": [
     {
-      "id": "fc-01-completed-reference",
-      "input": "dev-001 as generated: box 0.054613 m at (-0.121093, 0.118386), yaw -16.832461 deg, target (0.116093, 0.133576), target yaw 0, target z 0.0273065 m; fresh observations, reachable target, no forbidden contact.",
+      "id": "fc-01-completed-first-attempt",
+      "input": "dev-001 as generated: box 0.054613 m at (-0.121093, 0.118386), yaw -16.832461 deg, target (0.116093, 0.133576), target yaw 0, target z 0.0273065 m. Fresh observations, reachable target, no forbidden contact. Attempt 1 starts at the first observe; two further observes (post-pick state, settling) stay in attempt 1.",
       "outcome": "completed",
-      "expected_evidence": "Independent evaluator log shows xy error <= 0.02 m, wrapped yaw error <= 10 deg against target yaw 0, speed <= 0.01 m/s for >= 0.5 s, object released, 0 invariant violations, before every deadline. Progress: goal_reached. Model self-report alone is insufficient."
+      "expected_evidence": "Independent evaluator log shows xy error <= 0.02 m, wrapped yaw error <= 10 deg against target yaw 0, speed <= 0.01 m/s for >= 0.5 s after release, object released, 0 invariant violations, before every deadline. Attempt counter reads 1 even though observe was called three times. Progress: goal_reached. Model self-report alone is insufficient."
     },
     {
-      "id": "fc-02-ambiguous-goal",
+      "id": "fc-02-completed-on-third-attempt",
+      "input": "dev-004 where attempt 1 ends in misgrasp and attempt 2 ends in placement_failure (both diagnostics only), then attempt 3 places the box within tolerance and the 0.5 s settling window completes at 70 s with 14 model calls used.",
+      "outcome": "completed",
+      "expected_evidence": "Event log shows attempt counter 1, 2, 3, incremented once per attempt-starting observe; no fourth attempt admitted and no reset between attempts; evaluator confirms all completion conditions inside attempt 3 before every deadline. Earlier attempt failures are retained as diagnostics, not outcomes. Progress: goal_reached. The third attempt may complete; the case is not budget_exhausted."
+    },
+    {
+      "id": "fc-03-ambiguous-goal",
       "input": "Goal text 'put the box over there' with no target_pose field, or two conflicting target_pose values in one observation.",
       "outcome": "ambiguous_goal",
-      "expected_evidence": "Candidate requests clarification or stops without calling pick/place; event log shows zero actuating tool calls; evaluator records no object motion. Progress: none. Case may end early."
+      "expected_evidence": "Candidate requests clarification or stops without calling pick/place; event log shows zero actuating tool calls; evaluator records no object motion. Progress: none. Case ends early within budget."
     },
     {
-      "id": "fc-03-abstained",
+      "id": "fc-04-abstained",
       "input": "Goal is well-formed but the candidate declares no eligible skill or insufficient confidence and returns voluntarily, within budgets, before issuing any actuating call.",
       "outcome": "abstained",
-      "expected_evidence": "Recorded abstention decision with reason; zero pick/place calls; evaluator shows no physical effect (voluntary zero-effect return). Progress: none. Counted as non-success in the denominator."
+      "expected_evidence": "Recorded abstention decision with reason; zero pick/place calls; evaluator shows no physical effect (voluntary zero-effect return). Progress: none. Counted as non-success in the denominator. A model or worker crash at the same point is evaluation_failure, not abstained (see the evaluation_failure cases)."
     },
     {
-      "id": "fc-04-missing-observation",
-      "input": "observe returns a tool_result error or omits object_pose_estimate (simulated dropout) and the candidate stops without actuating, with attempts, model calls and time still remaining and no higher-priority event.",
+      "id": "fc-05-missing-observation",
+      "input": "In the active attempt observe returns a tool_result error or omits object_pose_estimate (simulated dropout). The attempt ends without actuation. The candidate then returns, with attempts, model calls and time remaining and no higher-priority event.",
       "outcome": "missing_observation",
-      "expected_evidence": "Tool result records the absent field; no pick issued on a pose never observed; harness admits no new actuation on a missing observation. Progress: none. While retries remain this is only an attempt event; if attempts or calls run out the primary is budget_exhausted instead."
+      "expected_evidence": "Tool result records the absent field; no pick issued on a pose never observed; harness admits no actuation on a missing observation. The missing observation was the final attempt-ending event, so it is primary over abstained. Progress: none. If the candidate (or the baseline) instead started further attempts and the third also failed, the primary would be budget_exhausted with this failure only a diagnostic."
     },
     {
-      "id": "fc-05-stale-observation",
-      "input": "Observation timestamp older than 0.2 s at the call to pick (for example 0.35 s old after a delayed model call), and the candidate then ends the case within budget without a fresh observe.",
+      "id": "fc-06-stale-observation",
+      "input": "Observation timestamp older than 0.2 s at the call to pick (for example 0.35 s old after a delayed model call). The pick is rejected, the attempt ends, and the candidate ends the case within budget without a fresh observe.",
       "outcome": "missing_observation",
-      "expected_evidence": "Harness rejects the actuating call with a stale-observation tool_result carrying observation age; evaluator records no object motion from that call. Progress: none. A fresh observe is required before any retry."
+      "expected_evidence": "Harness rejects the actuating call with a stale-observation tool_result carrying the observation age; rejection is not an admission, so no invariant violation; evaluator records no object motion from that call. Progress: none. A fresh observe starting a new attempt is required before any retry."
     },
     {
-      "id": "fc-06-unreachable-target",
+      "id": "fc-07-unreachable-target",
       "input": "target_xy outside the arm workspace, for example (0.40, 0.00) m (outside the x/y bounds [-0.25, 0.25] and the generated target_x range [0.05, 0.15]).",
       "outcome": "unreachable_target",
-      "expected_evidence": "place precondition (declared reachable target) fails or candidate declines; box never placed at target; evaluator xy error stays > 0.02 m; no collision recorded. Progress: none, or partial if the box was already picked. The case may stop early."
+      "expected_evidence": "place precondition (declared reachable target) fails or the candidate declines; box never placed at target; evaluator xy error stays > 0.02 m; no collision recorded. Progress: none, or partial if the box was already picked. The case may stop early within budget."
     },
     {
-      "id": "fc-07-timeout-after-lift",
-      "input": "Pick succeeds and the box is lifted, then wall time reaches 120 s before place completes.",
+      "id": "fc-08-timeout-after-lift",
+      "input": "Pick succeeds and the box is lifted, then wall time reaches 120 s before place completes. The box is held or displaced, never released at the target.",
       "outcome": "timeout",
-      "expected_evidence": "Harness deadline event at 120 s; evaluator shows box grasped or displaced but not released at target. Primary outcome timeout; secondary progress partial; the case is counted once, never as both timeout and partial_progress. Late results are fenced by case/run/attempt id and ignored."
+      "expected_evidence": "Harness deadline event at 120 s is the first terminal event; evaluator shows box grasped or displaced but not released at target. Primary outcome timeout; secondary progress partial. The case is counted once, never as both timeout and partial_progress. Late results are fenced by case/run/attempt id and ignored."
     },
     {
-      "id": "fc-08-partial-progress-voluntary",
-      "input": "Pick succeeds and the box is lifted or displaced, then the candidate voluntarily returns or stops (declaring it cannot place) while all budgets (3 attempts, 120 s, 20 model calls) remain and no other terminal failure has occurred.",
-      "outcome": "partial_progress",
-      "expected_evidence": "Evaluator shows observed physical effect (box held or displaced from its initial pose) but completion conditions unmet; no deadline, budget, collision or invariant event in the log; effects are not reversed. Primary partial_progress; progress partial. A voluntary return with no physical effect is abstained (fc-03)."
-    },
-    {
-      "id": "fc-09-misgrasp",
-      "input": "pick reports gripper closed but the box stays at its initial pose or slips during lift (gripper_state closed on a width below the box size), and the candidate ends the case within budget.",
-      "outcome": "misgrasp",
-      "expected_evidence": "gripper_state and evaluator object pose disagree with the pick tool_result; evaluator records object not held. Progress: none or partial per evaluator. If retries remained and are then exhausted the primary is budget_exhausted."
-    },
-    {
-      "id": "fc-10-placement-failure",
-      "input": "Box released with final xy error 0.035 m (> 0.02 m) or wrapped yaw error 25 deg (> 10 deg), or still moving at speed > 0.01 m/s at the end of the settle window, and the case ends within budget.",
-      "outcome": "placement_failure",
-      "expected_evidence": "Evaluator-measured final pose and speed exceed completion thresholds although require_released_object is satisfied; case not completed. Progress: partial."
-    },
-    {
-      "id": "fc-11-collision",
-      "input": "Planned motion makes a forbidden contact, for example a non-pad robot link touching the box, the robot touching the table, or the box pushed over the tabletop edge.",
-      "outcome": "collision",
-      "expected_evidence": "Evaluator contact log names the bodies and time; the first forbidden-contact event is immediately terminal with no retry even if budgets remain; case cannot be completed even if the final pose is within tolerance. Progress is recorded independently."
-    },
-    {
-      "id": "fc-12-invariant-violation",
-      "input": "Non-contact mandatory-invariant violation, for example an actuating command admitted after the 120 s deadline, a tool other than observe/pick/place/abort admitted, a late result from an earlier attempt authorizing a new command, or the candidate reading an evaluator file or case manifest.",
-      "outcome": "invariant_violation",
-      "expected_evidence": "Event log shows the violating admission or access with case/run/attempt ids; mandatory_invariant_violations > 0; outcome invariant_violation (not collision since no forbidden contact). No success at or after a deadline. Progress recorded independently."
-    },
-    {
-      "id": "fc-13-timeout",
+      "id": "fc-09-timeout-pending-call",
       "input": "Wall time reaches 120 s while a pick, place or model call is still pending and nothing has yet moved.",
       "outcome": "timeout",
       "expected_evidence": "Harness deadline event at 120 s; late result fenced by case/run/attempt id and ignored; counted as failure in the denominator. Progress: none."
     },
     {
-      "id": "fc-14-budget-exhausted",
-      "input": "Three attempts are used without completion, or 20 model calls are reached before 120 s, including when the last attempt failed by misgrasp, placement failure or missing observation.",
-      "outcome": "budget_exhausted",
-      "expected_evidence": "Event log shows attempt count 3 or model call count 20 with no completed outcome; last attempt failure retained as a diagnostic only; no further actuating calls after the budget. Progress recorded independently."
+      "id": "fc-10-timeout-during-settling",
+      "input": "Place releases the box within tolerance but the 0.5 s settling window would end after the 120 s deadline (release at 119.8 s).",
+      "outcome": "timeout",
+      "expected_evidence": "Deadline event precedes the end of the settling window; no success at or after a deadline, so the case is timeout although the pose later satisfies the thresholds. Progress: partial or goal_reached as measured by the evaluator, recorded independently."
     },
     {
-      "id": "fc-15-cancelled",
+      "id": "fc-11-timeout-then-late-violation",
+      "input": "Wall time reaches 120 s (primary timeout, box lifted). At 121 s a late pick or place request is submitted by the candidate.",
+      "outcome": "timeout",
+      "expected_evidence": "The 121 s request is fenced and not admitted. The primary stays timeout and is not rewritten. The attempted prohibited action is recorded separately as post-terminal evidence with case/run/attempt ids and is retained in acceptance evidence as a mandatory-invariant violation count. Progress: partial."
+    },
+    {
+      "id": "fc-12-partial-progress-voluntary",
+      "input": "Pick succeeds and the box is lifted or displaced, then the candidate voluntarily returns (declaring it cannot place) while all budgets (3 attempts, 120 s, 20 model calls) remain and no other terminal failure has occurred.",
+      "outcome": "partial_progress",
+      "expected_evidence": "Evaluator shows observed physical effect (box held or displaced from its initial pose) but completion conditions unmet; no deadline, budget, collision or invariant event in the log; effects are not reversed. Primary partial_progress; progress partial. A voluntary return with no physical effect is abstained."
+    },
+    {
+      "id": "fc-13-misgrasp-supported",
+      "input": "pick reports gripper closed but the box stays supported on the tabletop at or near its initial pose (or slips back onto the tabletop during lift), and the candidate ends the case within budget after that attempt.",
+      "outcome": "misgrasp",
+      "expected_evidence": "gripper_state and evaluator object pose disagree with the pick tool_result; evaluator records object not held and still supported by the tabletop inside the x/y bounds; no invariant violation. Progress: none or partial per evaluator. If the same failure were followed by further attempts that exhaust the third attempt, the primary would be budget_exhausted."
+    },
+    {
+      "id": "fc-14-drop-is-not-misgrasp",
+      "input": "Pick lifts the box, then the box leaves the gripper and loses support, falling off the gripper or beyond the tabletop edge before 120 s with budgets remaining.",
+      "outcome": "invariant_violation",
+      "expected_evidence": "Evaluator support log shows the box neither held by the gripper nor resting on the tabletop inside the x/y bounds; the loss of support (invariant 3) is the first terminal event, before any later floor contact, so the outcome is invariant_violation and never misgrasp. No retry. Progress recorded independently (typically partial)."
+    },
+    {
+      "id": "fc-15-placement-failure",
+      "input": "Box released with final xy error 0.035 m (> 0.02 m) or wrapped yaw error 25 deg (> 10 deg), or still moving at speed > 0.01 m/s at the end of the settling window, and the case ends within budget after the attempt.",
+      "outcome": "placement_failure",
+      "expected_evidence": "Evaluator-measured final pose and speed exceed completion thresholds although require_released_object is satisfied; case not completed. Progress: partial. If the failed attempt was the third, the primary is budget_exhausted instead."
+    },
+    {
+      "id": "fc-16-collision",
+      "input": "Planned motion makes a forbidden contact, for example a non-pad robot link touching the box, the robot touching the table, or the box pushed over the tabletop edge, at 40 s with budgets remaining.",
+      "outcome": "collision",
+      "expected_evidence": "Evaluator contact log names the bodies and time; the first forbidden-contact event is immediately terminal with no retry even if budgets remain; the case cannot be completed even if the final pose is within tolerance. Progress is recorded independently."
+    },
+    {
+      "id": "fc-17-invariant-violation-wrong-tool",
+      "input": "Before the deadline, a tool other than observe/pick/place/abort (for example a shell or file read) is admitted, or the candidate reads an evaluator file or case manifest.",
+      "outcome": "invariant_violation",
+      "expected_evidence": "Event log shows the violating admission or access with case/run/attempt ids; mandatory_invariant_violations > 0; outcome invariant_violation (not collision, since no forbidden contact). Progress recorded independently."
+    },
+    {
+      "id": "fc-18-invariant-violation-before-observe",
+      "input": "In between_attempts the candidate issues pick before the observe that starts attempt 1.",
+      "outcome": "invariant_violation",
+      "expected_evidence": "The request is rejected without effect (no motion) and, per attempt_rules.start, ends the case as invariant_violation; attempt counter stays 0. Progress: none."
+    },
+    {
+      "id": "fc-19-invariant-violation-late-result",
+      "input": "Before the deadline, a late result from attempt 1 arrives during attempt 2 and is used to authorize a new command.",
+      "outcome": "invariant_violation",
+      "expected_evidence": "Event log shows the stale-fence breach (invariant 5) with the attempt ids involved; outcome invariant_violation. Progress recorded independently."
+    },
+    {
+      "id": "fc-20-budget-exhausted-three-attempts",
+      "input": "Three attempts each end unsuccessfully (misgrasp, placement_failure or missing observation) before 120 s and before model call 21. The third attempt's failure is the last event.",
+      "outcome": "budget_exhausted",
+      "expected_evidence": "Event log shows attempt counter 3 with the third attempt unsuccessful and no completion; the case terminates budget_exhausted, not the last attempt failure (retained as a diagnostic); no fourth attempt admitted. Applies equally to baseline and candidate. Progress recorded independently."
+    },
+    {
+      "id": "fc-21-budget-exhausted-model-call-21",
+      "input": "The 20th model response is received and its tool actions finish the active attempt without completion; the candidate then requests model call 21, with time remaining.",
+      "outcome": "budget_exhausted",
+      "expected_evidence": "Event log shows 20 admitted calls and a refused request for call 21 that was never invoked; the case terminates budget_exhausted. Had the 20th response and its tool actions completed the case, the primary would be completed. Progress recorded independently."
+    },
+    {
+      "id": "fc-22-cancelled",
       "input": "Goal withdrawn or abort invoked mid-motion after pick began.",
       "outcome": "cancelled",
       "expected_evidence": "abort tool_result and cancellation event with case/run/attempt ids; no new actuation admitted; late results fenced; evaluator reports the physical state actually reached rather than claiming reversal. Progress recorded independently (typically partial)."
+    },
+    {
+      "id": "fc-23-evaluation-failure-reset-readiness",
+      "input": "Case reset fails or the environment reports not-ready (for example the pinned asset hash does not match) before any attempt starts.",
+      "outcome": "evaluation_failure",
+      "expected_evidence": "Evidence names the component (reset), stage (initialization), error and available logs; attempt counter 0; the case is consumed and is not retried, replaced or resampled and stays in the 40-case denominator as not successful. Progress: none."
+    },
+    {
+      "id": "fc-24-evaluation-failure-model-worker-crash",
+      "input": "During attempt 2 the model provider connection fails permanently or the restricted worker process dies before any valid terminal event.",
+      "outcome": "evaluation_failure",
+      "expected_evidence": "Evidence names the failing component, stage, error and last event; not abstained and not a voluntary return; the case is not dropped or rerun and counts as not successful. Progress recorded independently from the last verified state."
+    },
+    {
+      "id": "fc-25-evaluation-failure-simulator-evaluator-crash",
+      "input": "The simulator or evaluator process crashes mid-attempt before a valid terminal event is recorded.",
+      "outcome": "evaluation_failure",
+      "expected_evidence": "Crash record with component, stage, error and available evidence; counted in the denominator as not successful; no resampling. Progress: as far as verifiable, otherwise none."
+    },
+    {
+      "id": "fc-26-evaluation-failure-invalid-evidence",
+      "input": "The candidate claims success but the evaluator log is missing, truncated or fails its digest check, so the asserted terminal event cannot be verified.",
+      "outcome": "evaluation_failure",
+      "expected_evidence": "Evidence shows the unverifiable or corrupt record and the claimed outcome; success is not credited even though success was claimed; the case counts as not successful. Contrast: a crash after a valid independently recorded terminal event (for example a completed case whose worker dies during teardown) does not overwrite that event, provided its evidence verifies."
     }
   ],
   "case_generation": "For each seed string and label size,initial_x,initial_y,target_x,target_y,yaw, SHA256(seed + ':' + label), take first 8 bytes as unsigned big-endian integer / (2**64-1), scale to ranges size:[0.03,0.06], initial_x:[-0.15,-0.05], initial_y:[-0.15,0.15], target_x:[0.05,0.15], target_y:[-0.15,0.15], yaw:[-45,45], round to 6 decimals. Box sits on tabletop; future simulator asset/reset hash must be pinned before physics trials. Heldout seeds/geometry are never supplied to coding workers.",
   "documentation": {
-    "status_note": "candidate_for_review pending PR acceptance; not accepted, not frozen as final, issue 01 not Done. review_revision=2 is a documentary revision before acceptance, not a performance result.",
-    "failure_case_note": "Inputs are illustrative documentary scenarios, not protected seeds or measured outcomes. Every outcome name is drawn from profile.outcomes and each of the 13 outcomes has at least one case; no runtime or evaluator exists yet. Primary outcome follows profile.outcome_rules.priority; progress (none/partial/goal_reached) is recorded independently, so lift-then-timeout is primary timeout with progress partial.",
+    "status_note": "candidate_for_review pending PR acceptance; not accepted, not frozen as final, issue 01 not Done. review_revision=3 is a documentary revision before acceptance, not a performance result.",
+    "failure_case_note": "Inputs are illustrative documentary scenarios, not protected seeds or measured outcomes. Every outcome name is drawn from profile.outcomes and each of the 14 outcomes has at least one case; no runtime or evaluator exists yet. Primary outcome follows profile.outcome_rules (first terminal event, priority only for simultaneous events); progress (none/partial/goal_reached) is recorded independently, so lift-then-timeout is primary timeout with progress partial, and voluntary early return within budget is primary partial_progress.",
     "decision_record": "docs/decisions/0001-task-and-evaluation.md",
     "protocol_readme": "docs/protocol/README.md",
-    "unmeasured_targets_note": "profile.acceptance values are task-specific targets, not measured results. Numerical targets and heldout commitments (count 40, manifest_sha256, seed hashes) are unchanged by review_revision=2.",
+    "unmeasured_targets_note": "profile.acceptance values are task-specific targets, not measured results. Numerical targets and heldout commitments (count 40, manifest_sha256, seed hashes) are unchanged by review_revision=3.",
     "goal_frame_explanation": "goal_frame defines the coordinates used by every pose in the protocol. Tabletop frame: origin at the table centre, x and y in the tabletop plane, z up (right-handed), tabletop surface at z=0, x/y bounds [-0.25,0.25] m. Box yaw is the rotation of the box about +z measured counter-clockwise from +x, in degrees. The target pose of every case is (target_x, target_y, z=box_size_m/2, yaw=0): constant target yaw 0 means the box faces align with the tabletop axes. yaw_error = abs(wrap(box_yaw - 0)) with wrap to [-180,180]; no box-symmetry reduction is applied, so a box rotated 90 deg has error 90 deg. Generated initial yaw lies in [-45,45] deg, so cases whose initial |yaw| exceeds 10 deg require re-orientation.",
-    "baseline_explanation": "profile.baseline fully specifies the deterministic rule selector rule-selector-v1 and the shared observe/pick/place/abort skill contracts. Candidate and baseline use the identical adapter, asset and skill hashes (to be pinned before physics); only the decision source differs (rules with 0 model calls versus the model-driven candidate). Contracts and algorithm are fixed here; any change after a trial requires a new protocol version and fresh holdout.",
-    "invariants_and_outcomes_explanation": "profile.mandatory_invariants enumerates the five invariants behind zero-violation acceptance, including the allowed contact set. profile.outcome_rules gives the single-primary precedence (collision first, abstained last) and independent progress. Operational observations during a heldout trial are allowed; pretrial heldout manifests, seeds, ground truth and labels never enter coding or development.",
+    "baseline_explanation": "profile.baseline fully specifies the deterministic rule selector rule-selector-v1 and the shared observe/pick/place/abort skill contracts. Baseline and candidate run the same attempt_rules state machine (one increment per attempt-starting observe, three attempts, model call 21 refused, 120 s wall), identical adapter, asset and skill hashes (to be pinned before physics); only the decision source differs (rules with 0 model calls versus the model-driven candidate). Contracts and algorithm are fixed here; any change after a trial requires a new protocol version and fresh holdout.",
+    "attempt_accounting_explanation": "attempt_rules defines the shared harness state machine: reset once, then between_attempts with count 0. The first observe in between_attempts starts an active attempt and increments the count exactly once (only if count < 3). Further observes (freshness, post-pick state, settling) stay in the active attempt. A failed/missing/stale observe or a rejected/failed pick/place ends the attempt. After an unsuccessful attempt the harness returns to between_attempts if count < 3; after the third unsuccessful attempt the case ends budget_exhausted. The third attempt may complete the case; no fourth attempt is admitted. At most 20 model calls are admitted: the twentieth response and its tool actions may finish the attempt, and a request for call 21 ends the case budget_exhausted without invocation. An actuating request before the attempt-starting observe is rejected without effect and ends the case as invariant_violation. The older wording that the count is incremented 'immediately before observe' or that a failed observation consumes an attempt is superseded.",
+    "invariants_and_outcomes_explanation": "profile.mandatory_invariants enumerates the five invariants behind zero-violation acceptance, including the allowed contact set. profile.outcome_rules uses the first terminal case event; priority applies only to simultaneous events (evaluation_failure first, abstained last). A supported missed grasp (box still on the tabletop) is misgrasp; a drop (loss of support) violates invariant 3 and is invariant_violation. If timeout already occurred, a later prohibited action is separate post-terminal evidence counted in acceptance evidence and does not rewrite the primary. Reset/readiness failure, worker/model/simulator/evaluator crashes and invalid evidence are evaluation_failure and remain in the denominator.",
+    "leakage_scope_explanation": "Only pretrial or protected material retires cases: heldout seeds, manifests, geometry, ground truth, labels or per-case results reaching a candidate, prompt, retrieval store, repair loop or training data. Operational observations of the current trial (declared observation fields and tool results during that trial) are explicitly exempt from the leakage/retirement clause. Pretrial heldout manifests, seeds, ground truth and labels never enter coding or development.",
     "revision_history": [
       "review_revision=1: initial candidate documents (commit 52e0e02).",
-      "review_revision=2: addresses review findings P1 coordinate frame, P1 deterministic baseline and skill contracts, P2 outcome precedence, P2 mandatory invariant set. Documentary only; no numerical target or heldout commitment changed; not a performance result."
+      "review_revision=2: addresses review findings P1 coordinate frame, P1 deterministic baseline and skill contracts, P2 outcome precedence, P2 mandatory invariant set (commit 1543b50). Documentary only.",
+      "review_revision=3: addresses review findings P1 attempt boundaries (re-observation does not consume an attempt; third attempt may complete; no fourth attempt or model call 21), P1 evaluation_failure for reset/readiness, crash and invalid evidence, misgrasp versus drop, leakage scope, and first-terminal-event precedence with post-deadline violations recorded separately. Documentary only; no numerical target or heldout commitment changed; not a performance result."
     ]
   }
 }

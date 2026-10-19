@@ -31,7 +31,7 @@ Planning and generation initially use the same underlying model with separate pr
 
 - [Implementation roadmap](docs/roadmap.md): ordered features, dependencies, acceptance criteria, and issue links.
 - [Architecture](docs/architecture.md): responsibilities, context flow, failure behavior, and model boundaries.
-- [Task and evaluation protocol (candidate_for_review)](docs/protocol/README.md): the `pick-place-v1` candidate profile ([task-v1.json](docs/protocol/task-v1.json)) and [decision record 0001](docs/decisions/0001-task-and-evaluation.md). Pending PR acceptance (review revision 2, documentary only); simulator and model are unverified candidates.
+- [Task and evaluation protocol (candidate_for_review)](docs/protocol/README.md): the `pick-place-v1` candidate profile ([task-v1.json](docs/protocol/task-v1.json)) and [decision record 0001](docs/decisions/0001-task-and-evaluation.md). Pending PR acceptance (review revision 3, documentary only; not a performance result); simulator and model are unverified candidates.
 - [Testing strategy](docs/testing.md): offline fixtures, containment, simulator tests, held-out evaluation, and evidence.
 - [Contributing](CONTRIBUTING.md): how to take a feature from planned to verified.
 - [Private GitHub Project](https://github.com/users/alokdidde/projects/4): all roadmap issues in Sequence order. Readiness distinguishes Ready, Blocked, and Deferred work.
