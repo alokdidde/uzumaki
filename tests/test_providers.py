@@ -101,3 +101,20 @@ def test_no_network_during_tests(fixture_path: Path) -> None:
     RecordedProvider.from_path(fixture_path).request({"role": "planner", "input": "fixture"})
     with pytest.raises(AssertionError, match="offline"):
         socket.create_connection(("example.com", 80))
+
+
+def test_deeply_nested_malformed_json_has_safe_error(tmp_path: Path) -> None:
+    path = tmp_path / "nested.json"
+    path.write_text("[" * 100000, encoding="utf-8")
+    with pytest.raises(ValueError, match="not valid JSON"):
+        RecordedProvider.from_path(path)
+
+
+def test_deep_request_has_safe_error(fixture_path: Path) -> None:
+    nested: Any = "private-sentinel"
+    for _ in range(2000):
+        nested = [nested]
+    provider = RecordedProvider.from_path(fixture_path)
+    with pytest.raises(ValueError, match="JSON-serializable") as exc:
+        provider.request({"nested": nested})
+    assert "private-sentinel" not in str(exc.value)

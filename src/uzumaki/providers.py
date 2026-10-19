@@ -13,7 +13,7 @@ SCHEMA_VERSION = "1.0"
 def _key(request: Any) -> str:
     try:
         return json.dumps(request, sort_keys=True, separators=(",", ":"), allow_nan=False)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, RecursionError):
         raise ValueError("request is not a JSON-serializable object") from None
 
 
@@ -35,7 +35,7 @@ class RecordedProvider:
             raise ValueError("recorded provider configuration file is unreadable") from None
         try:
             data = json.loads(text)
-        except ValueError:
+        except (ValueError, RecursionError):
             raise ValueError("recorded provider configuration is not valid JSON") from None
         return cls._from_data(data)
 
@@ -68,4 +68,7 @@ class RecordedProvider:
         key = _key(request)
         if key not in self._records:
             raise ValueError("no recorded result matches this request")
-        return copy.deepcopy(self._records[key])
+        try:
+            return copy.deepcopy(self._records[key])
+        except RecursionError:
+            raise ValueError("recorded provider result exceeds supported nesting") from None
