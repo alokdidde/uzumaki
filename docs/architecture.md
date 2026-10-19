@@ -49,4 +49,9 @@ The [roadmap](roadmap.md) controls sequence; the [testing strategy](testing.md) 
 
 ## Implemented so far
 
-Only the `uzumaki.providers.RecordedProvider` fixture replayer (stdlib-only, no network) exists in `src/uzumaki`; no harness runtime, execution, sandbox or live model support is implemented.
+`src/uzumaki` contains the `uzumaki.providers.RecordedProvider` fixture replayer (stdlib-only, no network) and the feature-04 evidence library ([feature note](features/event-evidence.md)):
+
+- `uzumaki.evidence` records run/task/candidate IDs, contract, skill and model versions, observation identities, decisions, tool calls and results, the outcome and timings in a bounded, checksum-chained log (`uzumaki.events/1.0`). It redacts sensitive keys and marks a run non-replayable when a replay input was redacted. Its validator rejects truncated, reordered, corrupt, incomplete, oversized and version-mismatched evidence.
+- `uzumaki.replay` keeps recorded-decision replay, fresh-model reevaluation and environment resimulation distinct. Only recorded-decision replay is implemented; it serves recorded outputs to deterministic harness logic without a provider or environment and compares semantic outcomes. The other modes are rejected, never substituted.
+
+No harness runtime, execution, sandbox or live model support is implemented. The checksums are integrity checks, not signatures.
