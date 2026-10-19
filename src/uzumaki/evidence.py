@@ -212,13 +212,16 @@ def _blocks_replay(kind: str, path: str) -> bool:
     return False
 
 
+def _event_non_replayable(event: Mapping[str, Any]) -> list[str]:
+    return [
+        f"required_input_redacted:seq={event['seq']}:{path}"
+        for path in event["redacted_paths"]
+        if _blocks_replay(event["kind"], path)
+    ]
+
+
 def _non_replayable(events: Iterable[Mapping[str, Any]]) -> list[str]:
-    reasons: list[str] = []
-    for event in events:
-        for path in event["redacted_paths"]:
-            if _blocks_replay(event["kind"], path):
-                reasons.append(f"required_input_redacted:seq={event['seq']}:{path}")
-    return reasons
+    return [reason for event in events for reason in _event_non_replayable(event)]
 
 
 class DecisionSource(Protocol):
@@ -255,6 +258,18 @@ def _check_id(value: Any, what: str) -> str:
     return value
 
 
+def _check_recorder_limits(limits: Limits) -> Limits:
+    ceiling = Limits()
+    values = limits.as_dict()
+    if not all(type(v) is int and v > 0 for v in values.values()):
+        raise EvidenceError("malformed", "limits must be positive integers")
+    # validate_bundle, load_bundle and replay cap every bound at the defaults, so a recorder must
+    # not accept evidence that they would later reject.
+    if any(v > ceiling.as_dict()[k] for k, v in values.items()):
+        raise EvidenceError("oversized", "limits exceed the validator ceiling")
+    return limits
+
+
 def _check_versions(value: Any, what: str, key_check: Callable[[Any], bool]) -> dict[str, str]:
     if not isinstance(value, dict):
         raise EvidenceError("malformed", f"{what} must be an object")
@@ -280,7 +295,7 @@ class EventRecorder:
         sensitive_keys: Iterable[str] = DEFAULT_SENSITIVE_KEYS,
         origin: Mapping[str, Any] | None = None,
     ) -> None:
-        self._limits = limits or Limits()
+        self._limits = _check_recorder_limits(limits or Limits())
         self._manifest: dict[str, Any] = {
             "contract_version": CONTRACT_VERSION,
             "run_id": _check_id(run_id, "run_id"),
@@ -297,7 +312,12 @@ class EventRecorder:
         self._keys = frozenset(k.lower() for k in sensitive_keys)
         self._events: list[dict[str, Any]] = []
         self._head = _genesis(self._manifest)
-        self._bytes = len(canonical_json(self._manifest))
+        self._event_bytes = 0  # canonical bytes of all recorded events, hashes included
+        self._reasons: list[str] = []
+        self._reason_bytes = 0  # canonical bytes of the non_replayable reason strings
+        self._wrapper_bytes = (
+            len(canonical_json({"log_version": LOG_VERSION, "manifest": 0, "events": 0})) - 2
+        )
         self._open_calls: dict[str, int] = {}
         self._call_ids: set[str] = set()
         self._state = "new"
@@ -308,8 +328,26 @@ class EventRecorder:
         if self._state not in states:
             raise EvidenceError("recorder_state", "operation not allowed in this recorder state")
 
+    def _bundle_bytes(
+        self, count: int, event_bytes: int, reason_count: int, reason_bytes: int
+    ) -> int:
+        """Exact canonical size of the bundle ``finish`` would build from these totals."""
+        manifest = {
+            **self._manifest,
+            "event_count": count,
+            "head_sha256": "0" * 64,
+            "replayable": reason_count == 0,
+            "non_replayable": [],
+        }
+        manifest_bytes = len(canonical_json(manifest)) + reason_bytes + max(0, reason_count - 1)
+        events_bytes = 2 + event_bytes + max(0, count - 1)
+        return self._wrapper_bytes + manifest_bytes + events_bytes
+
     def _append(self, kind: str, data: dict[str, Any]) -> None:
-        if len(self._events) >= self._limits.max_events:
+        final = kind == "run_finished"
+        # Until the log is closed, one event slot and the bytes of the largest possible
+        # run_finished event stay reserved, so a recorded outcome can always be finished.
+        if len(self._events) + (1 if final else 2) > self._limits.max_events:
             self._state = "failed"
             raise EvidenceError("oversized", "event count limit reached")
         found: list[str] = []
@@ -333,21 +371,34 @@ class EventRecorder:
             "redacted_paths": found,
             "prev_sha256": self._head,
         }
-        size = len(canonical_json(event)) + 80
-        if size > self._limits.max_event_bytes:
-            self._state = "failed"
-            raise EvidenceError("oversized", "event exceeds the per-event byte limit")
-        if self._bytes + size > self._limits.max_bundle_bytes:
-            self._state = "failed"
-            raise EvidenceError("oversized", "bundle byte limit reached")
         event["sha256"] = _chain(self._head, event)
         try:
             _check_event_shape(event, event["seq"])
         except EvidenceError:
             self._state = "failed"
             raise
+        size = len(canonical_json(event))
+        if size > self._limits.max_event_bytes:
+            self._state = "failed"
+            raise EvidenceError("oversized", "event exceeds the per-event byte limit")
+        new_reasons = _event_non_replayable(event)
+        reason_count = len(self._reasons) + len(new_reasons)
+        reason_bytes = self._reason_bytes + sum(len(canonical_json(r)) for r in new_reasons)
+        count = len(self._events) + 1
+        event_bytes = self._event_bytes + size
+        if not final:
+            count += 1
+            event_bytes += _max_finish_event_bytes(count - 1)
+        if (
+            self._bundle_bytes(count, event_bytes, reason_count, reason_bytes)
+            > self._limits.max_bundle_bytes
+        ):
+            self._state = "failed"
+            raise EvidenceError("oversized", "bundle byte limit reached")
         self._head = event["sha256"]
-        self._bytes += size
+        self._event_bytes += size
+        self._reasons.extend(new_reasons)
+        self._reason_bytes = reason_bytes
         self._events.append(event)
 
     def observation(
@@ -455,7 +506,7 @@ class EventRecorder:
         self._require("outcome")
         self._append("run_finished", {"status": status})
         self._state = "finished"
-        reasons = _non_replayable(self._events)
+        reasons = list(self._reasons)
         bundle = {
             "log_version": LOG_VERSION,
             "manifest": {
@@ -469,6 +520,24 @@ class EventRecorder:
         }
         validate_bundle(bundle)
         return copy.deepcopy(bundle)
+
+
+def _max_finish_event_bytes(seq: int) -> int:
+    """Upper bound on the canonical size of a run_finished event at ``seq``."""
+    longest = max(TERMINAL_STATUSES, key=len)
+    return len(
+        canonical_json(
+            {
+                "seq": seq,
+                "kind": "run_finished",
+                "monotonic_ms": _MAX_MS,
+                "data": {"status": longest},
+                "redacted_paths": [],
+                "prev_sha256": "0" * 64,
+                "sha256": "0" * 64,
+            }
+        )
+    )
 
 
 def _check_field(kind: str, value: Any, path: str) -> None:

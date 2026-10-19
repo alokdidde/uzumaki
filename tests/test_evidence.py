@@ -203,7 +203,8 @@ def test_rejects_undeclared_redaction() -> None:
 
 
 def test_event_count_is_bounded() -> None:
-    rec = new_recorder(limits=Limits(max_events=3))
+    # One slot stays reserved for run_finished, so a fourth event is refused before it is recorded.
+    rec = new_recorder(limits=Limits(max_events=4))
     rec.tool_call("call-1", "observe", {})
     rec.tool_result("call-1", "ok", {})
     with pytest.raises(EvidenceError) as exc:
@@ -229,6 +230,78 @@ def test_event_and_bundle_bytes_are_bounded(tmp_path: Path) -> None:
     with pytest.raises(EvidenceError) as exc:
         load_bundle(path, Limits(max_bundle_bytes=4096))
     assert exc.value.reason == "oversized"
+
+
+def test_recorder_rejects_limits_the_validator_would_reject() -> None:
+    for limits in (
+        Limits(max_events=5000),
+        Limits(max_event_bytes=Limits().max_event_bytes + 1),
+        Limits(max_bundle_bytes=Limits().max_bundle_bytes + 1),
+    ):
+        with pytest.raises(EvidenceError) as exc:
+            new_recorder(limits=limits)
+        assert exc.value.reason == "oversized"
+    with pytest.raises(EvidenceError) as exc:
+        new_recorder(limits=Limits(max_events=0))
+    assert exc.value.reason == "malformed"
+
+
+def test_run_filling_the_default_event_limit_finishes_and_loads(tmp_path: Path) -> None:
+    rec = new_recorder()
+    for i in range(2046):
+        rec.tool_call(f"call-{i}", "observe", {})
+        rec.tool_result(f"call-{i}", "ok", {})
+    with pytest.raises(EvidenceError) as exc:
+        rec.tool_call("call-x", "observe", {})
+        rec.tool_result("call-x", "ok", {})
+        rec.outcome("completed", "goal_reached")  # would leave no slot for run_finished
+    assert exc.value.reason == "oversized"
+    rec = new_recorder()
+    for i in range(2046):
+        rec.tool_call(f"call-{i}", "observe", {})
+        rec.tool_result(f"call-{i}", "ok", {})
+    rec.outcome("completed", "goal_reached")
+    bundle = rec.finish("completed")
+    assert len(bundle["events"]) == 4095
+    path = tmp_path / "full.json"
+    write_bundle(bundle, path)
+    assert load_bundle(path) == bundle
+
+
+def _record_near_byte_limit(limit: int) -> dict[str, Any] | None:
+    """Record a run with required-input redactions; None if a limit stops it at record time."""
+    rec = new_recorder(limits=Limits(max_bundle_bytes=limit))
+    try:
+        for i in range(3):
+            rec.tool_call(f"call-{i}", "configure", {"api_key": "k", "n": i})
+            rec.tool_result(f"call-{i}", "ok", {"token": "t"})
+        rec.outcome("completed", "goal_reached")
+    except EvidenceError as exc:
+        assert exc.reason == "oversized"
+        with pytest.raises(EvidenceError) as state:
+            rec.finish("completed")
+        assert state.value.reason == "recorder_state"
+        return None
+    bundle: dict[str, Any] = rec.finish("completed")  # must never fail once the outcome is in
+    return bundle
+
+
+def test_byte_limit_is_enforced_exactly_at_record_time() -> None:
+    results = {limit: _record_near_byte_limit(limit) for limit in range(3000, 4500)}
+    accepted = [limit for limit, bundle in results.items() if bundle is not None]
+    assert accepted and accepted[0] > 3000  # the range spans the boundary
+    assert accepted == list(range(accepted[0], 4500))  # monotone: no failures past the boundary
+    for limit in accepted:
+        bundle = results[limit]
+        assert bundle is not None
+        assert len(bundle["manifest"]["non_replayable"]) == 6
+        size = len(json.dumps(bundle, sort_keys=True, separators=(",", ":")))
+        assert size <= limit
+        validate_bundle(bundle)
+    # The only slack is the reserved worst-case run_finished time and status.
+    first = results[accepted[0]]
+    assert first is not None
+    assert accepted[0] - len(json.dumps(first, sort_keys=True, separators=(",", ":"))) < 32
 
 
 def test_validator_enforces_declared_limits() -> None:
