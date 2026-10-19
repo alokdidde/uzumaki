@@ -2,13 +2,13 @@
 
 This is a test plan, not a report of passing implementation tests. Issue 01 freezes task-specific metrics and thresholds; issue 03 introduces runnable package/CI commands and documents them here. No model API, dependency install, or powered hardware is required to review this bootstrap.
 
-The candidate task profile and thresholds are in the [protocol](protocol/README.md) (`candidate_for_review`, unmeasured). Today's checks are documentary (diff whitespace check, JSON inspection, the external protocol checker, manual review criteria in that README; the profile is review revision 3, `candidate_for_review`, pending PR acceptance); they are not the executable tests described below, which start with feature 03.
+The candidate task profile and thresholds are in the [protocol](protocol/README.md) (`candidate_for_review`, unmeasured). Today's checks are documentary (diff whitespace check, JSON inspection, the external protocol checker, manual review criteria in that README; the profile is review revision 4, a documentary revision with zero trials, `candidate_for_review`, pending PR acceptance); they are not the executable tests described below, which start with feature 03.
 
 ## Acceptance protocol
 
 Before implementing a feature, record its workload, pinned inputs and environment, acceptance criteria, failure cases, metrics, immutable thresholds, clean-checkout reproduction commands, and retained evidence location. Document protocol changes and rerun affected checks; never weaken a valid check to turn a failure into a pass. Every feature has specific acceptance and test cases in [the roadmap](roadmap.md) and its issue.
 
-Correctness/containment invariants are mandatory; performance or success-rate targets depend on the chosen task. Do not invent universal latency or robotics success thresholds. Unimplemented or unavailable checks are not passes. An optional suite may be excluded from a default run; when explicitly requested, missing prerequisites produce a visible failure.
+Correctness/containment invariants are mandatory, and their absence must be shown by retained independent evidence: for the first task all 40 held-out cases, failures included, need integrity-checked invariant evidence, missing or corrupt evidence is never read as zero, and failure counts alone never prove zero violations (see `acceptance_evidence_rules` in the [protocol](protocol/README.md#acceptance-evidence-rules-acceptance_evidence_rules)). Rejected or fenced requests are diagnostics; only actual prohibited admission, execution, effects or access count as violations. performance or success-rate targets depend on the chosen task. Do not invent universal latency or robotics success thresholds. Unimplemented or unavailable checks are not passes. An optional suite may be excluded from a default run; when explicitly requested, missing prerequisites produce a visible failure.
 
 ## Layers
 
