@@ -106,6 +106,9 @@ MAX_SKILLS = 256
 MAX_INSTRUCTIONS = 8192
 MAX_APPLICABILITY = 512
 MAX_DEPENDENCIES = 8
+#: Bound on dependency edges examined while searching for a consistent closure. Exceeding it
+#: fails closed with ``incompatible_dependency``.
+MAX_RESOLUTION_STEPS = 10_000
 #: Contract 1.0 ``eligible_skills.payload.skills.maxItems``.
 MAX_ELIGIBLE = 32
 MAX_CONTRACT_FIELDS = 16
@@ -595,6 +598,29 @@ def _tools_within(dependency: Skill, dependent: Skill) -> bool:
     return all(granted.get(name) == v for name, v in dependency.tool_permissions.items())
 
 
+#: States a pin or validation may resolve to, and states a new registration may depend on.
+_RESOLVABLE = frozenset({"validated"})
+_REGISTRABLE = frozenset({"candidate", "validated", "deprecated"})
+
+
+def _acyclic(closure: Mapping[str, Skill]) -> bool:
+    """Whether the chosen versions in ``closure`` (ID -> skill) form no dependency cycle."""
+    marks: dict[str, int] = {}
+
+    def visit(skill_id: str) -> bool:
+        mark = marks.get(skill_id)
+        if mark is not None:
+            return mark == 2
+        marks[skill_id] = 1
+        for dep in closure[skill_id].dependencies:
+            if not visit(dep.skill_id):
+                return False
+        marks[skill_id] = 2
+        return True
+
+    return all(visit(skill_id) for skill_id in closure)
+
+
 class RegistrySnapshot:
     """Immutable view of the registry at one ``registry_version``."""
 
@@ -621,34 +647,89 @@ class RegistrySnapshot:
         self.get(skill_id, skill_version)
         return self._states[(skill_id, skill_version)]
 
-    def _validated_versions(self, skill_id: str) -> list[int]:
+    def _versions(self, skill_id: str, usable: frozenset[str]) -> list[int]:
         return sorted(
             version
             for (sid, version), state in self._states.items()
-            if sid == skill_id and state == "validated"
+            if sid == skill_id and state in usable
         )
 
-    def _resolve(self, skill: Skill, chain: tuple[str, ...]) -> dict[tuple[str, int], Skill]:
-        """Resolve each dependency to its highest validated version in range, recursively."""
-        resolved: dict[tuple[str, int], Skill] = {}
-        for dep in skill.dependencies:
-            if dep.skill_id in chain:
-                raise SkillError("dependency_cycle", skill.label)
+    def _validated_versions(self, skill_id: str) -> list[int]:
+        return self._versions(skill_id, _RESOLVABLE)
+
+    def _search(
+        self,
+        pending: list[tuple[Skill, Dependency]],
+        assigned: dict[str, Skill],
+        usable: frozenset[str],
+        failures: list[tuple[str, str]],
+        steps: list[int],
+    ) -> dict[str, Skill] | None:
+        """Backtracking search for one version per skill ID that satisfies every range.
+
+        Edges are taken in order; a new ID tries its usable versions from highest to lowest, and
+        an ID already chosen must satisfy each later range on it. Recursion happens only when a
+        new ID is chosen, so its depth is bounded by the number of distinct IDs.
+        """
+        root = next(iter(assigned.values()))
+        for index, (parent, dep) in enumerate(pending):
+            steps[0] += 1
+            if steps[0] > MAX_RESOLUTION_STEPS:
+                raise SkillError("incompatible_dependency", root.label)
+            if dep.skill_id == root.skill_id:
+                failures.append(("dependency_cycle", parent.label))
+                return None
+            chosen = assigned.get(dep.skill_id)
+            if chosen is not None:
+                if dep.accepts(chosen.skill_version) and _tools_within(chosen, parent):
+                    continue
+                failures.append(("incompatible_dependency", parent.label))
+                return None
             if not any(sid == dep.skill_id for sid, _ in self._skills):
-                raise SkillError("missing_dependency", skill.label)
-            versions = [v for v in self._validated_versions(dep.skill_id) if dep.accepts(v)]
-            if not versions:
-                raise SkillError("incompatible_dependency", skill.label)
-            target = self._skills[(dep.skill_id, versions[-1])]
-            if not _tools_within(target, skill):
-                raise SkillError("incompatible_dependency", skill.label)
-            resolved[target.key] = target
-            resolved.update(self._resolve(target, (*chain, dep.skill_id)))
-        return resolved
+                failures.append(("missing_dependency", parent.label))
+                return None
+            candidates = [v for v in self._versions(dep.skill_id, usable) if dep.accepts(v)]
+            if not candidates:
+                failures.append(("incompatible_dependency", parent.label))
+                return None
+            rest = pending[index + 1 :]
+            for version in reversed(candidates):
+                target = self._skills[(dep.skill_id, version)]
+                if not _tools_within(target, parent):
+                    failures.append(("incompatible_dependency", parent.label))
+                    continue
+                edges = [(target, child) for child in target.dependencies]
+                result = self._search(
+                    rest + edges, {**assigned, dep.skill_id: target}, usable, failures, steps
+                )
+                if result is not None:
+                    return result
+            return None
+        if not _acyclic(assigned):
+            failures.append(("dependency_cycle", root.label))
+            return None
+        return assigned
+
+    def _closure(self, skill: Skill, usable: frozenset[str]) -> dict[str, Skill]:
+        """The dependency closure of ``skill``: exactly one version per skill ID.
+
+        Every dependency range on an ID in the closure must accept the one chosen version, and
+        each chosen version's tools must be within its dependent's grants. Among consistent
+        closures, earlier edges get the highest version (dependencies in declaration order,
+        depth after breadth). Raises the first failure seen when no consistent closure exists.
+        """
+        failures: list[tuple[str, str]] = []
+        pending = [(skill, dep) for dep in skill.dependencies]
+        result = self._search(pending, {skill.skill_id: skill}, usable, failures, [0])
+        if result is None:
+            reason, subject = (failures or [("incompatible_dependency", skill.label)])[0]
+            raise SkillError(reason, subject)
+        return {sid: target for sid, target in result.items() if sid != skill.skill_id}
 
     def resolve_dependencies(self, skill: Skill) -> tuple[Skill, ...]:
-        closure = self._resolve(skill, (skill.skill_id,))
-        return tuple(closure[key] for key in sorted(closure))
+        """Resolve a consistent validated closure: one version per ID, sorted by key."""
+        closure = self._closure(skill, _RESOLVABLE)
+        return tuple(sorted(closure.values(), key=lambda target: target.key))
 
     def pin(self, skill_id: str, skill_version: int | None = None, *, run_id: str) -> PinnedSkill:
         """Pin a validated skill (the highest validated version when none is given)."""
@@ -829,6 +910,8 @@ class SkillRegistry:
                 raise SkillError("incompatible_dependency", skill.label)
             if self._reaches(dep.skill_id, skill.skill_id):
                 raise SkillError("dependency_cycle", skill.label)
+        # The ranges across the whole closure must agree on one non-rejected version per ID.
+        RegistrySnapshot(self._version, self._skills, self._states)._closure(skill, _REGISTRABLE)
 
     def register(self, artifact: Skill | Mapping[str, Any], *, by: str = "caller") -> Skill:
         """Register a new artifact as ``candidate``. Nothing is ever replaced."""
@@ -876,8 +959,9 @@ class SkillRegistry:
     ) -> int:
         """Change the state of one version; returns the new ``registry_version``.
 
-        ``validated`` additionally requires the artifact to verify and every dependency to resolve
-        to a validated version (``incompatible_dependency`` otherwise).
+        ``validated`` additionally requires the artifact to verify and its dependency closure to
+        resolve to one validated version per skill ID that satisfies every range on that ID
+        (``incompatible_dependency`` otherwise).
         """
         if not isinstance(evidence_ref, str) or not _ID.fullmatch(evidence_ref):
             raise SkillError("malformed")

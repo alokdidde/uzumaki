@@ -461,6 +461,75 @@ def test_validation_requires_validated_dependencies() -> None:
     assert registry.state("pick-and-place", 1) == "candidate"
 
 
+def diamond_registry() -> SkillRegistry:
+    """place-box@1 and @2 validated; helper@1 validated and depends on place-box [1, 1]."""
+    registry = base_registry()
+    registry.register(sealed("place-box", skill_version=2))
+    registry.validate("place-box", 2, evidence_ref="review-1")
+    helper = sealed("pick-and-place", skill_id="helper", dependencies=depends(("place-box", 1, 1)))
+    registry.register(helper)
+    registry.validate("helper", 1, evidence_ref="review-1")
+    return registry
+
+
+def test_overlapping_diamond_resolves_to_one_version_per_skill_id() -> None:
+    registry = diamond_registry()
+    top = sealed(
+        "pick-and-place",
+        skill_id="top",
+        dependencies=depends(("helper", 1, 1), ("place-box", 1, 2)),
+    )
+    registry.register(top)
+    registry.validate("top", 1, evidence_ref="review-1")
+    pinned = registry.pin("top", run_id="run-1")
+    assert [d.key for d in pinned.dependencies] == [("helper", 1), ("place-box", 1)]
+    assert "top" in [s.skill_id for s in registry.snapshot().eligible()]
+
+
+def test_disjoint_diamond_is_rejected_at_registration() -> None:
+    registry = diamond_registry()
+    version = registry.registry_version
+    top = sealed(
+        "pick-and-place",
+        skill_id="top",
+        dependencies=depends(("helper", 1, 1), ("place-box", 2, 2)),
+    )
+    rejects("incompatible_dependency", lambda: registry.register(top))
+    assert registry.registry_version == version
+    rejects("unknown_skill", lambda: registry.get("top", 1))
+
+
+def test_disjoint_validated_diamond_blocks_validation_and_new_pins() -> None:
+    registry = diamond_registry()
+    helper_v2 = sealed(
+        "pick-and-place",
+        skill_id="helper",
+        skill_version=2,
+        dependencies=depends(("place-box", 2, 2)),
+    )
+    registry.register(helper_v2)
+    top = sealed(
+        "pick-and-place",
+        skill_id="top",
+        dependencies=depends(("helper", 1, 2), ("place-box", 2, 2)),
+    )
+    registry.register(top)  # consistent through the candidate helper@2
+    # Only helper@1 is validated, and it needs place-box@1 while top needs place-box@2.
+    rejects("incompatible_dependency", lambda: registry.validate("top", 1, evidence_ref="r-1"))
+    assert registry.state("top", 1) == "candidate"
+
+    registry.validate("helper", 2, evidence_ref="review-2")
+    registry.validate("top", 1, evidence_ref="review-2")
+    pinned = registry.pin("top", run_id="run-1")
+    assert [d.key for d in pinned.dependencies] == [("helper", 2), ("place-box", 2)]
+
+    registry.deprecate("helper", 2, evidence_ref="review-3")
+    rejects("incompatible_dependency", lambda: registry.pin("top", run_id="run-2"))
+    assert "top" not in [s.skill_id for s in registry.snapshot().eligible()]
+    assert [d.key for d in pinned.dependencies] == [("helper", 2), ("place-box", 2)]
+    pinned.verify()
+
+
 # --- duplicate and conflicting IDs ----------------------------------------------------------
 
 
