@@ -52,7 +52,9 @@ from uzumaki.broker import BROKER_PROTOCOL, ToolBroker, ToolCallRecord
 
 SANDBOX_VERSION = "uzumaki.sandbox/1.0"
 
-#: Platforms on which the adversarial containment suite has been run and passed.
+#: The only platforms admitted: the target of the adversarial containment suite
+#: (tests/test_sandbox_containment.py). Pass evidence comes from independent validation runs, not
+#: from this constant; every other OS or architecture fails admission.
 VERIFIED_PLATFORMS = (("Linux", "x86_64"),)
 #: Landlock ABI 6 adds signal and abstract-socket scoping; must equal the bootstrap's minimum.
 MIN_LANDLOCK_ABI = 6
