@@ -1,0 +1,2098 @@
+{
+ "$comment": "Normative documentary contract for uzumaki issue 02. Offline-checkable JSON data; no runtime implements it yet (feature 03 onward).",
+ "contract_version": "1.0",
+ "protocol_version": "pick-place-v1",
+ "authority": {
+  "planner": "selection_or_abstention_only",
+  "generator": "untrusted_artifact_only",
+  "evaluator": "task_success_authority"
+ },
+ "limits": {
+  "max_input_bytes": 65536,
+  "max_observation_age_ms": 200
+ },
+ "limits_rationale": {
+  "max_input_bytes": "Measured on canonical JSON (sorted keys, separators ',' and ':', ASCII escapes, NaN/Infinity forbidden) of the whole record. Checked before any other rule. A documentary containment limit, not a performance claim.",
+  "max_observation_age_ms": "profile.observations.max_age_seconds 0.2 expressed in integer ms. Applied to received_at_ms - captured_at_ms at record validation, and again by the harness at admission of every actuating call against admission time."
+ },
+ "records": {
+  "task_context": {
+   "$schema": "https://json-schema.org/draft/2020-12/schema",
+   "title": "uzumaki task_context v1.0",
+   "description": "Task context: separates observed facts, inferred judgments, objectives, constraints, hints and partial physical progress.",
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "schema_version",
+    "kind",
+    "payload"
+   ],
+   "properties": {
+    "schema_version": {
+     "const": "1.0"
+    },
+    "kind": {
+     "const": "task_context"
+    },
+    "payload": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "context_id",
+      "task_id",
+      "case_id",
+      "assembled_at_ms",
+      "observed_facts",
+      "inferred_judgments",
+      "objectives",
+      "constraints",
+      "hints",
+      "partial_progress"
+     ],
+     "properties": {
+      "context_id": {
+       "type": "string",
+       "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+       "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+      },
+      "task_id": {
+       "type": "string",
+       "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+       "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+      },
+      "case_id": {
+       "type": "string",
+       "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+       "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+      },
+      "assembled_at_ms": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 9007199254740991,
+       "description": "Nonnegative integer milliseconds."
+      },
+      "observed_facts": {
+       "type": "array",
+       "maxItems": 16,
+       "items": {
+        "description": "Observed fact: one declared pick-place-v1 observation field copied from a single observation. The protocol `timestamp` field is carried as observation captured_at_ms, not as a fact. An absent field is unknown/missing and is never filled from memory or guessed; null values are not permitted.",
+        "oneOf": [
+         {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "fact_id",
+           "observation_id",
+           "field",
+           "value"
+          ],
+          "properties": {
+           "fact_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+            "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+           },
+           "observation_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+            "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+           },
+           "field": {
+            "const": "object_pose_estimate"
+           },
+           "value": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+             "x_m",
+             "y_m",
+             "z_m",
+             "yaw_deg"
+            ],
+            "properties": {
+             "x_m": {
+              "type": "number",
+              "minimum": -0.25,
+              "maximum": 0.25,
+              "description": "Metres, tabletop frame (goal_frame)."
+             },
+             "y_m": {
+              "type": "number",
+              "minimum": -0.25,
+              "maximum": 0.25,
+              "description": "Metres, tabletop frame."
+             },
+             "z_m": {
+              "type": "number",
+              "minimum": -1,
+              "maximum": 2,
+              "description": "Metres above tabletop z=0."
+             },
+             "yaw_deg": {
+              "type": "number",
+              "minimum": -180,
+              "maximum": 180,
+              "description": "Degrees, wrapped to [-180,180]."
+             }
+            },
+            "description": "Pose in the pick-place-v1 tabletop frame. An estimate when observed, never ground truth."
+           }
+          },
+          "description": "Estimated box pose."
+         },
+         {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "fact_id",
+           "observation_id",
+           "field",
+           "value"
+          ],
+          "properties": {
+           "fact_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+            "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+           },
+           "observation_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+            "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+           },
+           "field": {
+            "const": "target_pose"
+           },
+           "value": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+             "x_m",
+             "y_m",
+             "z_m",
+             "yaw_deg"
+            ],
+            "properties": {
+             "x_m": {
+              "type": "number",
+              "minimum": -0.25,
+              "maximum": 0.25,
+              "description": "Metres, tabletop frame (goal_frame)."
+             },
+             "y_m": {
+              "type": "number",
+              "minimum": -0.25,
+              "maximum": 0.25,
+              "description": "Metres, tabletop frame."
+             },
+             "z_m": {
+              "type": "number",
+              "minimum": -1,
+              "maximum": 2,
+              "description": "Metres above tabletop z=0."
+             },
+             "yaw_deg": {
+              "type": "number",
+              "minimum": -180,
+              "maximum": 180,
+              "description": "Degrees, wrapped to [-180,180]."
+             }
+            },
+            "description": "Pose in the pick-place-v1 tabletop frame. An estimate when observed, never ground truth."
+           }
+          },
+          "description": "Declared target pose as observed."
+         },
+         {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "fact_id",
+           "observation_id",
+           "field",
+           "value"
+          ],
+          "properties": {
+           "fact_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+            "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+           },
+           "observation_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+            "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+           },
+           "field": {
+            "const": "gripper_state"
+           },
+           "value": {
+            "enum": [
+             "open_empty",
+             "closed_empty",
+             "holding"
+            ],
+            "description": "Reported gripper state."
+           }
+          },
+          "description": "Gripper state."
+         },
+         {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "fact_id",
+           "observation_id",
+           "field",
+           "value"
+          ],
+          "properties": {
+           "fact_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+            "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+           },
+           "observation_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+            "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+           },
+           "field": {
+            "const": "tool_result"
+           },
+           "value": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+             "tool",
+             "status",
+             "reason"
+            ],
+            "properties": {
+             "tool": {
+              "enum": [
+               "observe",
+               "pick",
+               "place",
+               "abort"
+              ]
+             },
+             "status": {
+              "enum": [
+               "succeeded",
+               "failed",
+               "rejected"
+              ]
+             },
+             "reason": {
+              "type": [
+               "string",
+               "null"
+              ],
+              "minLength": 1,
+              "maxLength": 256,
+              "description": "Bounded tool-reported reason; untrusted data. At most 256 code points. Null: no reason reported."
+             }
+            }
+           }
+          },
+          "description": "Last tool result as reported by the tool broker; untrusted data, not a success claim."
+         }
+        ]
+       },
+       "description": "Observed facts only. At most 16. Two facts for the same field with different values make the input contradictory (harness semantic rule)."
+      },
+      "inferred_judgments": {
+       "type": "array",
+       "maxItems": 16,
+       "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+         "judgment_id",
+         "author_role",
+         "statement",
+         "confidence",
+         "basis_ids",
+         "authoritative"
+        ],
+        "properties": {
+         "judgment_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+          "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+         },
+         "author_role": {
+          "enum": [
+           "planner",
+           "generator",
+           "skill",
+           "retrieval"
+          ]
+         },
+         "statement": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "description": "Inferred judgment text; untrusted data. At most 1024 code points."
+         },
+         "confidence": {
+          "type": [
+           "number",
+           "null"
+          ],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Self-reported confidence in [0,1]. Null: confidence not stated; never defaulted."
+         },
+         "basis_ids": {
+          "type": "array",
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": {
+           "type": "string",
+           "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+           "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+          },
+          "description": "IDs of facts/observations/hints the judgment cites."
+         },
+         "authoritative": {
+          "const": false
+         }
+        },
+        "description": "Inferred judgment from a model/skill/retrieval role. Never promoted to an observed fact, objective or outcome."
+       }
+      },
+      "objectives": {
+       "type": "array",
+       "minItems": 1,
+       "maxItems": 1,
+       "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+         "objective_id",
+         "kind",
+         "target_pose",
+         "xy_tolerance_m",
+         "yaw_tolerance_deg",
+         "settle_s",
+         "source"
+        ],
+        "properties": {
+         "objective_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+          "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+         },
+         "kind": {
+          "const": "place_box_at_target"
+         },
+         "target_pose": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "x_m",
+           "y_m",
+           "z_m",
+           "yaw_deg"
+          ],
+          "properties": {
+           "x_m": {
+            "type": "number",
+            "minimum": -0.25,
+            "maximum": 0.25,
+            "description": "Metres, tabletop frame (goal_frame)."
+           },
+           "y_m": {
+            "type": "number",
+            "minimum": -0.25,
+            "maximum": 0.25,
+            "description": "Metres, tabletop frame."
+           },
+           "z_m": {
+            "type": "number",
+            "minimum": -1,
+            "maximum": 2,
+            "description": "Metres above tabletop z=0."
+           },
+           "yaw_deg": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180,
+            "description": "Degrees, wrapped to [-180,180]."
+           }
+          },
+          "description": "Pose in the pick-place-v1 tabletop frame. An estimate when observed, never ground truth."
+         },
+         "xy_tolerance_m": {
+          "const": 0.02
+         },
+         "yaw_tolerance_deg": {
+          "const": 10
+         },
+         "settle_s": {
+          "const": 0.5
+         },
+         "source": {
+          "const": "task_protocol"
+         }
+        },
+        "description": "Objective fixed by the frozen pick-place-v1 protocol completion rule. No model role can author or change it."
+       },
+       "description": "Exactly one objective for pick-place-v1."
+      },
+      "constraints": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "protocol_version",
+        "attempts_per_case",
+        "wall_ms_per_case",
+        "model_calls_per_case",
+        "max_observation_age_ms",
+        "allowed_tools",
+        "source"
+       ],
+       "properties": {
+        "protocol_version": {
+         "const": "pick-place-v1"
+        },
+        "attempts_per_case": {
+         "const": 3
+        },
+        "wall_ms_per_case": {
+         "const": 120000
+        },
+        "model_calls_per_case": {
+         "const": 20
+        },
+        "max_observation_age_ms": {
+         "const": 200
+        },
+        "allowed_tools": {
+         "type": "array",
+         "minItems": 4,
+         "maxItems": 4,
+         "uniqueItems": true,
+         "items": {
+          "enum": [
+           "observe",
+           "pick",
+           "place",
+           "abort"
+          ]
+         }
+        },
+        "source": {
+         "const": "task_protocol"
+        }
+       },
+       "description": "Read-only constraints copied from profile.budgets/tools/observations. Read-only to every model role."
+      },
+      "hints": {
+       "type": "array",
+       "maxItems": 8,
+       "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+         "hint_id",
+         "source",
+         "text",
+         "trust"
+        ],
+        "properties": {
+         "hint_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+          "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+         },
+         "source": {
+          "enum": [
+           "task_text",
+           "retrieval",
+           "skill_documentation"
+          ]
+         },
+         "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "description": "Hint text. At most 1024 code points."
+         },
+         "trust": {
+          "const": "untrusted_data"
+         }
+        },
+        "description": "Hint: untrusted guidance, never authority, objective or constraint."
+       }
+      },
+      "partial_progress": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "level",
+        "source",
+        "evidence_ref"
+       ],
+       "properties": {
+        "level": {
+         "enum": [
+          "none",
+          "partial",
+          "goal_reached",
+          "unknown"
+         ],
+         "description": "Physical progress per protocol outcome_rules.progress; `unknown` = not yet assessed by the evaluator (never read as none)."
+        },
+        "source": {
+         "enum": [
+          "environment_evaluator",
+          "not_assessed"
+         ]
+        },
+        "evidence_ref": {
+         "type": [
+          "string",
+          "null"
+         ],
+         "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+         "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content. Null: no evaluator evidence yet (level must be unknown)."
+        }
+       },
+       "description": "Partial physical progress as independently recorded by the environment evaluator. Model claims of progress are inferred judgments, never this field.",
+       "allOf": [
+        {
+         "if": {
+          "properties": {
+           "level": {
+            "const": "unknown"
+           }
+          }
+         },
+         "then": {
+          "properties": {
+           "source": {
+            "const": "not_assessed"
+           },
+           "evidence_ref": {
+            "type": "null"
+           }
+          }
+         },
+         "else": {
+          "properties": {
+           "source": {
+            "const": "environment_evaluator"
+           },
+           "evidence_ref": {
+            "type": "string"
+           }
+          }
+         }
+        }
+       ]
+      }
+     },
+     "description": "Bounded context assembled by the harness for a model role. Each category is a separate field so no item can change category."
+    }
+   }
+  },
+  "observation": {
+   "$schema": "https://json-schema.org/draft/2020-12/schema",
+   "title": "uzumaki observation v1.0",
+   "description": "Timestamped observation from the environment observe tool. Freshness: 0 <= received_at_ms - captured_at_ms <= 200.",
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "schema_version",
+    "kind",
+    "payload"
+   ],
+   "properties": {
+    "schema_version": {
+     "const": "1.0"
+    },
+    "kind": {
+     "const": "observation"
+    },
+    "payload": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "observation_id",
+      "task_id",
+      "case_id",
+      "run_id",
+      "attempt_id",
+      "clock_domain",
+      "captured_at_ms",
+      "received_at_ms",
+      "source",
+      "observed_facts"
+     ],
+     "properties": {
+      "observation_id": {
+       "type": "string",
+       "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+       "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+      },
+      "task_id": {
+       "type": "string",
+       "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+       "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+      },
+      "case_id": {
+       "type": "string",
+       "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+       "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+      },
+      "run_id": {
+       "type": "string",
+       "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+       "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+      },
+      "attempt_id": {
+       "type": "string",
+       "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+       "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+      },
+      "clock_domain": {
+       "const": "harness_monotonic",
+       "description": "captured_at_ms and received_at_ms are both in this single clock domain."
+      },
+      "captured_at_ms": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 9007199254740991,
+       "description": "Time the environment captured the sample, harness_monotonic ms."
+      },
+      "received_at_ms": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 9007199254740991,
+       "description": "Time the harness received the sample, same clock domain. Must be >= captured_at_ms (else contradictory); received-captured <= 200 ms (else stale)."
+      },
+      "source": {
+       "const": "environment_observe"
+      },
+      "observed_facts": {
+       "type": "array",
+       "maxItems": 16,
+       "items": {
+        "description": "Observed fact: one declared pick-place-v1 observation field copied from a single observation. The protocol `timestamp` field is carried as observation captured_at_ms, not as a fact. An absent field is unknown/missing and is never filled from memory or guessed; null values are not permitted.",
+        "oneOf": [
+         {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "fact_id",
+           "observation_id",
+           "field",
+           "value"
+          ],
+          "properties": {
+           "fact_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+            "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+           },
+           "observation_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+            "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+           },
+           "field": {
+            "const": "object_pose_estimate"
+           },
+           "value": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+             "x_m",
+             "y_m",
+             "z_m",
+             "yaw_deg"
+            ],
+            "properties": {
+             "x_m": {
+              "type": "number",
+              "minimum": -0.25,
+              "maximum": 0.25,
+              "description": "Metres, tabletop frame (goal_frame)."
+             },
+             "y_m": {
+              "type": "number",
+              "minimum": -0.25,
+              "maximum": 0.25,
+              "description": "Metres, tabletop frame."
+             },
+             "z_m": {
+              "type": "number",
+              "minimum": -1,
+              "maximum": 2,
+              "description": "Metres above tabletop z=0."
+             },
+             "yaw_deg": {
+              "type": "number",
+              "minimum": -180,
+              "maximum": 180,
+              "description": "Degrees, wrapped to [-180,180]."
+             }
+            },
+            "description": "Pose in the pick-place-v1 tabletop frame. An estimate when observed, never ground truth."
+           }
+          },
+          "description": "Estimated box pose."
+         },
+         {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "fact_id",
+           "observation_id",
+           "field",
+           "value"
+          ],
+          "properties": {
+           "fact_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+            "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+           },
+           "observation_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+            "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+           },
+           "field": {
+            "const": "target_pose"
+           },
+           "value": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+             "x_m",
+             "y_m",
+             "z_m",
+             "yaw_deg"
+            ],
+            "properties": {
+             "x_m": {
+              "type": "number",
+              "minimum": -0.25,
+              "maximum": 0.25,
+              "description": "Metres, tabletop frame (goal_frame)."
+             },
+             "y_m": {
+              "type": "number",
+              "minimum": -0.25,
+              "maximum": 0.25,
+              "description": "Metres, tabletop frame."
+             },
+             "z_m": {
+              "type": "number",
+              "minimum": -1,
+              "maximum": 2,
+              "description": "Metres above tabletop z=0."
+             },
+             "yaw_deg": {
+              "type": "number",
+              "minimum": -180,
+              "maximum": 180,
+              "description": "Degrees, wrapped to [-180,180]."
+             }
+            },
+            "description": "Pose in the pick-place-v1 tabletop frame. An estimate when observed, never ground truth."
+           }
+          },
+          "description": "Declared target pose as observed."
+         },
+         {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "fact_id",
+           "observation_id",
+           "field",
+           "value"
+          ],
+          "properties": {
+           "fact_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+            "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+           },
+           "observation_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+            "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+           },
+           "field": {
+            "const": "gripper_state"
+           },
+           "value": {
+            "enum": [
+             "open_empty",
+             "closed_empty",
+             "holding"
+            ],
+            "description": "Reported gripper state."
+           }
+          },
+          "description": "Gripper state."
+         },
+         {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+           "fact_id",
+           "observation_id",
+           "field",
+           "value"
+          ],
+          "properties": {
+           "fact_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+            "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+           },
+           "observation_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+            "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+           },
+           "field": {
+            "const": "tool_result"
+           },
+           "value": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+             "tool",
+             "status",
+             "reason"
+            ],
+            "properties": {
+             "tool": {
+              "enum": [
+               "observe",
+               "pick",
+               "place",
+               "abort"
+              ]
+             },
+             "status": {
+              "enum": [
+               "succeeded",
+               "failed",
+               "rejected"
+              ]
+             },
+             "reason": {
+              "type": [
+               "string",
+               "null"
+              ],
+              "minLength": 1,
+              "maxLength": 256,
+              "description": "Bounded tool-reported reason; untrusted data. At most 256 code points. Null: no reason reported."
+             }
+            }
+           }
+          },
+          "description": "Last tool result as reported by the tool broker; untrusted data, not a success claim."
+         }
+        ]
+       },
+       "description": "Observed facts only. At most 16. Two facts for the same field with different values make the input contradictory (harness semantic rule)."
+      }
+     }
+    }
+   }
+  },
+  "eligible_skills": {
+   "$schema": "https://json-schema.org/draft/2020-12/schema",
+   "title": "uzumaki eligible_skills v1.0",
+   "description": "Read-only, versioned view of eligible skills computed by the harness from one registry snapshot and one observation. Models cannot write it.",
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "schema_version",
+    "kind",
+    "payload"
+   ],
+   "properties": {
+    "schema_version": {
+     "const": "1.0"
+    },
+    "kind": {
+     "const": "eligible_skills"
+    },
+    "payload": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "eligible_set_id",
+      "registry_version",
+      "based_on_observation_id",
+      "computed_at_ms",
+      "access",
+      "skills"
+     ],
+     "properties": {
+      "eligible_set_id": {
+       "type": "string",
+       "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+       "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+      },
+      "registry_version": {
+       "type": "integer",
+       "minimum": 1,
+       "description": "Immutable skill-registry snapshot version this view was computed from."
+      },
+      "based_on_observation_id": {
+       "type": "string",
+       "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+       "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+      },
+      "computed_at_ms": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 9007199254740991,
+       "description": "Nonnegative integer milliseconds."
+      },
+      "access": {
+       "const": "read_only"
+      },
+      "skills": {
+       "type": "array",
+       "maxItems": 32,
+       "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+         "skill_id",
+         "skill_version",
+         "content_sha256",
+         "parameter_schema_sha256",
+         "tool_permissions",
+         "applicability"
+        ],
+        "properties": {
+         "skill_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+          "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+         },
+         "skill_version": {
+          "type": "integer",
+          "minimum": 1
+         },
+         "content_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "Lowercase hex SHA-256 digest."
+         },
+         "parameter_schema_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "Lowercase hex SHA-256 digest."
+         },
+         "tool_permissions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {
+           "enum": [
+            "observe",
+            "pick",
+            "place",
+            "abort"
+           ]
+          }
+         },
+         "applicability": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "description": "Declared applicability summary from the registry; untrusted to models. At most 512 code points."
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "planner_decision": {
+   "$schema": "https://json-schema.org/draft/2020-12/schema",
+   "title": "uzumaki planner_decision v1.0",
+   "description": "Planner proposal: select one eligible skill or abstain. A proposal, not an admission; it has no field that can mutate skills, the registry or evaluator policy.",
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "schema_version",
+    "kind",
+    "payload"
+   ],
+   "properties": {
+    "schema_version": {
+     "const": "1.0"
+    },
+    "kind": {
+     "const": "planner_decision"
+    },
+    "payload": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "decision_id",
+      "task_id",
+      "decision",
+      "skill_id",
+      "skill_version",
+      "eligible_set_id",
+      "registry_version",
+      "parameters",
+      "abstain_reason",
+      "rationale",
+      "based_on_observation_id",
+      "provenance_id"
+     ],
+     "properties": {
+      "decision_id": {
+       "type": "string",
+       "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+       "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+      },
+      "task_id": {
+       "type": "string",
+       "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+       "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+      },
+      "decision": {
+       "enum": [
+        "select",
+        "abstain"
+       ]
+      },
+      "skill_id": {
+       "type": [
+        "string",
+        "null"
+       ],
+       "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+       "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content. Null: required when decision is abstain."
+      },
+      "skill_version": {
+       "type": [
+        "integer",
+        "null"
+       ],
+       "minimum": 1,
+       "description": "Null: required when decision is abstain."
+      },
+      "eligible_set_id": {
+       "type": "string",
+       "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+       "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+      },
+      "registry_version": {
+       "type": "integer",
+       "minimum": 1
+      },
+      "parameters": {
+       "type": "object",
+       "maxProperties": 16,
+       "propertyNames": {
+        "pattern": "^[a-z][a-z0-9_]{0,31}$"
+       },
+       "additionalProperties": {
+        "type": [
+         "number",
+         "string",
+         "boolean"
+        ],
+        "maxLength": 128
+       },
+       "description": "Skill parameters; validated by the harness against the skill parameter schema. Empty for abstain."
+      },
+      "abstain_reason": {
+       "enum": [
+        "no_eligible_skill",
+        "insufficient_observation",
+        "ambiguous_goal",
+        "out_of_scope",
+        null
+       ],
+       "description": "Null: required when decision is select."
+      },
+      "rationale": {
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 2048,
+       "description": "Planner rationale; an inferred judgment, never evidence of success. At most 2048 code points."
+      },
+      "based_on_observation_id": {
+       "type": "string",
+       "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+       "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+      },
+      "provenance_id": {
+       "type": "string",
+       "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+       "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+      }
+     }
+    }
+   }
+  },
+  "candidate_artifact": {
+   "$schema": "https://json-schema.org/draft/2020-12/schema",
+   "title": "uzumaki candidate_artifact v1.0",
+   "description": "Untrusted generator output. Inert data; execution requires a separate harness-owned admission defined by later features (06, 16, 17).",
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "schema_version",
+    "kind",
+    "payload"
+   ],
+   "properties": {
+    "schema_version": {
+     "const": "1.0"
+    },
+    "kind": {
+     "const": "candidate_artifact"
+    },
+    "payload": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "artifact_id",
+      "sha256",
+      "format",
+      "content",
+      "parent_artifact_ids",
+      "repair_round",
+      "provenance_id",
+      "trust",
+      "authorization"
+     ],
+     "properties": {
+      "artifact_id": {
+       "type": "string",
+       "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+       "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+      },
+      "sha256": {
+       "type": "string",
+       "pattern": "^[0-9a-f]{64}$",
+       "description": "SHA-256 of the UTF-8 bytes of content."
+      },
+      "format": {
+       "enum": [
+        "constrained_program_text",
+        "executable_graph_json"
+       ],
+       "description": "Representation chosen in feature 12; v1 admits either as inert data."
+      },
+      "content": {
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 65536,
+       "description": "Inline artifact text, at most 65536 code points; the whole record is further bounded by max_input_bytes."
+      },
+      "parent_artifact_ids": {
+       "type": "array",
+       "maxItems": 8,
+       "uniqueItems": true,
+       "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+        "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+       }
+      },
+      "repair_round": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 64
+      },
+      "provenance_id": {
+       "type": "string",
+       "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+       "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+      },
+      "trust": {
+       "const": "untrusted"
+      },
+      "authorization": {
+       "const": false,
+       "description": "Always false: a candidate artifact never authorizes execution."
+      }
+     }
+    }
+   }
+  },
+  "execution_event": {
+   "$schema": "https://json-schema.org/draft/2020-12/schema",
+   "title": "uzumaki execution_event v1.0",
+   "description": "Harness-authored, append-only execution event. Admission decisions are recorded here by the harness coordinator only.",
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "schema_version",
+    "kind",
+    "payload"
+   ],
+   "properties": {
+    "schema_version": {
+     "const": "1.0"
+    },
+    "kind": {
+     "const": "execution_event"
+    },
+    "payload": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "case_id",
+      "run_id",
+      "attempt_id",
+      "event_id",
+      "seq",
+      "event_kind",
+      "monotonic_ms",
+      "lifecycle_from",
+      "lifecycle_to",
+      "tool",
+      "subject_id",
+      "rejection_reason",
+      "progress"
+     ],
+     "properties": {
+      "case_id": {
+       "type": "string",
+       "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+       "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+      },
+      "run_id": {
+       "type": "string",
+       "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+       "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+      },
+      "attempt_id": {
+       "type": [
+        "string",
+        "null"
+       ],
+       "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+       "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content. Null: event precedes or follows any attempt (between_attempts, queued, terminal)."
+      },
+      "event_id": {
+       "type": "string",
+       "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+       "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+      },
+      "seq": {
+       "type": "integer",
+       "minimum": 0,
+       "description": "Strictly increasing per run_id (harness rule)."
+      },
+      "event_kind": {
+       "enum": [
+        "state_transition",
+        "proposal_received",
+        "admission_accepted",
+        "admission_rejected",
+        "tool_result",
+        "observation_received",
+        "cancel_requested",
+        "late_result_fenced",
+        "terminal_repeat_ignored"
+       ]
+      },
+      "monotonic_ms": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 9007199254740991,
+       "description": "harness_monotonic clock ms."
+      },
+      "lifecycle_from": {
+       "enum": [
+        "queued",
+        "running",
+        "cancelling",
+        "completed",
+        "cancelled",
+        "failed",
+        "rejected",
+        null
+       ],
+       "description": "Null: not a state_transition event."
+      },
+      "lifecycle_to": {
+       "enum": [
+        "queued",
+        "running",
+        "cancelling",
+        "completed",
+        "cancelled",
+        "failed",
+        "rejected",
+        null
+       ],
+       "description": "Null: not a state_transition event."
+      },
+      "tool": {
+       "enum": [
+        "observe",
+        "pick",
+        "place",
+        "abort",
+        null
+       ],
+       "description": "Null: event not about a tool request."
+      },
+      "subject_id": {
+       "type": [
+        "string",
+        "null"
+       ],
+       "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+       "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content. Null: no proposal/artifact/observation subject."
+      },
+      "rejection_reason": {
+       "enum": [
+        "malformed",
+        "missing",
+        "stale",
+        "contradictory",
+        "oversized",
+        "unsupported_version",
+        "not_in_eligible_set",
+        "eligible_set_version_skew",
+        "unauthorized_operation",
+        "lifecycle_violation",
+        "budget_exhausted",
+        "unknown_tool",
+        null
+       ],
+       "description": "Null: not a rejection or fence."
+      },
+      "progress": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "level",
+        "source",
+        "evidence_ref"
+       ],
+       "properties": {
+        "level": {
+         "enum": [
+          "none",
+          "partial",
+          "goal_reached",
+          "unknown"
+         ],
+         "description": "Physical progress per protocol outcome_rules.progress; `unknown` = not yet assessed by the evaluator (never read as none)."
+        },
+        "source": {
+         "enum": [
+          "environment_evaluator",
+          "not_assessed"
+         ]
+        },
+        "evidence_ref": {
+         "type": [
+          "string",
+          "null"
+         ],
+         "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+         "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content. Null: no evaluator evidence yet (level must be unknown)."
+        }
+       },
+       "description": "Partial physical progress as independently recorded by the environment evaluator. Model claims of progress are inferred judgments, never this field.",
+       "allOf": [
+        {
+         "if": {
+          "properties": {
+           "level": {
+            "const": "unknown"
+           }
+          }
+         },
+         "then": {
+          "properties": {
+           "source": {
+            "const": "not_assessed"
+           },
+           "evidence_ref": {
+            "type": "null"
+           }
+          }
+         },
+         "else": {
+          "properties": {
+           "source": {
+            "const": "environment_evaluator"
+           },
+           "evidence_ref": {
+            "type": "string"
+           }
+          }
+         }
+        }
+       ]
+      }
+     }
+    }
+   }
+  },
+  "outcome": {
+   "$schema": "https://json-schema.org/draft/2020-12/schema",
+   "title": "uzumaki outcome v1.0",
+   "description": "Evaluator-authored task outcome. Success authority is the environment evaluator only; model claims are retained as non-authoritative judgments.",
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "schema_version",
+    "kind",
+    "payload"
+   ],
+   "properties": {
+    "schema_version": {
+     "const": "1.0"
+    },
+    "kind": {
+     "const": "outcome"
+    },
+    "payload": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "case_id",
+      "run_id",
+      "primary",
+      "progress",
+      "lifecycle_state",
+      "invariant_evidence",
+      "invariant_violation_count",
+      "evaluator_evidence_refs",
+      "model_claims",
+      "authoritative_source"
+     ],
+     "properties": {
+      "case_id": {
+       "type": "string",
+       "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+       "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+      },
+      "run_id": {
+       "type": "string",
+       "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+       "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+      },
+      "primary": {
+       "enum": [
+        "abstained",
+        "ambiguous_goal",
+        "budget_exhausted",
+        "cancelled",
+        "collision",
+        "completed",
+        "evaluation_failure",
+        "invariant_violation",
+        "misgrasp",
+        "missing_observation",
+        "partial_progress",
+        "placement_failure",
+        "timeout",
+        "tool_rejected",
+        "unreachable_target"
+       ],
+       "description": "Exactly one of pick-place-v1 profile.outcomes, chosen by outcome_rules first-terminal-event precedence."
+      },
+      "progress": {
+       "enum": [
+        "none",
+        "partial",
+        "goal_reached"
+       ],
+       "description": "Recorded for every primary outcome (outcome_rules.progress)."
+      },
+      "lifecycle_state": {
+       "enum": [
+        "completed",
+        "cancelled",
+        "failed",
+        "rejected"
+       ]
+      },
+      "invariant_evidence": {
+       "enum": [
+        "complete",
+        "missing",
+        "corrupt"
+       ]
+      },
+      "invariant_violation_count": {
+       "type": [
+        "integer",
+        "null"
+       ],
+       "minimum": 0,
+       "description": "Null: evidence missing or corrupt; never read as zero."
+      },
+      "evaluator_evidence_refs": {
+       "type": "array",
+       "minItems": 1,
+       "maxItems": 64,
+       "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+         "ref",
+         "sha256"
+        ],
+        "properties": {
+         "ref": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+          "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+         },
+         "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "Lowercase hex SHA-256 digest."
+         }
+        }
+       }
+      },
+      "model_claims": {
+       "type": "array",
+       "maxItems": 8,
+       "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+         "role",
+         "claim",
+         "authoritative"
+        ],
+        "properties": {
+         "role": {
+          "enum": [
+           "planner",
+           "generator"
+          ]
+         },
+         "claim": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "description": "Model self-report; ignored for success. At most 512 code points."
+         },
+         "authoritative": {
+          "const": false
+         }
+        }
+       }
+      },
+      "authoritative_source": {
+       "const": "environment_evaluator"
+      }
+     },
+     "allOf": [
+      {
+       "if": {
+        "properties": {
+         "invariant_evidence": {
+          "enum": [
+           "missing",
+           "corrupt"
+          ]
+         }
+        }
+       },
+       "then": {
+        "properties": {
+         "invariant_violation_count": {
+          "type": "null"
+         }
+        }
+       },
+       "else": {
+        "properties": {
+         "invariant_violation_count": {
+          "type": "integer"
+         }
+        }
+       }
+      }
+     ]
+    }
+   }
+  },
+  "model_provenance": {
+   "$schema": "https://json-schema.org/draft/2020-12/schema",
+   "title": "uzumaki model_provenance v1.0",
+   "description": "Model call provenance. Records what was requested and reported; does not establish model behaviour or correctness.",
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "schema_version",
+    "kind",
+    "payload"
+   ],
+   "properties": {
+    "schema_version": {
+     "const": "1.0"
+    },
+    "kind": {
+     "const": "model_provenance"
+    },
+    "payload": {
+     "type": "object",
+     "additionalProperties": false,
+     "required": [
+      "provenance_id",
+      "provider",
+      "model",
+      "reported_model",
+      "role",
+      "replay_mode",
+      "prompt_sha256",
+      "input_sha256",
+      "output_sha256",
+      "requested_at_ms",
+      "latency_ms",
+      "usage"
+     ],
+     "properties": {
+      "provenance_id": {
+       "type": "string",
+       "pattern": "^[a-z0-9][a-z0-9._:-]{0,63}$",
+       "description": "Opaque lowercase identifier, 1-64 chars. Never reused for a different record content."
+      },
+      "provider": {
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 64,
+       "description": "Provider name as configured. At most 64 code points."
+      },
+      "model": {
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 128,
+       "description": "Model ID requested. At most 128 code points."
+      },
+      "reported_model": {
+       "type": [
+        "string",
+        "null"
+       ],
+       "minLength": 1,
+       "maxLength": 128,
+       "description": "Model ID the provider reported. At most 128 code points. Null: provider did not report one (unknown)."
+      },
+      "role": {
+       "enum": [
+        "planner",
+        "generator"
+       ]
+      },
+      "replay_mode": {
+       "enum": [
+        "live",
+        "recorded"
+       ]
+      },
+      "prompt_sha256": {
+       "type": "string",
+       "pattern": "^[0-9a-f]{64}$",
+       "description": "Digest of the versioned prompt template."
+      },
+      "input_sha256": {
+       "type": "string",
+       "pattern": "^[0-9a-f]{64}$",
+       "description": "Digest of the canonical request context."
+      },
+      "output_sha256": {
+       "type": [
+        "string",
+        "null"
+       ],
+       "pattern": "^[0-9a-f]{64}$",
+       "description": "Lowercase hex SHA-256 digest. Null: no response was received (timeout/crash)."
+      },
+      "requested_at_ms": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 9007199254740991,
+       "description": "Nonnegative integer milliseconds."
+      },
+      "latency_ms": {
+       "type": [
+        "integer",
+        "null"
+       ],
+       "minimum": 0,
+       "maximum": 9007199254740991,
+       "description": "Nonnegative integer milliseconds. Null: latency not measured."
+      },
+      "usage": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "status",
+        "input_tokens",
+        "output_tokens",
+        "cost_usd"
+       ],
+       "properties": {
+        "status": {
+         "enum": [
+          "reported",
+          "partially_reported",
+          "unknown"
+         ]
+        },
+        "input_tokens": {
+         "type": [
+          "integer",
+          "null"
+         ],
+         "minimum": 0,
+         "description": "Null: not reported (unknown, never zero)."
+        },
+        "output_tokens": {
+         "type": [
+          "integer",
+          "null"
+         ],
+         "minimum": 0,
+         "description": "Null: not reported (unknown, never zero)."
+        },
+        "cost_usd": {
+         "type": [
+          "number",
+          "null"
+         ],
+         "minimum": 0,
+         "description": "Null: not reported (unknown, never zero)."
+        }
+       },
+       "description": "Provider-reported usage. Unknown is null; a guessed 0 is forbidden.",
+       "allOf": [
+        {
+         "if": {
+          "properties": {
+           "status": {
+            "const": "unknown"
+           }
+          }
+         },
+         "then": {
+          "properties": {
+           "input_tokens": {
+            "type": "null"
+           },
+           "output_tokens": {
+            "type": "null"
+           },
+           "cost_usd": {
+            "type": "null"
+           }
+          }
+         }
+        },
+        {
+         "if": {
+          "properties": {
+           "status": {
+            "const": "reported"
+           }
+          }
+         },
+         "then": {
+          "properties": {
+           "input_tokens": {
+            "type": "integer"
+           },
+           "output_tokens": {
+            "type": "integer"
+           }
+          }
+         }
+        }
+       ]
+      }
+     }
+    }
+   }
+  }
+ },
+ "validation_order": [
+  {
+   "step": 1,
+   "rule": "canonical JSON of the whole input exceeds max_input_bytes",
+   "reason": "oversized"
+  },
+  {
+   "step": 2,
+   "rule": "input is not a JSON object",
+   "reason": "malformed"
+  },
+  {
+   "step": 3,
+   "rule": "schema_version absent",
+   "reason": "missing"
+  },
+  {
+   "step": 4,
+   "rule": "schema_version is not exactly the string \"1.0\" (no coercion, no downgrade, no best-effort parse)",
+   "reason": "unsupported_version"
+  },
+  {
+   "step": 5,
+   "rule": "JSON Schema errors: any `required` error",
+   "reason": "missing"
+  },
+  {
+   "step": 6,
+   "rule": "JSON Schema errors, none of them `required` (type, const, enum, pattern, bounds, unknown field)",
+   "reason": "malformed"
+  },
+  {
+   "step": 7,
+   "rule": "observation received_at_ms < captured_at_ms",
+   "reason": "contradictory"
+  },
+  {
+   "step": 8,
+   "rule": "observation received_at_ms - captured_at_ms > max_observation_age_ms",
+   "reason": "stale"
+  },
+  {
+   "step": 9,
+   "rule": "planner_decision: (decision == select) differs from (skill_id != null)",
+   "reason": "contradictory"
+  }
+ ],
+ "record_rejection_reasons": [
+  "malformed",
+  "missing",
+  "stale",
+  "contradictory",
+  "oversized",
+  "unsupported_version"
+ ],
+ "harness_semantic_rules": {
+  "$comment": "Normative but NOT checked by the offline checker; enforcement is future runtime work (features 04-10). A violation is rejected with the stated reason.",
+  "rules": [
+   {
+    "record": "planner_decision",
+    "rule": "select requires non-null skill_version and null abstain_reason; abstain requires null skill_version, non-null abstain_reason and empty parameters",
+    "reason": "contradictory"
+   },
+   {
+    "record": "observation",
+    "rule": "two observed_facts with the same field and different values",
+    "reason": "contradictory"
+   },
+   {
+    "record": "observation",
+    "rule": "observed_facts.observation_id differs from payload.observation_id",
+    "reason": "contradictory"
+   },
+   {
+    "record": "candidate_artifact",
+    "rule": "sha256 differs from SHA-256 of content UTF-8 bytes",
+    "reason": "contradictory"
+   },
+   {
+    "record": "execution_event",
+    "rule": "seq not strictly increasing per run_id, or lifecycle_from/lifecycle_to not a declared transition",
+    "reason": "contradictory"
+   },
+   {
+    "record": "model_provenance",
+    "rule": "status partially_reported with all usage values null, or reported with cost_usd guessed instead of provider-reported",
+    "reason": "contradictory"
+   }
+  ]
+ },
+ "admission": {
+  "authority": "harness_coordinator",
+  "principle": "Proposals (planner_decision, candidate_artifact, model output) are untrusted inputs. Only the harness coordinator admits an action, and records each admission decision as an execution_event (admission_accepted or admission_rejected). Record validity is necessary, never sufficient, for admission.",
+  "proposal_records": [
+   "planner_decision",
+   "candidate_artifact",
+   "model_provenance"
+  ],
+  "authoritative_records": {
+   "harness_coordinator": [
+    "task_context",
+    "eligible_skills",
+    "execution_event"
+   ],
+   "environment_observe": [
+    "observation"
+   ],
+   "environment_evaluator": [
+    "outcome"
+   ]
+  },
+  "checks_in_order": [
+   {
+    "check": "record validation_order passes",
+    "reason": "per validation_order"
+   },
+   {
+    "check": "run lifecycle state is running and an attempt is active (protocol attempt_rules)",
+    "reason": "lifecycle_violation"
+   },
+   {
+    "check": "based_on_observation_id names the latest observation of the active attempt and admission_time - captured_at_ms <= 200",
+    "reason": "stale"
+   },
+   {
+    "check": "eligible_set_id and registry_version equal the current read-only eligible view",
+    "reason": "eligible_set_version_skew"
+   },
+   {
+    "check": "(skill_id, skill_version) is listed in that view",
+    "reason": "not_in_eligible_set"
+   },
+   {
+    "check": "requested tool is one of observe/pick/place/abort and within the skill tool_permissions",
+    "reason": "unknown_tool"
+   },
+   {
+    "check": "attempt and model-call budgets allow the action (no fourth attempt, no model call 21)",
+    "reason": "budget_exhausted"
+   },
+   {
+    "check": "any request to register/replace/mutate skills, registry, evaluator policy, budgets or thresholds, or to execute a candidate_artifact",
+    "reason": "unauthorized_operation"
+   }
+  ],
+  "candidate_artifacts": "A candidate_artifact is never admitted for execution under contract 1.0: v1 defines no execution grant. Static checks, isolated evaluation (feature 06/16) and promotion (feature 17) must define a separate harness-issued authority in a later contract version.",
+  "abstention": "An admitted abstain causes no actuation; the case outcome follows protocol outcome_rules (abstained or the last attempt diagnostic).",
+  "protocol_outcome_mapping": "A rejected pick/place maps to exactly one outcome by outcome_rules.request_rejections: stale/missing observation -> missing_observation; absent/conflicting target -> ambiguous_goal; unreachable declared pose -> unreachable_target; every other rejection -> tool_rejected. Rejected or fenced requests add 0 invariant violations."
+ },
+ "lifecycle": {
+  "subject": "harness run for one case; protocol attempt states (between_attempts/active/settling) live inside `running` and are defined by profile.attempt_rules, not redefined here",
+  "states": [
+   "queued",
+   "running",
+   "cancelling",
+   "completed",
+   "cancelled",
+   "failed",
+   "rejected"
+  ],
+  "initial": "queued",
+  "terminal": [
+   "completed",
+   "cancelled",
+   "failed",
+   "rejected"
+  ],
+  "transitions": [
+   {
+    "from": "queued",
+    "to": "running",
+    "on": "admitted_and_reset_ready"
+   },
+   {
+    "from": "queued",
+    "to": "rejected",
+    "on": "run_admission_rejected"
+   },
+   {
+    "from": "queued",
+    "to": "cancelled",
+    "on": "cancel_before_start"
+   },
+   {
+    "from": "queued",
+    "to": "failed",
+    "on": "reset_or_readiness_failure"
+   },
+   {
+    "from": "running",
+    "to": "completed",
+    "on": "evaluator_terminal_event"
+   },
+   {
+    "from": "running",
+    "to": "cancelling",
+    "on": "cancel_requested"
+   },
+   {
+    "from": "running",
+    "to": "failed",
+    "on": "component_crash_or_invalid_evidence"
+   },
+   {
+    "from": "cancelling",
+    "to": "cancelled",
+    "on": "safe_stop_reported_and_evaluated"
+   },
+   {
+    "from": "cancelling",
+    "to": "failed",
+    "on": "component_crash_or_invalid_evidence"
+   }
+  ],
+  "state_meaning": {
+   "queued": "Run requested; nothing admitted, no physical effects.",
+   "running": "Case reset succeeded; attempts may be active. Only state in which actuation can be admitted.",
+   "cancelling": "Cancel (abort or goal withdrawal) accepted; no new actuation admitted; abort/safe stop in progress.",
+   "completed": "Evaluator recorded a valid terminal case event. NOT task success: success is outcome.primary == completed.",
+   "cancelled": "Cancellation finished; primary outcome cancelled unless a simultaneous higher-priority event applies.",
+   "failed": "Reset/readiness failure, or worker/model/simulator/evaluator crash or invalid evidence before a valid terminal event: primary evaluation_failure.",
+   "rejected": "Run input rejected before reset; no effects. The case stays in the denominator as evaluation_failure with progress none."
+  },
+  "lifecycle_to_primary": {
+   "completed": [
+    "abstained",
+    "ambiguous_goal",
+    "budget_exhausted",
+    "collision",
+    "completed",
+    "invariant_violation",
+    "misgrasp",
+    "missing_observation",
+    "partial_progress",
+    "placement_failure",
+    "timeout",
+    "tool_rejected",
+    "unreachable_target"
+   ],
+   "cancelled": [
+    "cancelled",
+    "collision",
+    "invariant_violation"
+   ],
+   "failed": [
+    "evaluation_failure"
+   ],
+   "rejected": [
+    "evaluation_failure"
+   ]
+  },
+  "terminal_immutability": "No transition leaves a terminal state. The outcome record of a terminal run is never rewritten. A repeat of the identical terminal transition is a no-op recorded as terminal_repeat_ignored; any other transition request is rejected as lifecycle_violation.",
+  "cancellation_effects": "Entering cancelling admits no new actuation; abort requests a safe stop and reports the actual reached state. Cancellation never reverses physical progress; outcome.progress reports what was reached (e.g. partial). Cancel before start yields cancelled with progress none.",
+  "late_result_fencing": "Every tool admission and result carries case_id, run_id and attempt_id. A result whose IDs do not match the active attempt, or that arrives in cancelling or a terminal state, is recorded as execution_event late_result_fenced with rejection_reason null or the matching reason, never applied, cannot authorize another command or revise a terminal outcome, and adds 0 invariant violations. An actual prohibited effect after terminal is retained as separate invariant evidence (outcome_rules.post_terminal).",
+  "first_terminal_event": "When several terminal events race, the first recorded terminal case event wins; simultaneous events use profile.outcome_rules.priority."
+ },
+ "versioning": "Contract 1.0 is frozen. Any change to a field, enum, limit or rule requires a new contract_version, documented in CHANGELOG.md; readers reject any schema_version other than \"1.0\" as unsupported_version.",
+ "non_claims": "No runtime, validator package, harness, worker, evaluator, simulator or model integration implements these contracts yet. Executable enforcement starts with feature 03 onward."
+}

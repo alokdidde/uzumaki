@@ -1,0 +1,18 @@
+# Changelog
+
+Documentary changes to canonical contracts and protocols. Entries describe specifications, not runtime capability.
+
+## Unreleased
+
+### Added — harness and model contracts 1.0 ([issue 02](https://github.com/alokdidde/uzumaki/issues/2))
+
+- [docs/contracts/v1.json](docs/contracts/v1.json) adds contract version `1.0`:
+  - eight closed, self-contained JSON Schema Draft 2020-12 record schemas;
+  - the authority map: the planner may only select or abstain, the generator produces only untrusted artifacts, and the evaluator is the task-success authority;
+  - limits of 65536 input bytes and a 200 ms observation age;
+  - the validation order, admission checks, harness semantic rules and the run lifecycle (`queued`, `running`, `cancelling`, then terminal `completed`, `cancelled`, `failed`, `rejected`).
+- [docs/contracts/fixtures.json](docs/contracts/fixtures.json) adds 17 valid and 32 invalid concrete fixtures covering malformed, missing, stale, contradictory, oversized and unsupported-version inputs, authority violations, unknown-versus-zero usage and evidence, late-result fencing, cancellation and eligible-set version skew.
+- [docs/contracts/README.md](docs/contracts/README.md) and [docs/features/harness-contracts.md](docs/features/harness-contracts.md) describe the specification, decisions and limitations.
+- [README.md](README.md), [docs/architecture.md](docs/architecture.md) and [docs/testing.md](docs/testing.md) now link the contracts.
+
+Not changed: the issue-01 `pick-place-v1` protocol and decision 0001. Not added: any package, validator code, CI, harness, worker, evaluator, simulator or model integration (feature 03 onward).

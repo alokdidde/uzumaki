@@ -32,6 +32,7 @@ Planning and generation initially use the same underlying model with separate pr
 - [Implementation roadmap](docs/roadmap.md): ordered features, dependencies, acceptance criteria, and issue links.
 - [Architecture](docs/architecture.md): responsibilities, context flow, failure behavior, and model boundaries.
 - [Task and evaluation protocol (candidate_for_review)](docs/protocol/README.md): the `pick-place-v1` candidate profile ([task-v1.json](docs/protocol/task-v1.json)) and [decision record 0001](docs/decisions/0001-task-and-evaluation.md). Pending PR acceptance (review revision 5, documentary only; zero trials, not a performance result; numerical targets and heldout commitments unchanged); simulator and model are unverified candidates.
+- [Harness and model contracts 1.0](docs/contracts/README.md) (issue 02, documentary): versioned record schemas ([v1.json](docs/contracts/v1.json)), fixtures ([fixtures.json](docs/contracts/fixtures.json)), authority, admission and lifecycle rules; see the [feature note](docs/features/harness-contracts.md) and [CHANGELOG](CHANGELOG.md). Offline-checkable specifications only; no runtime enforces them yet.
 - [Testing strategy](docs/testing.md): offline fixtures, containment, simulator tests, held-out evaluation, and evidence.
 - [Contributing](CONTRIBUTING.md): how to take a feature from planned to verified.
 - [Private GitHub Project](https://github.com/users/alokdidde/projects/4): all roadmap issues in Sequence order. Readiness distinguishes Ready, Blocked, and Deferred work.
@@ -46,7 +47,7 @@ The MVP ends at feature 18: one reproducible simulator-backed loop that selects 
 
 ## Testing today
 
-There is no runtime to install or execute yet. Current validation is documentary only (see the [protocol README](docs/protocol/README.md#documentary-commands-offline-no-network-no-install)) and checks the documentation, roadmap ordering/dependencies, and GitHub setup. Feature 03 introduces the locked package and executable test commands. Do not treat planned commands or unchecked issue criteria as passing tests.
+There is no runtime to install or execute yet. Current validation is documentary only (see the [protocol README](docs/protocol/README.md#documentary-commands-offline-no-network-no-install)) and checks the documentation, roadmap ordering/dependencies, and GitHub setup. The issue-02 contracts add an offline schema/fixture check run by an external trusted checker ([contracts README](docs/contracts/README.md#offline-check-reproduction)); it executes no application code. Feature 03 introduces the locked package and executable test commands. Do not treat planned commands or unchecked issue criteria as passing tests.
 
 All default implementation tests will use recorded/fake providers with live network access disabled. Simulator and paid-model tests will be explicit separate suites. Generated code must run only in a restricted worker whose protection does not depend on the generated code returning.
 
