@@ -270,17 +270,37 @@ out['ssh'] = attempt(lambda: os.listdir(os.path.expanduser('~/.ssh')))
 # --- network ------------------------------------------------------------------------------------
 
 
+def _host_listener(family: int, address: Any) -> socket.socket | None:
+    """A non-blocking host listener for the candidate to try, or None if the host has no network.
+
+    Some validation hosts run the whole test process under an inherited seccomp network guard, so
+    the host itself cannot create sockets. The candidate's attempts are still made and must still be
+    denied; only the "nothing reached the host listener" check is unavailable there.
+    """
+    try:
+        server = socket.socket(family, socket.SOCK_STREAM)
+    except PermissionError:
+        return None
+    try:
+        server.bind(address)
+        server.listen(8)
+        server.setblocking(False)
+    except OSError:
+        server.close()
+        return None
+    return server
+
+
+NETWORK_ATTEMPTS = ("tcp", "udp", "ipv6", "unix", "netlink", "pair", "raw_syscall", "io_uring")
+
+
 def test_network_is_denied_even_through_raw_syscalls(worker: Any, tmp_path: Path) -> None:
-    listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    listener.bind(("127.0.0.1", 0))
-    listener.listen(8)
-    listener.setblocking(False)
-    port = listener.getsockname()[1]
+    listener = _host_listener(socket.AF_INET, ("127.0.0.1", 0))
+    # Without a host listener, port 9 (discard) is a target nothing should be able to connect to.
+    port = listener.getsockname()[1] if listener is not None else 9
     unix_path = tmp_path / "host.sock"
-    unix_listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    unix_listener.bind(str(unix_path))
-    unix_listener.listen(8)
-    unix_listener.setblocking(False)
+    unix_listener = _host_listener(socket.AF_UNIX, str(unix_path))
+    servers = [s for s in (listener, unix_listener) if s is not None]
     try:
         source = candidate(
             f"""
@@ -299,14 +319,15 @@ out['io_uring'] = 'denied:errno%d' % ctypes.get_errno() if fd < 0 else 'allowed:
         )
         report = worker()(source)
         assert report.status == "returned"
+        assert sorted(report.result) == sorted(NETWORK_ATTEMPTS)
         assert all(v.startswith("denied:") for v in report.result.values()), report.result
         assert report.result["raw_syscall"] == "denied:errno1"  # EPERM from the kernel
-        for server in (listener, unix_listener):
+        for server in servers:
             with pytest.raises(BlockingIOError):
                 server.accept()
     finally:
-        listener.close()
-        unix_listener.close()
+        for server in servers:
+            server.close()
 
 
 # --- processes and kill authority ---------------------------------------------------------------
