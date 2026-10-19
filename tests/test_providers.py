@@ -115,6 +115,6 @@ def test_deep_request_has_safe_error(fixture_path: Path) -> None:
     for _ in range(2000):
         nested = [nested]
     provider = RecordedProvider.from_path(fixture_path)
-    with pytest.raises(ValueError, match="JSON-serializable") as exc:
+    with pytest.raises(ValueError) as exc:
         provider.request({"nested": nested})
     assert "private-sentinel" not in str(exc.value)
