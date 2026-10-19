@@ -239,6 +239,152 @@ out['boot_write'] = attempt(lambda: open(sys.argv[0], 'a'))
     assert not (tmp_path / "escape.txt").exists()
 
 
+def metadata_tree(root: Path) -> dict[str, tuple[Any, ...]]:
+    """Mode, owner, mtime, ctime and xattr names of every entry, which content hashes miss."""
+    snapshot: dict[str, tuple[Any, ...]] = {}
+    for p in sorted([root, *root.rglob("*")]):
+        st = os.lstat(p)
+        try:
+            xattrs: list[str] | None = sorted(os.listxattr(p, follow_symlinks=False))
+        except OSError:
+            xattrs = None
+        snapshot[str(p.relative_to(root))] = (
+            st.st_mode,
+            st.st_uid,
+            st.st_gid,
+            st.st_mtime_ns,
+            st.st_ctime_ns,
+            xattrs,
+        )
+    return snapshot
+
+
+def test_metadata_of_protected_and_readable_files_cannot_be_changed(
+    worker: Any, tmp_path: Path
+) -> None:
+    """Landlock does not cover chmod, chown, utime or xattrs, so seccomp denies them."""
+    assets = tmp_path / "assets"
+    for name in ("evaluator", "prompts", "skills", "heldout"):
+        (assets / name).mkdir(parents=True)
+        (assets / name / "data.json").write_text('{"answer": 42}', encoding="utf-8")
+    evaluator = str(assets / "evaluator" / "data.json")
+    heldout = str(assets / "heldout" / "data.json")
+    try:
+        os.setxattr(heldout, "user.uzumaki", b"1")
+    except OSError:
+        pass  # the host filesystem may not support user xattrs; the removal attempt still runs
+    before = metadata_tree(assets)
+    before_content = digest_tree(assets)
+    uid, gid = os.getuid(), os.getgid()
+    # Every attempt must fail with EPERM (errno 1, the seccomp filter), not EACCES from Landlock.
+    # Readable files are re-chmodded to their current mode so a regression cannot alter them.
+    source = candidate(
+        f"""
+libc = ctypes.CDLL(None, use_errno=True)
+def raw(nr, *args):
+    rc = libc.syscall(nr, *args)
+    return 'denied:errno%d' % ctypes.get_errno() if rc < 0 else 'allowed:%d' % rc
+def errno_of(fn):
+    try:
+        return 'allowed:' + repr(fn())[:100]
+    except OSError as error:
+        return 'denied:errno%d' % error.errno
+def same_mode(path):
+    return os.stat(path).st_mode & 0o7777
+out['chmod_evaluator'] = errno_of(lambda: os.chmod({evaluator!r}, 0))
+out['chmod_heldout_wide'] = errno_of(lambda: os.chmod({heldout!r}, 0o666))
+out['chmod_dir'] = errno_of(lambda: os.chmod({str(assets / "skills")!r}, 0o777))
+out['chown_same_owner'] = errno_of(lambda: os.chown({evaluator!r}, {uid}, {gid}))
+out['lchown'] = errno_of(lambda: os.lchown({evaluator!r}, {uid}, {gid}))
+out['utime'] = errno_of(lambda: os.utime({evaluator!r}, (0, 0)))
+out['utime_now'] = errno_of(lambda: os.utime({heldout!r}))
+out['setxattr'] = errno_of(lambda: os.setxattr({evaluator!r}, 'user.x', b'1'))
+out['removexattr'] = errno_of(lambda: os.removexattr({heldout!r}, 'user.uzumaki'))
+out['raw_chmod'] = raw(90, {evaluator.encode()!r}, 0)
+out['raw_fchmodat'] = raw(268, -100, {evaluator.encode()!r}, 0)
+out['raw_fchmodat2'] = raw(452, -100, {evaluator.encode()!r}, 0, 0)
+out['raw_fchownat'] = raw(260, -100, {evaluator.encode()!r}, {uid}, {gid}, 0)
+out['raw_utimes'] = raw(235, {evaluator.encode()!r}, None)
+out['raw_utimensat'] = raw(280, -100, {evaluator.encode()!r}, None, 0)
+out['raw_futimesat'] = raw(261, -100, {evaluator.encode()!r}, None)
+out['raw_lsetxattr'] = raw(189, {evaluator.encode()!r}, b'user.x', b'1', 1, 0)
+out['raw_setxattrat'] = raw(463, -100, {evaluator.encode()!r}, 0, b'user.x', None, 0)
+out['raw_removexattrat'] = raw(466, -100, {heldout.encode()!r}, 0, b'user.uzumaki')
+own = CONFIG['candidate']
+out['chmod_candidate'] = errno_of(lambda: os.chmod(own, same_mode(own)))
+out['chmod_boot'] = errno_of(lambda: os.chmod(sys.argv[0], same_mode(sys.argv[0])))
+scratch = open('mine.txt', 'w')
+out['fchmod_scratch'] = errno_of(lambda: os.fchmod(scratch.fileno(), 0o777))
+out['fchown_scratch'] = errno_of(lambda: os.fchown(scratch.fileno(), {uid}, {gid}))
+out['futime_scratch'] = errno_of(lambda: os.utime(scratch.fileno(), (0, 0)))
+out['fsetxattr_scratch'] = errno_of(lambda: os.setxattr(scratch.fileno(), 'user.x', b'1'))
+out['getxattr'] = errno_of(lambda: os.getxattr({heldout!r}, 'user.uzumaki'))
+out['listxattr'] = errno_of(lambda: os.listxattr({heldout!r}))
+out['inotify_init1'] = raw(294, 0)
+out['inotify_add_watch'] = raw(254, 0, CONFIG['candidate'].encode(), 0x2)
+out['fanotify_init'] = raw(300, 0, 0)
+"""
+    )
+    report = worker(protected=(assets,))(source)
+    assert report.status == "returned"
+    assert len(report.result) == 30
+    assert {k: v for k, v in report.result.items() if v != "denied:errno1"} == {}
+    assert metadata_tree(assets) == before
+    assert digest_tree(assets) == before_content
+
+
+# --- persistent kernel IPC ----------------------------------------------------------------------
+
+
+def sysv_keys(kind: str) -> set[int]:
+    """Keys of SysV IPC objects of one kind (msg, shm, sem) in the host IPC namespace."""
+    try:
+        lines = Path(f"/proc/sysvipc/{kind}").read_text(encoding="ascii").splitlines()[1:]
+    except OSError:
+        return set()
+    return {int(line.split()[0]) for line in lines if line.strip()}
+
+
+def test_sysv_ipc_and_posix_queues_are_denied_and_leave_no_object(worker: Any) -> None:
+    """IPC objects outlive processes, so a candidate must not be able to create or reach them."""
+    key = 0x55A00000 | (os.getpid() & 0xFFFF)
+    queue = f"uzumaki-test-{os.getpid()}".encode()
+    for kind in ("msg", "shm", "sem"):
+        assert key not in sysv_keys(kind)
+    source = candidate(
+        f"""
+libc = ctypes.CDLL(None, use_errno=True)
+def raw(nr, *args):
+    rc = libc.syscall(nr, *args)
+    return 'denied:errno%d' % ctypes.get_errno() if rc < 0 else 'allowed:%d' % rc
+CREAT = 0o1000 | 0o600
+out['msgget'] = raw(68, {key}, CREAT)
+out['msgget_private'] = raw(68, 0, CREAT)
+out['shmget'] = raw(29, {key}, 4096, CREAT)
+out['semget'] = raw(64, {key}, 1, CREAT)
+out['msgsnd'] = raw(69, 0, b'\\x01\\x00\\x00\\x00\\x00\\x00\\x00\\x00hi', 2, 0)
+out['msgrcv'] = raw(70, 0, ctypes.create_string_buffer(64), 32, 0, 0o4000)
+out['shmat'] = raw(30, 0, None, 0)
+out['semop'] = raw(65, 0, None, 0)
+out['msgctl'] = raw(71, 0, 2, None)
+out['shmctl'] = raw(31, 0, 2, None)
+out['semctl'] = raw(66, 0, 0, 2, None)
+out['mq_open'] = raw(240, {queue!r}, 0o100 | 0o2, 0o600, None)
+out['mq_unlink'] = raw(241, {queue!r})
+"""
+    )
+    report = worker()(source)
+    assert report.status == "returned"
+    assert {k: v for k, v in report.result.items() if v != "denied:errno1"} == {}
+    assert report.tree_clean
+    # Nothing survives the run in the shared IPC namespace.
+    for kind in ("msg", "shm", "sem"):
+        assert key not in sysv_keys(kind)
+    mqueue = Path("/dev/mqueue")
+    if mqueue.is_dir():
+        assert not (mqueue / queue.decode()).exists()
+
+
 # --- credentials --------------------------------------------------------------------------------
 
 

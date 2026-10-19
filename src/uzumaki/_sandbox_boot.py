@@ -4,7 +4,8 @@ Do not import this module from the harness. ``uzumaki.sandbox`` starts it by fil
 session with a scrubbed environment and only the broker pipes open. Before it reads any candidate
 code it applies, in order: resource limits, ``no_new_privs``, a Landlock domain (filesystem
 allowlist, TCP denied, signals and abstract UNIX sockets scoped to the domain) and a seccomp
-filter (no sockets, no new processes or exec, no namespace, ptrace, rlimit or mount changes). It
+filter (no sockets, no new processes or exec, no namespace, ptrace, rlimit or mount changes, no
+file metadata changes or xattr reads, no file watches, no SysV IPC or POSIX message queues). It
 then checks that the restrictions hold and reports ``ready``. Only after that does it load and
 run the candidate. Everything here is stdlib-only and self-contained, because the child cannot
 read the harness package once restricted.
@@ -77,10 +78,78 @@ _SYS = {
     "pidfd_getfd": 438,
     "mount_setattr": 442,
 }
+# Landlock cannot restrict metadata changes (mode, owner, timestamps, xattrs, inode attributes),
+# and the worker runs as the host's UID, so these are denied for every path and descriptor.
+_SYS_METADATA = {
+    "chmod": 90,
+    "fchmod": 91,
+    "chown": 92,
+    "fchown": 93,
+    "lchown": 94,
+    "utime": 132,
+    "setxattr": 188,
+    "lsetxattr": 189,
+    "fsetxattr": 190,
+    "removexattr": 197,
+    "lremovexattr": 198,
+    "fremovexattr": 199,
+    "utimes": 235,
+    "fchownat": 260,
+    "futimesat": 261,
+    "fchmodat": 268,
+    "utimensat": 280,
+    "fchmodat2": 452,
+    "setxattrat": 463,
+    "removexattrat": 466,
+    "file_setattr": 469,
+}
+# Landlock does not cover reading xattr names or values either; candidates need neither.
+# File-change watches on readable paths are not needed by candidates.
+_SYS_WATCH = {
+    "getxattr": 191,
+    "lgetxattr": 192,
+    "fgetxattr": 193,
+    "listxattr": 194,
+    "llistxattr": 195,
+    "flistxattr": 196,
+    "getxattrat": 464,
+    "listxattrat": 465,
+    "inotify_init": 253,
+    "inotify_add_watch": 254,
+    "inotify_init1": 294,
+    "fanotify_init": 300,
+    "fanotify_mark": 301,
+}
+# SysV IPC and POSIX message queues are kernel objects that outlive the worker's processes and
+# are shared with the host's IPC namespace; Landlock does not mediate them.
+_SYS_IPC = {
+    "shmget": 29,
+    "shmat": 30,
+    "shmctl": 31,
+    "semget": 64,
+    "semop": 65,
+    "semctl": 66,
+    "shmdt": 67,
+    "msgget": 68,
+    "msgsnd": 69,
+    "msgrcv": 70,
+    "msgctl": 71,
+    "semtimedop": 220,
+    "mq_open": 240,
+    "mq_unlink": 241,
+    "mq_timedsend": 242,
+    "mq_timedreceive": 243,
+    "mq_notify": 244,
+    "mq_getsetattr": 245,
+}
+_SYS.update(_SYS_METADATA)
+_SYS.update(_SYS_WATCH)
+_SYS.update(_SYS_IPC)
 _SYS_LANDLOCK_CREATE_RULESET = 444
 _SYS_LANDLOCK_ADD_RULE = 445
 _SYS_LANDLOCK_RESTRICT_SELF = 446
 _DENIED = tuple(n for n in _SYS if n not in ("clone", "clone3"))
+_IPC_STAT = 2
 
 _PR_GET_SECCOMP = 21
 _PR_SET_SECCOMP = 22
@@ -294,6 +363,15 @@ def _verify(probes: list[str]) -> None:
             continue
         os.close(fd)
         raise ContainmentError("filesystem_not_restricted")
+    # Side-effect free: unfiltered, these fail with ENOENT and EINVAL instead of EPERM.
+    self_checks: tuple[tuple[str, int, tuple[Any, ...]], ...] = (
+        ("metadata_not_restricted", _SYS["chmod"], (b"", 0)),
+        ("ipc_not_restricted", _SYS["msgctl"], (-1, _IPC_STAT, None)),
+    )
+    for code, nr, args in self_checks:
+        ctypes.set_errno(0)
+        if _libc.syscall(nr, *args) != -1 or ctypes.get_errno() != _EPERM:
+            raise ContainmentError(code)
     try:
         probe = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     except PermissionError:
