@@ -51,7 +51,9 @@ WALL_MS = 120_000
 
 #: Fixture constants (not measurements).
 CASE_START_MS = 1000
-TOOL_MS: Mapping[str, int] = MappingProxyType({"observe": 100, "pick": 1500, "place": 1500, "abort": 100})
+TOOL_MS: Mapping[str, int] = MappingProxyType(
+    {"observe": 100, "pick": 1500, "place": 1500, "abort": 100}
+)
 SETTLE_DELAY_MS = 200
 STALE_LAG_MS = 300
 GRASP_TOLERANCE_M = 0.01
@@ -257,7 +259,7 @@ def _finite(value: Any) -> bool:
 
 
 class FixtureWorld:
-    """Privileged fixture state and the host handlers of ``observe``, ``pick``, ``place``, ``abort``.
+    """Privileged fixture state and the host handlers of the four ``pick-place-v1`` tools.
 
     Each tool call advances the shared clock by ``TOOL_MS``; a rejected request takes no time and
     has no effect. Every actuation request is logged with its admission context, so the evaluator
@@ -286,7 +288,12 @@ class FixtureWorld:
         self._last_result: str | None = None
 
     def handlers(self) -> dict[str, Handler]:
-        return {"observe": self.observe, "pick": self.pick, "place": self.place, "abort": self.abort}
+        return {
+            "observe": self.observe,
+            "pick": self.pick,
+            "place": self.place,
+            "abort": self.abort,
+        }
 
     def withdraw_goal(self) -> None:
         """Goal withdrawal by the case controller: no new actuation is admitted afterwards."""
@@ -498,7 +505,8 @@ class FixtureEvaluator:
     """Independent outcome authority for one fixture case.
 
     It reads the world's privileged state and admission log. The harness tells it about skill
-    reports and attempt diagnostics through ``monitor`` calls; reports are recorded as claims only.
+    reports and attempt diagnostics through ``monitor`` calls (``skill_report``, ``attempt_end``,
+    ``status`` and ``final``); reports are recorded as claims only.
     The primary outcome follows the protocol: the first terminal case event wins (an evaluator
     event such as ``completed`` precedes any later harness stop), then the harness's terminal
     status, then the last attempt diagnostic for a voluntary return.
@@ -522,6 +530,8 @@ class FixtureEvaluator:
             failure = arguments.get("failure")
             if failure in DIAGNOSTIC_OUTCOMES:
                 self.last_failure = failure
+            return ToolResult("ok", self._status(), {})
+        if event == "status":
             return ToolResult("ok", self._status(), {})
         if event == "final":
             return ToolResult("ok", self._final(arguments), {})
@@ -658,9 +668,11 @@ class FixtureBackend:
             self.world.withdraw_goal()
         if response["status"] != "ok":
             status = "rejected" if response["status"] == "rejected" else "error"
-            return ToolResult(status, {"reason": response.get("reason"), "at_ms": self.world.clock()}, {})
+            failure = {"reason": response.get("reason"), "at_ms": self.world.clock()}
+            return ToolResult(status, failure, {})
         result = dict(response["result"])
         status = result.pop("status", None)
         if status not in TOOL_RESULT_STATUSES:
-            return ToolResult("error", {"reason": "malformed_tool_result", "at_ms": self.world.clock()}, {})
+            malformed = {"reason": "malformed_tool_result", "at_ms": self.world.clock()}
+            return ToolResult("error", malformed, {})
         return ToolResult(status, result, {})
