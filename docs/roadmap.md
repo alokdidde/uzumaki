@@ -1,6 +1,6 @@
 # Implementation roadmap
 
-Status: planning only. All 26 features are open; no implementation or experiment is marked complete.
+This document defines the ordered scope and acceptance criteria. Live implementation status, pull requests and completion evidence are tracked in the private GitHub Project linked below.
 
 Implement required work in ascending Sequence order. Dependencies must be accepted before a feature becomes Ready. Feature 01 is initially Ready; later required items are Blocked. Optional experiments are Deferred and each lists its own prerequisites; they do not form a mandatory chain.
 
