@@ -1811,9 +1811,36 @@
          }
         }
        }
+      },
+      {
+       "if": {
+        "required": [
+         "primary",
+         "invariant_evidence"
+        ],
+        "properties": {
+         "primary": {
+          "enum": [
+           "collision",
+           "invariant_violation"
+          ]
+         },
+         "invariant_evidence": {
+          "const": "complete"
+         }
+        }
+       },
+       "then": {
+        "properties": {
+         "invariant_violation_count": {
+          "type": "integer",
+          "minimum": 1
+         }
+        }
+       }
       }
      ],
-     "$comment": "allOf encodes lifecycle.lifecycle_to_primary, rejected -> progress none, completed -> goal_reached with complete evidence and 0 violations (profile.completion.mandatory_invariant_violations), abstained -> progress none and partial_progress -> observed effects (outcome_rules.progress). A violation is a schema error and is therefore rejected as malformed by validation_order step 6."
+     "$comment": "allOf encodes lifecycle.lifecycle_to_primary, rejected -> progress none, completed -> goal_reached with complete evidence and 0 violations (profile.completion.mandatory_invariant_violations), collision/invariant_violation with complete evidence -> at least 1 violation (outcome_rules.case_terminal; both are mandatory-invariant violations), abstained -> progress none and partial_progress -> observed effects (outcome_rules.progress). A violation is a schema error and is therefore rejected as malformed by validation_order step 6."
     }
    }
   },
@@ -2129,16 +2156,16 @@
   },
   "checks_in_order": [
    {
-    "check": "record validation_order passes",
+    "check": "the harness tool-call channel names pick or place while the run lifecycle is running and the protocol attempt state is between_attempts, i.e. no observe has started an active attempt (profile.attempt_rules.start). Decided from harness state alone, before and independent of record validation: a malformed, missing, contradictory, oversized or unsupported-version pick/place before observe is still actuation_before_observe",
+    "reason": "actuation_before_observe"
+   },
+   {
+    "check": "record validation_order passes (reached for pick/place only within an active attempt or outside running)",
     "reason": "per validation_order"
    },
    {
     "check": "run lifecycle state is running (not queued, cancelling or terminal)",
     "reason": "lifecycle_violation"
-   },
-   {
-    "check": "pick/place requested while the protocol attempt state is between_attempts, i.e. no observe has started an active attempt (profile.attempt_rules.start)",
-    "reason": "actuation_before_observe"
    },
    {
     "check": "other attempt preconditions hold: an attempt is active, pick not while held, place not while not held, no actuation during settling",
@@ -2172,12 +2199,12 @@
   "candidate_artifacts": "A candidate_artifact is never admitted for execution under contract 1.0: v1 defines no execution grant. Static checks, isolated evaluation (feature 06/16) and promotion (feature 17) must define a separate harness-issued authority in a later contract version.",
   "abstention": "An admitted abstain causes no actuation; the case outcome follows protocol outcome_rules (abstained or the last attempt diagnostic).",
   "protocol_outcome_mapping": {
-   "summary": "A rejected pick/place maps to exactly one protocol outcome. Rules apply in order; the first match wins. Rejected or fenced requests add 0 invariant violations.",
+   "summary": "A rejected pick/place maps to exactly one protocol outcome. Rules apply in order; the first match wins. Rule 1 is keyed on the attempt state, not on the rejection reason, so before-attempt actuation never reaches the tool_rejected catch-all. Rejected or fenced requests add 0 invariant violations.",
    "rules_in_order": [
     {
-     "match": "rejection_reason actuation_before_observe",
+     "match": "any rejected pick/place while the run lifecycle is running and the protocol attempt state is between_attempts, whatever the record's validity or rejection_reason (by check order the recorded reason is always actuation_before_observe)",
      "primary": "missing_observation",
-     "effect": "ends the case (not only an attempt) per profile.attempt_rules.start and outcome_rules.request_rejections; no attempt is started or counted; 0 invariant violations. If such an actuation were improperly admitted the primary is invariant_violation."
+     "effect": "ends the case (not an attempt: none is active) per profile.attempt_rules.start and outcome_rules.request_rejections ('Before-attempt actuation remains the special missing_observation rule'); no attempt is started or counted; 0 invariant violations. If such an actuation were improperly admitted the primary is invariant_violation."
     },
     {
      "match": "rejection_reason stale or missing (observation absent or older than 200 ms at admission within an active attempt)",
@@ -2195,7 +2222,7 @@
      "effect": "ends the active attempt; may end the case early within budget"
     },
     {
-     "match": "any other rejection_reason on pick/place (lifecycle_violation, not_in_eligible_set, eligible_set_version_skew, unknown_tool, malformed, contradictory, oversized, unsupported_version, unauthorized_operation)",
+     "match": "any other rejection_reason on pick/place within an active attempt (lifecycle_violation, not_in_eligible_set, eligible_set_version_skew, unknown_tool, malformed, contradictory, oversized, unsupported_version, unauthorized_operation)",
      "primary": "tool_rejected",
      "effect": "ends the active attempt"
     },
@@ -2315,7 +2342,7 @@
   "cancellation_effects": "Entering cancelling admits no new actuation; abort requests a safe stop and reports the actual reached state. Cancellation never reverses physical progress; outcome.progress reports what was reached (e.g. partial). Cancel before start yields cancelled with progress none.",
   "late_result_fencing": "Every tool admission and result carries case_id, run_id and attempt_id. A result whose IDs do not match the active attempt, or that arrives in cancelling or a terminal state, is recorded as execution_event late_result_fenced with rejection_reason null or the matching reason, never applied, cannot authorize another command or revise a terminal outcome, and adds 0 invariant violations. An actual prohibited effect after terminal is retained as separate invariant evidence (outcome_rules.post_terminal).",
   "first_terminal_event": "When several terminal events race, the first recorded terminal case event wins; simultaneous events use profile.outcome_rules.priority.",
-  "lifecycle_to_primary_enforcement": "Enforced by the outcome record schema allOf (checked offline): an outcome whose primary is not allowed for its lifecycle_state, a rejected run with progress other than none, or primary completed without goal_reached, complete invariant evidence and 0 violations is rejected as malformed."
+  "lifecycle_to_primary_enforcement": "Enforced by the outcome record schema allOf (checked offline): an outcome whose primary is not allowed for its lifecycle_state, a rejected run with progress other than none, primary completed without goal_reached, complete invariant evidence and 0 violations, or primary collision/invariant_violation with complete invariant evidence and 0 violations is rejected as malformed."
  },
  "versioning": "Contract 1.0 is frozen. Any change to a field, enum, limit or rule requires a new contract_version, documented in CHANGELOG.md; readers reject any schema_version other than \"1.0\" as unsupported_version.",
  "non_claims": "No runtime, validator package, harness, worker, evaluator, simulator or model integration implements these contracts yet. Executable enforcement starts with feature 03 onward."

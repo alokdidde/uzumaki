@@ -32,9 +32,9 @@ Contract 1.0 is frozen. Any change to a field, enum, limit or rule needs a new `
 
 **Admission is separate from proposals.** `planner_decision`, `candidate_artifact` and model output are proposals. Only the harness coordinator admits an action, and every admission decision is recorded as an `execution_event` (`admission_accepted` / `admission_rejected`). A valid record is necessary but never sufficient for admission. The admission checks, in order, are listed in `v1.json` `admission.checks_in_order`:
 
-1. Record validation (below).
-2. The run is `running`. Otherwise `lifecycle_violation`.
-3. A `pick`/`place` requested in `between_attempts`, before any `observe` has started an attempt, is `actuation_before_observe`.
+1. A `pick`/`place` named by the tool-call channel while the run is `running` and in `between_attempts`, before any `observe` has started an attempt, is `actuation_before_observe`. This check uses harness state only and runs before record validation, so a malformed, contradictory, oversized or unsupported-version pick before `observe` gets the same reason and the same case-ending outcome.
+2. Record validation (below).
+3. The run is `running`. Otherwise `lifecycle_violation`.
 4. Other attempt preconditions hold: an attempt is active, no pick while held, no place while not held, no actuation during settling. Otherwise `lifecycle_violation`.
 5. The decision's observation is the latest one, and admission time minus `captured_at_ms` is 200 ms or less. Otherwise `stale`.
 6. `eligible_set_id` and `registry_version` match the current read-only view. Otherwise `eligible_set_version_skew`.
@@ -47,11 +47,11 @@ A rejected pick/place maps to exactly one protocol outcome through `admission.pr
 
 | Rejection | Primary | Effect |
 | --- | --- | --- |
-| `actuation_before_observe` | `missing_observation` | Ends the **case**, not just an attempt. No attempt is started or counted. If such an actuation were improperly admitted, the primary is `invariant_violation`. |
+| Any pick/place rejected in `between_attempts` while `running`, whatever the record's validity (recorded as `actuation_before_observe`) | `missing_observation` | Ends the **case**; no attempt is active, so none is ended, started or counted. If such an actuation were improperly admitted, the primary is `invariant_violation`. |
 | `stale` / `missing` observation in an active attempt | `missing_observation` | Ends the active attempt; retry follows `attempt_rules.retry`. |
 | Absent or conflicting target | `ambiguous_goal` | Ends the active attempt and may end the case early. |
 | Unreachable declared pose | `unreachable_target` | Ends the active attempt and may end the case early. |
-| Any other reason (`lifecycle_violation`, `not_in_eligible_set`, `eligible_set_version_skew`, `unknown_tool`, record reasons, `unauthorized_operation`) | `tool_rejected` | Ends the active attempt. |
+| Any other reason within an active attempt (`lifecycle_violation`, `not_in_eligible_set`, `eligible_set_version_skew`, `unknown_tool`, record reasons, `unauthorized_operation`) | `tool_rejected` | Ends the active attempt. |
 | `budget_exhausted` (fourth attempt or model call 21) | `budget_exhausted` | Ends the case without invocation. |
 
 Rejected or fenced requests add 0 invariant violations. Rejected non-actuating requests stay diagnostics and do not end an attempt by themselves.
@@ -101,7 +101,7 @@ This covers one harness run per case. The protocol's attempt states (`between_at
 | cancelling | cancelled | safe stop reported and evaluated |
 | cancelling | failed | component crash or invalid evidence |
 
-The terminal states are `completed`, `cancelled`, `failed` and `rejected`. No transition leaves them, and a terminal outcome is never rewritten. Repeating the identical terminal transition is a no-op recorded as `terminal_repeat_ignored`. Any other request is `lifecycle_violation`. Lifecycle `completed` means "a valid evaluator terminal event was recorded", **not** task success. Success is `outcome.primary == "completed"`. `lifecycle.lifecycle_to_primary` gives the allowed primaries for each terminal state, and the `outcome` schema enforces it (a mismatch is `malformed`).
+The terminal states are `completed`, `cancelled`, `failed` and `rejected`. No transition leaves them, and a terminal outcome is never rewritten. Repeating the identical terminal transition is a no-op recorded as `terminal_repeat_ignored`. Any other request is `lifecycle_violation`. Lifecycle `completed` means "a valid evaluator terminal event was recorded", **not** task success. Success is `outcome.primary == "completed"`. `lifecycle.lifecycle_to_primary` gives the allowed primaries for each terminal state, and the `outcome` schema enforces it (a mismatch is `malformed`). The schema also requires at least 1 violation when the primary is `collision` or `invariant_violation` and invariant evidence is complete.
 
 - **Cancellation effects.** No new actuation is admitted once a run is `cancelling`. `abort` requests a safe stop and reports the actual reached state. Physical progress is never reported as reversed: a cancelled run after a lift records progress `partial`.
 - **Late-result fencing.** Results carry `case_id`, `run_id` and `attempt_id`. A result that does not match the active attempt, or that arrives during `cancelling` or a terminal state, is recorded as `late_result_fenced`. It is never applied, cannot authorize a command or revise an outcome, and adds 0 violations. Actual prohibited effects are kept as separate invariant evidence (`outcome_rules.post_terminal`).
@@ -111,15 +111,15 @@ The terminal states are `completed`, `cancelled`, `failed` and `rejected`. No tr
 
 [fixtures.json](fixtures.json) uses only development-case geometry (`dev-001`, `dev-002`) and synthetic values. No heldout seed, geometry or result was read, used or invented.
 
-- **Valid (19):** at least one per record. They cover:
+- **Valid (22):** at least one per record. They cover:
   - a fresh observation, the 200 ms boundary, and an observation with no facts (all unknown);
   - select and abstain decisions;
-  - a fenced late result, an admission rejected for eligible-set version skew, a pick rejected before any observe (`actuation_before_observe`), and a candidate whose execution is refused (`unauthorized_operation`);
+  - a fenced late result, an admission rejected for eligible-set version skew, a pick rejected before any observe (`actuation_before_observe`), a malformed pick before any observe rejected with the same reason (subject null) together with its case outcome `missing_observation` (progress `none`, 0 violations), and a candidate whose execution is refused (`unauthorized_operation`);
   - a running→cancelling event with partial progress;
-  - a cancelled outcome whose model claim "Task complete." is ignored, a completed outcome with `goal_reached` and 0 violations, and an outcome with missing invariant evidence (count null);
+  - a cancelled outcome whose model claim "Task complete." is ignored, a completed outcome with `goal_reached` and 0 violations, a `collision` outcome with 1 violation, and an outcome with missing invariant evidence (count null);
   - provenance with unknown usage and with reported usage.
-- **Invalid (40):** each input is otherwise valid, so exactly one reason applies.
-  - `malformed`: non-object input; wrong types and bounds; wrong clock domain; a null fact; wrong `kind`; authority violations (a planner `register_skill` field, a writable eligible view, `authorization: true`, a trusted candidate, an outcome sourced from the planner, an authoritative judgment, an objective from retrieval, progress without the evaluator); an unknown primary; missing evidence read as 0; unknown usage guessed as 0; a relaxed objective speed; outcomes whose primary or progress contradicts the lifecycle state or completion rule (a rejected or failed run claiming `completed`, `completed` with a violation, with missing evidence or with progress `partial`, and `cancelled` in a `completed` run).
+- **Invalid (42):** each input is otherwise valid, so exactly one reason applies.
+  - `malformed`: non-object input; wrong types and bounds; wrong clock domain; a null fact; wrong `kind`; authority violations (a planner `register_skill` field, a writable eligible view, `authorization: true`, a trusted candidate, an outcome sourced from the planner, an authoritative judgment, an objective from retrieval, progress without the evaluator); an unknown primary; missing evidence read as 0; unknown usage guessed as 0; a relaxed objective speed; outcomes whose primary or progress contradicts the lifecycle state or completion rule (a rejected or failed run claiming `completed`, `completed` with a violation, with missing evidence or with progress `partial`, `cancelled` in a `completed` run, and `collision` or `invariant_violation` with complete evidence but 0 violations).
   - `missing`: no `schema_version`, `received_at_ms`, `payload`, `skill_id` key, `usage`, or objective `require_released_object`.
   - `stale`: 250 ms and 201 ms.
   - `contradictory`: reversed times; select with a null skill; abstain with a skill.

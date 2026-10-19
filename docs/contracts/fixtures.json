@@ -622,6 +622,83 @@
      "authoritative_source": "environment_evaluator"
     }
    }
+  },
+  {
+   "id": "valid-event-malformed-pick-before-observe-rejected",
+   "record": "execution_event",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "execution_event",
+    "payload": {
+     "case_id": "dev-001",
+     "run_id": "run-0005",
+     "attempt_id": null,
+     "event_id": "ev-1",
+     "seq": 1,
+     "event_kind": "admission_rejected",
+     "monotonic_ms": 5000,
+     "lifecycle_from": null,
+     "lifecycle_to": null,
+     "tool": "pick",
+     "subject_id": null,
+     "rejection_reason": "actuation_before_observe",
+     "progress": {
+      "level": "unknown",
+      "source": "not_assessed",
+      "evidence_ref": null
+     }
+    }
+   }
+  },
+  {
+   "id": "valid-outcome-malformed-pick-before-observe-missing-observation",
+   "record": "outcome",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "outcome",
+    "payload": {
+     "case_id": "dev-001",
+     "run_id": "run-0005",
+     "primary": "missing_observation",
+     "progress": "none",
+     "lifecycle_state": "completed",
+     "invariant_evidence": "complete",
+     "invariant_violation_count": 0,
+     "evaluator_evidence_refs": [
+      {
+       "ref": "evid-run-0005",
+       "sha256": "7777777777777777777777777777777777777777777777777777777777777777"
+      }
+     ],
+     "model_claims": [],
+     "authoritative_source": "environment_evaluator"
+    }
+   }
+  },
+  {
+   "id": "valid-outcome-collision-with-violation",
+   "record": "outcome",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "outcome",
+    "payload": {
+     "case_id": "dev-001",
+     "run_id": "run-0006",
+     "primary": "collision",
+     "progress": "partial",
+     "lifecycle_state": "completed",
+     "invariant_evidence": "complete",
+     "invariant_violation_count": 1,
+     "evaluator_evidence_refs": [
+      {
+       "ref": "evid-run-0006",
+       "sha256": "6666666666666666666666666666666666666666666666666666666666666666"
+      }
+     ],
+     "model_claims": [],
+     "authoritative_source": "environment_evaluator"
+    }
+   }
   }
  ],
  "invalid": [
@@ -2302,6 +2379,60 @@
    },
    "reason": "malformed",
    "description": "Objective relaxes speed_m_per_s_at_most to 0.05; objectives are frozen protocol constants."
+  },
+  {
+   "id": "malformed-outcome-collision-zero-violations",
+   "record": "outcome",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "outcome",
+    "payload": {
+     "case_id": "dev-001",
+     "run_id": "run-0006",
+     "primary": "collision",
+     "progress": "partial",
+     "lifecycle_state": "completed",
+     "invariant_evidence": "complete",
+     "invariant_violation_count": 0,
+     "evaluator_evidence_refs": [
+      {
+       "ref": "evid-run-0006",
+       "sha256": "6666666666666666666666666666666666666666666666666666666666666666"
+      }
+     ],
+     "model_claims": [],
+     "authoritative_source": "environment_evaluator"
+    }
+   },
+   "reason": "malformed",
+   "description": "Primary collision with complete invariant evidence and invariant_violation_count 0: collision is a mandatory-invariant (forbidden contact) violation, so complete evidence must count at least 1."
+  },
+  {
+   "id": "malformed-outcome-invariant-violation-zero-violations",
+   "record": "outcome",
+   "input": {
+    "schema_version": "1.0",
+    "kind": "outcome",
+    "payload": {
+     "case_id": "dev-001",
+     "run_id": "run-0007",
+     "primary": "invariant_violation",
+     "progress": "none",
+     "lifecycle_state": "completed",
+     "invariant_evidence": "complete",
+     "invariant_violation_count": 0,
+     "evaluator_evidence_refs": [
+      {
+       "ref": "evid-run-0007",
+       "sha256": "6666666666666666666666666666666666666666666666666666666666666666"
+      }
+     ],
+     "model_claims": [],
+     "authoritative_source": "environment_evaluator"
+    }
+   },
+   "reason": "malformed",
+   "description": "Primary invariant_violation with complete invariant evidence and invariant_violation_count 0 contradicts its own primary."
   }
  ]
 }

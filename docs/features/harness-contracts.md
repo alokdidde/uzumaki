@@ -7,7 +7,7 @@ Status: **documentary, candidate for review.** Nothing here is a runtime capabil
 ## What changed
 
 - [docs/contracts/v1.json](../contracts/v1.json) adds contract `1.0`. It defines eight closed, reference-free JSON Schema Draft 2020-12 record schemas (`task_context`, `observation`, `eligible_skills`, `planner_decision`, `candidate_artifact`, `execution_event`, `outcome`, `model_provenance`). It also covers the authority map, input and freshness limits, validation order, admission checks, harness semantic rules and the run lifecycle.
-- [docs/contracts/fixtures.json](../contracts/fixtures.json) adds 19 valid and 40 invalid concrete inputs, each invalid one with a single expected reason.
+- [docs/contracts/fixtures.json](../contracts/fixtures.json) adds 22 valid and 42 invalid concrete inputs, each invalid one with a single expected reason.
 - [docs/contracts/README.md](../contracts/README.md) is the human-readable specification and fixture catalogue.
 - [README](../../README.md), [architecture](../architecture.md) and [testing](../testing.md) now link the contracts and state their limits. [CHANGELOG.md](../../CHANGELOG.md) is added.
 - Issue-01 files (`docs/protocol/*`, `docs/decisions/0001-*`) are unchanged.
@@ -30,8 +30,8 @@ Status: **documentary, candidate for review.** Nothing here is a runtime capabil
 - **The evaluator owns success.** `outcome.authoritative_source` is const `environment_evaluator`, and model claims are retained but non-authoritative. The valid fixture `valid-outcome-cancelled-model-claim-ignored` shows a "Task complete." claim alongside primary `cancelled`.
 - **Run lifecycle versus task outcome.** Lifecycle `completed` means a valid evaluator terminal event was recorded. Task success is `primary == "completed"`. A run rejected before reset still stays in the denominator as `evaluation_failure`, following the protocol rule that no case is dropped.
 - **Objective is the full completion rule.** The `task_context` objective copies every `profile.completion` constant, including speed at most 0.01 m/s, a released object and 0 mandatory invariant violations, so the planner and generator never see a weaker success criterion.
-- **Before-attempt actuation is special.** A pick/place before any `observe` is rejected as `actuation_before_observe` and ends the case as `missing_observation`, as `attempt_rules.start` requires. Other lifecycle rejections map to `tool_rejected`.
-- **Outcome consistency is schema-enforced.** The `outcome` schema encodes `lifecycle_to_primary`, `rejected` → progress `none`, and `completed` → `goal_reached` with complete evidence and 0 violations. A success-bearing inconsistency is rejected as `malformed`.
+- **Before-attempt actuation is special.** A pick/place before any `observe` is rejected as `actuation_before_observe` and ends the case as `missing_observation`, as `attempt_rules.start` requires. The check runs on harness state before record validation, and the outcome mapping is keyed on the attempt state, so a malformed pick before `observe` also ends the case as `missing_observation`, never `tool_rejected`. Rejections within an active attempt that match no earlier rule map to `tool_rejected`.
+- **Outcome consistency is schema-enforced.** The `outcome` schema encodes `lifecycle_to_primary`, `rejected` → progress `none`, `completed` → `goal_reached` with complete evidence and 0 violations, and `collision`/`invariant_violation` with complete evidence → at least 1 violation. A success-bearing inconsistency is rejected as `malformed`.
 - **Eligible-set version skew.** A decision whose `eligible_set_id` or `registry_version` differs from the current read-only view is rejected at admission (`eligible_set_version_skew`). Earlier validation does not carry over.
 
 ## Limitations
