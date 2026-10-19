@@ -92,7 +92,9 @@ def test_malformed_configuration(tmp_path: Path, data: Any) -> None:
 def test_duplicate_requests_rejected(tmp_path: Path) -> None:
     rec = {"request": {"a": 1}, "result": {"b": 1}}
     with pytest.raises(ValueError, match="duplicate"):
-        RecordedProvider.from_path(write(tmp_path, {"schema_version": "1.0", "records": [rec, rec]}))
+        RecordedProvider.from_path(
+            write(tmp_path, {"schema_version": "1.0", "records": [rec, rec]})
+        )
 
 
 def test_no_network_during_tests(fixture_path: Path) -> None:
