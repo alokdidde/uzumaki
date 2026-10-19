@@ -47,17 +47,18 @@ def fixture_entries() -> list[dict[str, Any]]:
     return entries
 
 
-def body(skill_id: str = "pick-box", **changes: Any) -> dict[str, Any]:
+def body(template: str = "pick-box", /, **changes: Any) -> dict[str, Any]:
+    """Copy the fixture body whose skill_id is `template`; `changes` may override any field."""
     for entry in fixture_entries():
-        if entry["artifact"]["skill_id"] == skill_id:
+        if entry["artifact"]["skill_id"] == template:
             document = copy.deepcopy(entry["artifact"])
             document.update(changes)
             return document
-    raise KeyError(skill_id)
+    raise KeyError(template)
 
 
-def sealed(skill_id: str = "pick-box", **changes: Any) -> dict[str, Any]:
-    return seal_skill(body(skill_id, **changes))
+def sealed(template: str = "pick-box", /, **changes: Any) -> dict[str, Any]:
+    return seal_skill(body(template, **changes))
 
 
 def write_set(tmp_path: Path, entries: list[dict[str, Any]], name: str = "set.json") -> Path:
@@ -284,6 +285,8 @@ def test_strict_json_parsing(data: bytes) -> None:
         (("inputs", "properties", "Bad"), {"type": "boolean"}),
         (("inputs", "properties", "note"), {"type": "string"}),
         (("inputs", "properties", "note"), {"type": "string", "maxLength": 129}),
+        (("inputs", "properties", "note"), {"type": "string", "maxLength": True}),
+        (("inputs", "properties", "note"), {"type": "string", "maxLength": 8.0}),
         (("inputs", "properties", "note"), {"type": "string", "maxLength": 3, "enum": ["long"]}),
         (("inputs", "properties", "h"), {"type": "number", "minimum": 1, "maximum": 0}),
         (("inputs", "properties", "h"), {"type": "integer", "minimum": 0.5}),

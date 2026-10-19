@@ -48,7 +48,7 @@ Status: implemented as an offline library (`uzumaki.registry`). No harness loop,
 
 - loading the hand-authored set with provider construction disabled; every stored field, digest binding and `Budgets` conversion; copies returned by accessors; frozen skills;
 - tampered artifacts (edited instructions, bounds, tools, failure semantics, a swapped digest), a tampered file inside a set, in-memory byte and identity tampering detected by `verify`, `registry.verify` and `pin`; malformed digests, unsupported formats, oversized artifacts and files, and strict JSON;
-- 29 invalid contracts (input/output contracts, bounds above the protocol budget or missing, a non-evaluator success authority, retrying violations, overlapping or unknown outcomes) and 17 malformed fields, plus a valid extension that must load;
+- 31 invalid contracts (input/output contracts including non-integer `maxLength`, bounds above the protocol budget or missing, a non-evaluator success authority, retrying violations, overlapping or unknown outcomes) and 17 malformed fields, plus a valid extension that must load;
 - missing tools (undeclared, absent from the catalog or a partial broker manifest) and tool version mismatches;
 - incompatible dependencies (absent, out of range, only rejected, needing more tools, unvalidated at validation time), self-dependencies and cycles;
 - duplicate artifacts, conflicting content for one ID and version, decreasing versions, duplicate set entries and malformed set entries;

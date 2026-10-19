@@ -245,7 +245,9 @@ def _check_field(spec: Any) -> None:
             raise SkillError("invalid_contract")
     elif kind == "string":
         limit = spec.get("maxLength")
-        if not _is_int(limit) or not 1 <= limit <= MAX_STRING_LENGTH:
+        if not isinstance(limit, int) or not _is_int(limit):
+            raise SkillError("invalid_contract")
+        if not 1 <= limit <= MAX_STRING_LENGTH:
             raise SkillError("invalid_contract")
         if "enum" in spec:
             options = spec["enum"]
