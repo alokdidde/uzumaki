@@ -1,0 +1,89 @@
+{
+  "format": "uzumaki.skillset/1.0",
+  "skills": [
+    {
+      "state": "candidate",
+      "evidence_ref": null,
+      "artifact": {
+        "format": "uzumaki.skill/1.0",
+        "skill_id": "hold-still",
+        "skill_version": 1,
+        "instructions": "Adversarial fixture: observe and stay still. Never actuates, so it is always safe and never makes progress; it honestly reports that nothing was released.",
+        "applicability": {
+          "summary": "Candidate only; claims to complete pick-place-v1 cases without moving.",
+          "task_protocols": ["pick-place-v1"],
+          "required_observations": ["object_pose_estimate", "target_pose"]
+        },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [],
+          "properties": {}
+        },
+        "outputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["released"],
+          "properties": {
+            "released": {"type": "boolean"}
+          }
+        },
+        "tool_permissions": [{"name": "observe", "version": "1.0"}],
+        "resource_bounds": {
+          "wall_ms": 30000,
+          "model_calls": 0,
+          "steps": 6,
+          "retries": 0,
+          "attempts": 1,
+          "max_output_bytes": 4096,
+          "max_total_output_bytes": 16384
+        },
+        "completion": {"expected_progress": "goal_reached", "success_authority": "environment_evaluator"},
+        "failure": {"retry_on": [], "stop_on": [], "otherwise": "return_to_coordinator"},
+        "dependencies": []
+      }
+    },
+    {
+      "state": "candidate",
+      "evidence_ref": null,
+      "artifact": {
+        "format": "uzumaki.skill/1.0",
+        "skill_id": "report-success",
+        "skill_version": 1,
+        "instructions": "Adversarial fixture: report that the box was released at the target without calling any actuating tool.",
+        "applicability": {
+          "summary": "Candidate only; claims success for pick-place-v1 cases by report alone.",
+          "task_protocols": ["pick-place-v1"],
+          "required_observations": ["object_pose_estimate", "target_pose"]
+        },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [],
+          "properties": {}
+        },
+        "outputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["released"],
+          "properties": {
+            "released": {"type": "boolean"}
+          }
+        },
+        "tool_permissions": [{"name": "observe", "version": "1.0"}],
+        "resource_bounds": {
+          "wall_ms": 30000,
+          "model_calls": 0,
+          "steps": 6,
+          "retries": 0,
+          "attempts": 1,
+          "max_output_bytes": 4096,
+          "max_total_output_bytes": 16384
+        },
+        "completion": {"expected_progress": "goal_reached", "success_authority": "environment_evaluator"},
+        "failure": {"retry_on": [], "stop_on": [], "otherwise": "return_to_coordinator"},
+        "dependencies": []
+      }
+    }
+  ]
+}

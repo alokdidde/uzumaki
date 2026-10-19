@@ -1,0 +1,86 @@
+{
+  "format": "uzumaki.baseline-cases/1.0",
+  "protocol": "pick-place-v1",
+  "cases": [
+    {
+      "case_id": "nominal",
+      "geometry": "dev-001",
+      "box_size_m": 0.054613,
+      "initial_xy_m": [-0.121093, 0.118386],
+      "initial_yaw_deg": -16.832461,
+      "target_xy_m": [0.116093, 0.133576],
+      "faults": {"misgrasp_picks": 0, "stale_observes": [], "crash_on_call": null, "withdraw_goal_after_call": null},
+      "expected": {"primary": "completed", "progress": "goal_reached", "state": "completed", "status": "completed", "attempts": 1, "admitted": {"pick": 1, "place": 1}}
+    },
+    {
+      "case_id": "unreachable-goal",
+      "geometry": "dev-002-target-0.40",
+      "box_size_m": 0.04553,
+      "initial_xy_m": [-0.085142, 0.062836],
+      "initial_yaw_deg": -23.699624,
+      "target_xy_m": [0.40, 0.0],
+      "faults": {"misgrasp_picks": 0, "stale_observes": [], "crash_on_call": null, "withdraw_goal_after_call": null},
+      "expected": {"primary": "unreachable_target", "progress": "partial", "state": "completed", "status": "blocked", "attempts": 1, "admitted": {"pick": 1, "place": 0}}
+    },
+    {
+      "case_id": "failed-grasp",
+      "geometry": "dev-003",
+      "box_size_m": 0.031535,
+      "initial_xy_m": [-0.053449, -0.061066],
+      "initial_yaw_deg": -2.375005,
+      "target_xy_m": [0.089459, -0.114969],
+      "faults": {"misgrasp_picks": 1, "stale_observes": [], "crash_on_call": null, "withdraw_goal_after_call": null},
+      "expected": {"primary": "completed", "progress": "goal_reached", "state": "completed", "status": "completed", "attempts": 2, "admitted": {"pick": 2, "place": 1}}
+    },
+    {
+      "case_id": "stale-observation",
+      "geometry": "dev-004",
+      "box_size_m": 0.053462,
+      "initial_xy_m": [-0.060652, 0.02959],
+      "initial_yaw_deg": 10.226027,
+      "target_xy_m": [0.135355, 0.044644],
+      "faults": {"misgrasp_picks": 0, "stale_observes": [1], "crash_on_call": null, "withdraw_goal_after_call": null},
+      "expected": {"primary": "completed", "progress": "goal_reached", "state": "completed", "status": "completed", "attempts": 2, "admitted": {"pick": 1, "place": 1}}
+    },
+    {
+      "case_id": "stale-after-pick",
+      "geometry": "dev-005",
+      "box_size_m": 0.04647,
+      "initial_xy_m": [-0.130535, -0.099562],
+      "initial_yaw_deg": -43.100336,
+      "target_xy_m": [0.089156, -0.068784],
+      "faults": {"misgrasp_picks": 0, "stale_observes": [2], "crash_on_call": null, "withdraw_goal_after_call": null},
+      "expected": {"primary": "completed", "progress": "goal_reached", "state": "completed", "status": "completed", "attempts": 2, "admitted": {"pick": 1, "place": 1}}
+    },
+    {
+      "case_id": "retry-exhausted",
+      "geometry": "dev-006",
+      "box_size_m": 0.034349,
+      "initial_xy_m": [-0.109911, 0.131946],
+      "initial_yaw_deg": 14.195264,
+      "target_xy_m": [0.099754, 0.045609],
+      "faults": {"misgrasp_picks": 3, "stale_observes": [], "crash_on_call": null, "withdraw_goal_after_call": null},
+      "expected": {"primary": "budget_exhausted", "progress": "none", "state": "completed", "status": "budget_exhausted", "attempts": 3, "admitted": {"pick": 3, "place": 0}}
+    },
+    {
+      "case_id": "cancellation",
+      "geometry": "dev-007",
+      "box_size_m": 0.054047,
+      "initial_xy_m": [-0.144551, 0.078052],
+      "initial_yaw_deg": 6.356883,
+      "target_xy_m": [0.058034, 0.044741],
+      "faults": {"misgrasp_picks": 0, "stale_observes": [], "crash_on_call": null, "withdraw_goal_after_call": 2},
+      "expected": {"primary": "cancelled", "progress": "partial", "state": "cancelled", "status": "cancelled", "attempts": 1, "admitted": {"pick": 1, "place": 0}}
+    },
+    {
+      "case_id": "worker-crash",
+      "geometry": "dev-008",
+      "box_size_m": 0.030863,
+      "initial_xy_m": [-0.117417, 0.125361],
+      "initial_yaw_deg": 43.402229,
+      "target_xy_m": [0.055212, 0.138882],
+      "faults": {"misgrasp_picks": 0, "stale_observes": [], "crash_on_call": 3, "withdraw_goal_after_call": null},
+      "expected": {"primary": "evaluation_failure", "progress": "partial", "state": "failed", "status": "failed", "attempts": 1, "admitted": {"pick": 1, "place": 0}}
+    }
+  ]
+}
