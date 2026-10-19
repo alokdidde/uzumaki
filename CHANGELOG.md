@@ -4,6 +4,19 @@ Documentary changes to canonical contracts and protocols. Entries describe speci
 
 ## Unreleased
 
+### Added — lifecycle, budgets, cancellation and failure handling ([issue 05](https://github.com/alokdidde/uzumaki/issues/5))
+
+- `uzumaki.lifecycle`: a thread-safe contract 1.0 run lifecycle (same states, edges and event names). The first terminal request wins. Repeats record `terminal_repeat_ignored` and other disallowed requests record `lifecycle_violation`; neither raises nor changes state. It adds harness statuses `completed`, `abstained`, `blocked`, `partial_progress`, `timeout`, `budget_exhausted`, `cancelled`, `failed` and `rejected`, and monotonic progress (`none`, `partial`, `goal_reached`) that cancellation never reduces. Post-terminal observations are kept separately.
+- `uzumaki.budgets`: strict `Budgets` for wall time, model calls (retries included), steps, retries, attempts, per-call and total output bytes, per-call timeouts, and optional tokens and cost. Usage counts only when the provider reports it. Unknown usage is never zero; `unknown_usage` is `fail_closed` (default) or `record_unknown`.
+- `uzumaki.supervisor.BoundedRun`: enforces the budgets before and after each model or tool call, and retries timeouts, transient errors and malformed results within budget. Worker failures fail the run. It fences late results by run, attempt and call ID (recorded by digest, never applied) and handles cancellation at call boundaries. It makes no call after the run leaves `running`, releases registered resources exactly once, and provides `execute(logic)` and a `RunReport`.
+- `uzumaki.deadline`: `run_in_process` and `ProcessProvider` run a call in a spawned child process group, kill it at the deadline or after the reply, and bound its output. This bounds calls and cleans up processes; it is not a sandbox.
+- `uzumaki.faults`: `TransientProviderError`, `ProviderTimeout`, `WorkerFailure`.
+- Tests: `tests/test_lifecycle.py`, `tests/test_budgets.py` and `tests/test_supervisor.py` (fake clock), and `tests/test_deadline.py` (real processes), with helpers `tests/fakes.py` and `tests/process_workers.py`. Feature note: [docs/features/lifecycle-budgets.md](docs/features/lifecycle-budgets.md).
+
+- Review repair 1 (findings r0-F1, r0-F2): a voluntary stop at or after the wall deadline now ends the run as `timeout` (`wall_time`), and results arriving exactly at a call deadline are fenced. History entries record the contract `edge` separately from the actual trigger `on`, plus `by` and `evaluated: false`, so harness stops are never labelled as evaluator events. Progress keeps its source (the default is `harness_logic`), and `completed` needs `goal_reached` observed by `environment` or `evaluator`.
+
+Not changed: the `RecordedProvider` API (still usable as a `BoundedRun` provider), the evidence log format `uzumaki.events/1.0`, `make check`, CI, the protocol and contracts 1.0. Not added: a sandboxed worker (feature 06), an evaluator, environment abort/safe-stop, retry backoff, persisted run reports, live models or simulators.
+
 ### Added — execution events and semantic replay ([issue 04](https://github.com/alokdidde/uzumaki/issues/4))
 
 - `uzumaki.evidence`: `EventRecorder` writes a versioned (`uzumaki.events/1.0`, contract `1.0`) event log with run/task/candidate IDs, skill and model versions, observation identities (content digests, not raw content), decisions, tool calls and results, the outcome and timings. Events are SHA-256 chained from the manifest identity. `Limits` bound event count, event bytes and bundle bytes. The validator defaults are the ceiling, so the recorder rejects larger limits at construction. Bytes are counted exactly, and room for `run_finished` stays reserved, so exceeding a limit is an error when the offending event is recorded, never in `finish`, and is never silent dropping.
