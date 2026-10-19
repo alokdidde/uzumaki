@@ -11,7 +11,8 @@ Documentary changes to canonical contracts and protocols. Entries describe speci
   - the authority map: the planner may only select or abstain, the generator produces only untrusted artifacts, and the evaluator is the task-success authority;
   - limits of 65536 input bytes and a 200 ms observation age;
   - the validation order, admission checks, harness semantic rules and the run lifecycle (`queued`, `running`, `cancelling`, then terminal `completed`, `cancelled`, `failed`, `rejected`).
-- [docs/contracts/fixtures.json](docs/contracts/fixtures.json) adds 17 valid and 32 invalid concrete fixtures covering malformed, missing, stale, contradictory, oversized and unsupported-version inputs, authority violations, unknown-versus-zero usage and evidence, late-result fencing, cancellation and eligible-set version skew.
+- [docs/contracts/fixtures.json](docs/contracts/fixtures.json) adds 19 valid and 40 invalid concrete fixtures covering malformed, missing, stale, contradictory, oversized and unsupported-version inputs, authority violations, unknown-versus-zero usage and evidence, late-result fencing, cancellation, eligible-set version skew, before-attempt actuation and outcome/lifecycle consistency.
+- Review repair 1 (findings r0-F1 to r0-F4): the 200 ms boundary fixture now uses one observation ID throughout; admission adds `actuation_before_observe`, which ends the case as `missing_observation`; the objective carries the full `profile.completion` rule; and the outcome schema enforces lifecycle/primary/progress consistency.
 - [docs/contracts/README.md](docs/contracts/README.md) and [docs/features/harness-contracts.md](docs/features/harness-contracts.md) describe the specification, decisions and limitations.
 - [README.md](README.md), [docs/architecture.md](docs/architecture.md) and [docs/testing.md](docs/testing.md) now link the contracts.
 

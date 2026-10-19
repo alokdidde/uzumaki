@@ -377,6 +377,9 @@
          "xy_tolerance_m",
          "yaw_tolerance_deg",
          "settle_s",
+         "speed_m_per_s_at_most",
+         "require_released_object",
+         "mandatory_invariant_violations",
          "source"
         ],
         "properties": {
@@ -426,19 +429,34 @@
           "description": "Pose in the pick-place-v1 tabletop frame. An estimate when observed, never ground truth."
          },
          "xy_tolerance_m": {
-          "const": 0.02
+          "const": 0.02,
+          "description": "profile.completion.xy_error_m_at_most, metres."
          },
          "yaw_tolerance_deg": {
-          "const": 10
+          "const": 10,
+          "description": "profile.completion.yaw_error_deg_at_most, degrees."
          },
          "settle_s": {
-          "const": 0.5
+          "const": 0.5,
+          "description": "profile.completion.settled_seconds_at_least, seconds."
+         },
+         "speed_m_per_s_at_most": {
+          "const": 0.01,
+          "description": "profile.completion.speed_m_per_s_at_most, metres per second; object must be at rest at most this speed throughout the settling window."
+         },
+         "require_released_object": {
+          "const": true,
+          "description": "profile.completion.require_released_object; a held or still-grasped box never meets the objective."
+         },
+         "mandatory_invariant_violations": {
+          "const": 0,
+          "description": "profile.completion.mandatory_invariant_violations; completion requires zero mandatory invariant violations backed by complete invariant evidence."
          },
          "source": {
           "const": "task_protocol"
          }
         },
-        "description": "Objective fixed by the frozen pick-place-v1 protocol completion rule. No model role can author or change it."
+        "description": "Objective copying every condition of the frozen pick-place-v1 profile.completion rule (pose tolerance, settle time, speed, release and zero mandatory invariant violations). No model role can author or change it."
        },
        "description": "Exactly one objective for pick-place-v1."
       },
@@ -1379,6 +1397,7 @@
         "lifecycle_violation",
         "budget_exhausted",
         "unknown_tool",
+        "actuation_before_observe",
         null
        ],
        "description": "Null: not a rejection or fence."
@@ -1633,8 +1652,168 @@
          }
         }
        }
+      },
+      {
+       "if": {
+        "properties": {
+         "lifecycle_state": {
+          "const": "completed"
+         }
+        }
+       },
+       "then": {
+        "properties": {
+         "primary": {
+          "enum": [
+           "abstained",
+           "ambiguous_goal",
+           "budget_exhausted",
+           "collision",
+           "completed",
+           "invariant_violation",
+           "misgrasp",
+           "missing_observation",
+           "partial_progress",
+           "placement_failure",
+           "timeout",
+           "tool_rejected",
+           "unreachable_target"
+          ]
+         }
+        }
+       }
+      },
+      {
+       "if": {
+        "properties": {
+         "lifecycle_state": {
+          "const": "cancelled"
+         }
+        }
+       },
+       "then": {
+        "properties": {
+         "primary": {
+          "enum": [
+           "cancelled",
+           "collision",
+           "invariant_violation"
+          ]
+         }
+        }
+       }
+      },
+      {
+       "if": {
+        "properties": {
+         "lifecycle_state": {
+          "const": "failed"
+         }
+        }
+       },
+       "then": {
+        "properties": {
+         "primary": {
+          "enum": [
+           "evaluation_failure"
+          ]
+         }
+        }
+       }
+      },
+      {
+       "if": {
+        "properties": {
+         "lifecycle_state": {
+          "const": "rejected"
+         }
+        }
+       },
+       "then": {
+        "properties": {
+         "primary": {
+          "enum": [
+           "evaluation_failure"
+          ]
+         }
+        }
+       }
+      },
+      {
+       "if": {
+        "properties": {
+         "lifecycle_state": {
+          "const": "rejected"
+         }
+        }
+       },
+       "then": {
+        "properties": {
+         "progress": {
+          "const": "none"
+         }
+        }
+       }
+      },
+      {
+       "if": {
+        "properties": {
+         "primary": {
+          "const": "completed"
+         }
+        }
+       },
+       "then": {
+        "properties": {
+         "progress": {
+          "const": "goal_reached"
+         },
+         "invariant_evidence": {
+          "const": "complete"
+         },
+         "invariant_violation_count": {
+          "const": 0
+         }
+        }
+       }
+      },
+      {
+       "if": {
+        "properties": {
+         "primary": {
+          "const": "abstained"
+         }
+        }
+       },
+       "then": {
+        "properties": {
+         "progress": {
+          "const": "none"
+         }
+        }
+       }
+      },
+      {
+       "if": {
+        "properties": {
+         "primary": {
+          "const": "partial_progress"
+         }
+        }
+       },
+       "then": {
+        "properties": {
+         "progress": {
+          "enum": [
+           "partial",
+           "goal_reached"
+          ]
+         }
+        }
+       }
       }
-     ]
+     ],
+     "$comment": "allOf encodes lifecycle.lifecycle_to_primary, rejected -> progress none, completed -> goal_reached with complete evidence and 0 violations (profile.completion.mandatory_invariant_violations), abstained -> progress none and partial_progress -> observed effects (outcome_rules.progress). A violation is a schema error and is therefore rejected as malformed by validation_order step 6."
     }
    }
   },
@@ -1954,7 +2133,15 @@
     "reason": "per validation_order"
    },
    {
-    "check": "run lifecycle state is running and an attempt is active (protocol attempt_rules)",
+    "check": "run lifecycle state is running (not queued, cancelling or terminal)",
+    "reason": "lifecycle_violation"
+   },
+   {
+    "check": "pick/place requested while the protocol attempt state is between_attempts, i.e. no observe has started an active attempt (profile.attempt_rules.start)",
+    "reason": "actuation_before_observe"
+   },
+   {
+    "check": "other attempt preconditions hold: an attempt is active, pick not while held, place not while not held, no actuation during settling",
     "reason": "lifecycle_violation"
    },
    {
@@ -1984,7 +2171,43 @@
   ],
   "candidate_artifacts": "A candidate_artifact is never admitted for execution under contract 1.0: v1 defines no execution grant. Static checks, isolated evaluation (feature 06/16) and promotion (feature 17) must define a separate harness-issued authority in a later contract version.",
   "abstention": "An admitted abstain causes no actuation; the case outcome follows protocol outcome_rules (abstained or the last attempt diagnostic).",
-  "protocol_outcome_mapping": "A rejected pick/place maps to exactly one outcome by outcome_rules.request_rejections: stale/missing observation -> missing_observation; absent/conflicting target -> ambiguous_goal; unreachable declared pose -> unreachable_target; every other rejection -> tool_rejected. Rejected or fenced requests add 0 invariant violations."
+  "protocol_outcome_mapping": {
+   "summary": "A rejected pick/place maps to exactly one protocol outcome. Rules apply in order; the first match wins. Rejected or fenced requests add 0 invariant violations.",
+   "rules_in_order": [
+    {
+     "match": "rejection_reason actuation_before_observe",
+     "primary": "missing_observation",
+     "effect": "ends the case (not only an attempt) per profile.attempt_rules.start and outcome_rules.request_rejections; no attempt is started or counted; 0 invariant violations. If such an actuation were improperly admitted the primary is invariant_violation."
+    },
+    {
+     "match": "rejection_reason stale or missing (observation absent or older than 200 ms at admission within an active attempt)",
+     "primary": "missing_observation",
+     "effect": "ends the active attempt; retry under attempt_rules.retry"
+    },
+    {
+     "match": "target absent or conflicting",
+     "primary": "ambiguous_goal",
+     "effect": "ends the active attempt; may end the case early within budget"
+    },
+    {
+     "match": "declared pose unreachable",
+     "primary": "unreachable_target",
+     "effect": "ends the active attempt; may end the case early within budget"
+    },
+    {
+     "match": "any other rejection_reason on pick/place (lifecycle_violation, not_in_eligible_set, eligible_set_version_skew, unknown_tool, malformed, contradictory, oversized, unsupported_version, unauthorized_operation)",
+     "primary": "tool_rejected",
+     "effect": "ends the active attempt"
+    },
+    {
+     "match": "rejection_reason budget_exhausted (fourth attempt or model call 21)",
+     "primary": "budget_exhausted",
+     "effect": "ends the case without invocation"
+    }
+   ],
+   "non_actuating": "Rejected or fenced observe/abort or unknown non-actuating requests remain diagnostics and do not end an attempt by themselves (outcome_rules.request_rejections).",
+   "attempt_vs_case": "Per-attempt primaries are diagnostics while retrying; after the third failed attempt the case primary is budget_exhausted (outcome_rules.attempt_failures)."
+  }
  },
  "lifecycle": {
   "subject": "harness run for one case; protocol attempt states (between_attempts/active/settling) live inside `running` and are defined by profile.attempt_rules, not redefined here",
@@ -2091,7 +2314,8 @@
   "terminal_immutability": "No transition leaves a terminal state. The outcome record of a terminal run is never rewritten. A repeat of the identical terminal transition is a no-op recorded as terminal_repeat_ignored; any other transition request is rejected as lifecycle_violation.",
   "cancellation_effects": "Entering cancelling admits no new actuation; abort requests a safe stop and reports the actual reached state. Cancellation never reverses physical progress; outcome.progress reports what was reached (e.g. partial). Cancel before start yields cancelled with progress none.",
   "late_result_fencing": "Every tool admission and result carries case_id, run_id and attempt_id. A result whose IDs do not match the active attempt, or that arrives in cancelling or a terminal state, is recorded as execution_event late_result_fenced with rejection_reason null or the matching reason, never applied, cannot authorize another command or revise a terminal outcome, and adds 0 invariant violations. An actual prohibited effect after terminal is retained as separate invariant evidence (outcome_rules.post_terminal).",
-  "first_terminal_event": "When several terminal events race, the first recorded terminal case event wins; simultaneous events use profile.outcome_rules.priority."
+  "first_terminal_event": "When several terminal events race, the first recorded terminal case event wins; simultaneous events use profile.outcome_rules.priority.",
+  "lifecycle_to_primary_enforcement": "Enforced by the outcome record schema allOf (checked offline): an outcome whose primary is not allowed for its lifecycle_state, a rejected run with progress other than none, or primary completed without goal_reached, complete invariant evidence and 0 violations is rejected as malformed."
  },
  "versioning": "Contract 1.0 is frozen. Any change to a field, enum, limit or rule requires a new contract_version, documented in CHANGELOG.md; readers reject any schema_version other than \"1.0\" as unsupported_version.",
  "non_claims": "No runtime, validator package, harness, worker, evaluator, simulator or model integration implements these contracts yet. Executable enforcement starts with feature 03 onward."
