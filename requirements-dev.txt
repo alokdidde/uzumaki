@@ -1,5 +1,3 @@
-# Complete pinned development toolchain (direct and transitive).
-# Install once with network access: python -m pip install -r requirements-dev.txt
 attrs==25.3.0
 build==1.2.2.post1
 iniconfig==2.1.0
