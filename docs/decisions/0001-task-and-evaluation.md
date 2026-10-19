@@ -13,6 +13,10 @@ Issue 01 requires one rigid-object pick-and-place task, a simulator and model-pr
 - **Language:** CPython 3.12 family. The exact toolchain lock belongs to feature 03.
 - **Runtime model:** `claude-sonnet-5-5` from Anthropic, one model for both planner and generator roles with separate contexts. **UNVERIFIED**: availability, behavior, and cost are untested. Supplied reference (not fetched here): <https://code.claude.com/docs/en/model-config>.
 
+## Revision 2 (pre-acceptance)
+
+`review_revision=2` repairs the draft after review: it adds the tabletop frame and constant target yaw 0 (`goal_frame`), the deterministic `rule-selector-v1` baseline with shared skill contracts, the mandatory invariant set, and single-primary outcome precedence with independent progress. This is a documentary revision before acceptance, not a performance result. The numerical targets and heldout commitments are unchanged; the decision above is unchanged and remains a candidate.
+
 ## Alternatives considered
 
 Not exhaustively evaluated. Hardware was excluded as out of MVP scope; multiple objects and a separate decision model were deferred to later features. Other simulators and models were not compared; this is a candidate choice, to be revisited if verification fails.
