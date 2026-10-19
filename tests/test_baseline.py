@@ -286,7 +286,9 @@ def test_nominal_bundle_records_the_whole_loop(snapshot: RegistrySnapshot) -> No
     assert bundle["events"][0]["kind"] == "run_started"
     assert [event["kind"] for event in bundle["events"][-2:]] == ["outcome", "run_finished"]
     observations = kinds(bundle, "observation")
-    assert len(observations) == 11
+    # One recorded observation per world observe (2 in the attempt plus 7 while settling); the
+    # pick and place steps are counted in the 11 steps but produce no observation.
+    assert len(observations) == world_tools(bundle).count("observe") == 9
     assert {observation["source"] for observation in observations} == {"fixture_world"}
     calls = kinds(bundle, "tool_call")
     skills = {call["tool"]: call["skill_id"] for call in calls}
