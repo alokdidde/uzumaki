@@ -1,4 +1,4 @@
-.PHONY: check containment
+.PHONY: check containment baseline-evidence
 # Offline check: no installs, network or live providers. Run after
 # `python -m pip install -r requirements-dev.txt` and `python -m pip install --no-deps -e .`.
 check:
@@ -12,3 +12,9 @@ check:
 # fails admission (see docs/features/restricted-worker.md) this exits non-zero instead of skipping.
 containment:
 	UZUMAKI_REQUIRE_CONTAINMENT=1 python -m pytest tests/test_sandbox_admission.py tests/test_broker.py tests/test_sandbox_containment.py
+
+# Issue-08 offline baseline suite, also retaining the raw event bundles of every frozen case and
+# a hash manifest in build/evidence/baseline (ignored by Git; bundles are never committed).
+baseline-evidence:
+	rm -rf build/evidence/baseline
+	UZUMAKI_BASELINE_EVIDENCE_DIR=build/evidence/baseline python -m pytest tests/test_baseline.py
