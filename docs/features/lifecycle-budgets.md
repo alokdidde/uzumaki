@@ -1,0 +1,60 @@
+# Lifecycle, budgets, cancellation and failure handling (issue 05)
+
+Status: implemented as an offline library. No real harness loop, worker sandbox, live model or simulator uses it yet.
+
+## Frozen plan
+
+- **Workload:** `BoundedRun` driving the deterministic toy logic in `tests/test_supervisor.py` (planner call, `pick`, `place`) with scripted fake providers and tools, and real child processes in `tests/test_deadline.py` (`tests/process_workers.py`).
+- **Inputs and environment:** Python 3.12.12, stdlib-only runtime, the pinned `requirements-dev.txt`; sockets blocked in tests; a fake integer-millisecond clock for logic tests; the real monotonic clock and spawned POSIX child processes only in `tests/test_deadline.py`.
+- **Correctness guards:** contract 1.0 lifecycle states and edges are checked against `docs/contracts/v1.json`. Terminal states are never left, and repeated or racing terminal requests change nothing and are recorded. No provider or tool call happens after the run leaves `running`. Fenced results are never returned to the logic. Unknown usage is never counted as zero. Progress never decreases.
+- **Containment guards:** every injected fault ends in a terminal state within the budgets. A hung child is killed at its deadline together with its process group. Child output is read up to a byte limit. Error messages are fixed codes and never echo content.
+- **Metrics/thresholds:** pass/fail only. All tests in `tests/test_lifecycle.py`, `tests/test_budgets.py`, `tests/test_supervisor.py` and `tests/test_deadline.py` must pass inside `make check`. The real-process timing assertions are generous ceilings (20 s), not latency claims.
+- **Reproduction:** `python -m pip install -r requirements-dev.txt && python -m pip install --no-deps -e .` once, then `make check` offline. Only the deadline tests: `python -m pytest tests/test_deadline.py`.
+- **Raw evidence destination:** tests keep reports in memory and write only to pytest temporary directories. Real run reports belong in `runs/` or `artifacts/` (both git-ignored) or an access-controlled store referenced by hash, never in Git.
+
+## Implemented
+
+`uzumaki.lifecycle`:
+
+- `Lifecycle` implements the contract 1.0 states (`queued`, `running`, `cancelling`, terminal `completed`, `cancelled`, `failed`, `rejected`) and only its nine edges, with the contract's event names. It is thread-safe.
+- Each terminal run has a harness **status** that says why it stopped. `completed`, `abstained`, `blocked`, `partial_progress`, `timeout` and `budget_exhausted` map to the lifecycle state `completed`. `cancelled`, `failed` and `rejected` map to the state of the same name. The status is not a task-success claim: the independent evaluator owns outcomes (contract authority map). Statuses that share a name with a protocol primary outcome land in a lifecycle state that allows that outcome. `blocked` has no protocol outcome of its own.
+- **Progress** (`none`, `partial`, `goal_reached`) is recorded separately from the status and only increases. `completed` requires `goal_reached`, `partial_progress` requires `partial`, and `rejected` requires `none`. Cancellation and failure keep the progress that was reached. Progress observed after a terminal state is kept in `post_terminal` and does not rewrite the outcome.
+- **Idempotent transitions:** requests never raise for races. Repeating the request that produced a terminal state returns `applied=False` and records `terminal_repeat_ignored`. Any other disallowed request records `lifecycle_violation`. A repeated cancel while `cancelling` records `repeat_ignored`. The first terminal request wins. While `cancelling`, only `cancelled` or `failed` is accepted, so a cancel cannot be overtaken by a late completion or timeout.
+
+`uzumaki.budgets`:
+
+- `Budgets(wall_ms, model_calls, steps, retries, max_output_bytes, max_total_output_bytes, attempts=None, model_call_timeout_ms=None, tool_call_timeout_ms=None, tokens=None, cost_micro_usd=None, unknown_usage="fail_closed")` takes strict integers and rejects invalid values with `BudgetError`.
+- `parse_usage` reads `usage.input_tokens`, `usage.output_tokens` and `usage.cost_micro_usd` from a provider result. Tokens are known only when both counts are reported. Malformed usage is rejected and missing usage is unknown.
+- **Unknown-usage policy:** with a token or cost limit set, `fail_closed` stops the run as `budget_exhausted` (`tokens_unknown` or `cost_unknown`), because staying within the limit can no longer be shown. `record_unknown` continues. The ledger snapshot reports `known`, `unknown_calls` and a `total` that is `null` whenever any call was unknown.
+
+`uzumaki.supervisor.BoundedRun(run_id, budgets, provider, tools, clock)`:
+
+- Before every model or tool call it checks state, wall time and the budget. Once the run is no longer `running` it raises `RunStopped` without touching the provider or tools. Model calls count every provider invocation, retries included. Steps count tool calls. `new_attempt()` enforces `attempts`.
+- **Wall time and deadlines:** each call gets a deadline of `min(per-call timeout, remaining wall time)`. Wall-time expiry before a call stops the run as `timeout` (`wall_time`). A provider that implements `request_within(request, timeout_ms)` is given the remaining time. A plain provider (for example `RecordedProvider`) cannot be preempted, so its result is checked against the deadline when it returns.
+- **Provider faults:** `ProviderTimeout`, `TransientProviderError` and malformed results are retried while the retry, model-call and wall budgets allow. Malformed means not a JSON object, not serializable, over `max_output_bytes`, malformed usage, or failing the caller's `validate`. A retry storm therefore ends as `budget_exhausted` (`retries` or `model_calls`) or as `timeout`. `WorkerFailure` and any other provider exception (such as an unknown `RecordedProvider` request) fail the run without retry.
+- **Tool faults:** a tool exception fails the run (`worker_failure`). An invalid `ToolResult` fails it as `malformed_tool_result`, and output over the per-call limit fails it as `oversized_tool_result`. A tool past its deadline stops the run as `timeout` (`tool_deadline`). Tool calls are never retried by the supervisor. A tool `error` status is returned to the logic, which may stop as `blocked`.
+- **Tokens and cost** are checked before each call against known usage, and after each call. The call that crosses a limit has its result discarded and stops the run. Usage and output bytes are counted even for fenced or invalid results, because the consumption really happened.
+- **Fencing:** every call has a `Ticket(run_id, attempt_id, call_id, kind, deadline_ms, timeout_ms)`. `submit(ticket, payload)` accepts a result only for this run, the active attempt and a still-open call, while `running` and before the deadline. Otherwise the result is fenced with reason `run_mismatch`, `attempt_mismatch`, `already_settled`, `call_abandoned`, `unknown_call`, `not_running`, `deadline_exceeded` or `malformed_ticket`. A fenced result is recorded (IDs, reason, state and payload SHA-256, never raw content) and is never returned to the logic. `new_attempt()` and terminal states abandon open calls. A synchronous call whose result is fenced while the run is still running raises `ResultFenced`.
+- **Cancellation:** `cancel()` is thread-safe and idempotent. It moves `running` to `cancelling` (or `queued` to `cancelled`). An in-flight call finishes within its deadline, and its result is fenced (`not_running`). The logic receives `RunStopped`, and `execute` then finalizes the run as `cancelled`. Effects that happened are not undone or hidden: progress keeps what was reached and fenced results stay in the report.
+- **Resources:** `add_resource(name, release)` callbacks run exactly once, in reverse order, when the run becomes terminal. A failing release is recorded as `release_failed` and the remaining releases still run. A resource added after release is released immediately.
+- `execute(logic)` starts the run, calls `logic(run)` and always ends terminal. The logic returns `completed`, `abstained`, `blocked` or `partial_progress`. Logic exceptions become `failed` (`harness_logic_error`), and an interrupt fails the run and releases resources before propagating. A run left running (for example, claimed completion without observed `goal_reached`) becomes `failed` (`run_not_terminated`). `report()` returns state, status, detail, progress, attempt, the usage snapshot, transition history, diagnostics, fenced results, post-terminal evidence and released resources.
+
+`uzumaki.deadline`:
+
+- `run_in_process(target, payload, timeout_ms, max_output_bytes)` runs a module-level function in a spawned child in its own process group. A watchdog timer outside the child kills the group at the deadline (`ProviderTimeout`). After any reply, the group is killed and the child is reaped, so descendants do not outlive the call. A crash, an exception, a missing reply, oversized output or a malformed reply raises `WorkerFailure` with a fixed code.
+- `ProcessProvider` exposes this through `request` and `request_within`, so `BoundedRun` can hard-bound a hung provider in real time.
+- `uzumaki.faults` defines `TransientProviderError`, `ProviderTimeout` and `WorkerFailure`.
+
+## Tests
+
+- Fake-clock logic (`tests/test_lifecycle.py`, `tests/test_budgets.py`, `tests/test_supervisor.py`): contract states and edges; idempotent and racing terminal requests; progress monotonicity; budget validation and unknown-versus-zero usage; provider timeout, late completion, retry storms bounded by retries, model calls and wall time; malformed, oversized, non-JSON, bad-usage and schema-invalid results; worker and tool failures; step, output, token, cost and attempt budgets; run/attempt/call fencing; cancellation during model and tool calls; cancel-versus-completion in both orders; and 200 threaded cancel/completion races. Every terminal scenario also asserts that no provider or tool call is made afterwards.
+- Real processes (`tests/test_deadline.py`): a hung child killed at its deadline while the parent stays responsive; grandchildren killed on timeout and after a normal reply; crash, exception, output flood and malformed output; and `BoundedRun` timing out a hung real provider without a retry storm, or retrying a real timeout and then succeeding.
+
+## Limitations
+
+- This is not a sandbox. `run_in_process` children have the parent's privileges, filesystem and network. Restricted workers for generated code are feature 06. Process-group cleanup does not catch descendants that start a new session or process group. POSIX only.
+- Plain in-process providers and tools cannot be preempted. Their late results are fenced and the run stops or retries, but the wall clock can be overrun by one blocking call. Use `request_within`/`ProcessProvider` for a hard bound. Tools have no process-backed executor yet.
+- Token and cost limits act on reported usage after a response. One call can overshoot; its result is discarded. There is no request-side token cap or provider-specific pricing. No backoff is applied between retries.
+- Cancellation takes effect at call boundaries. There is no abort/safe-stop tool, environment adapter or evaluator yet, so `complete_cancellation` and `execute` stand in for "safe stop reported and evaluated". Progress must be supplied by the caller (`record_progress`). The status names why the harness stopped; it is not an evaluator outcome.
+- Run reports are in-memory structures. They are not yet written into the issue-04 event log, whose `uzumaki.events/1.0` format is unchanged.
+- Results of `make check` come from CI or a separate validation run; they are not asserted here.
