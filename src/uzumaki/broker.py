@@ -143,16 +143,24 @@ class ToolBroker:
         return answer("ok", None, result)
 
 
-def pick_place_v1_broker(handlers: Mapping[str, Handler]) -> ToolBroker:
-    """Broker for the ``pick-place-v1`` tools. Undeclared tool names are refused."""
-    unknown = set(handlers) - set(PICK_PLACE_V1_TOOLS)
-    if unknown:
+def tool_broker(
+    handlers: Mapping[str, Handler], tools: Iterable[str] = PICK_PLACE_V1_TOOLS
+) -> ToolBroker:
+    """Broker for a protocol's declared ``tools`` (version ``PICK_PLACE_V1_TOOL_VERSION``).
+    Handlers for undeclared tool names are refused."""
+    declared = tuple(tools)
+    if set(handlers) - set(declared):
         raise ValueError("handlers for undeclared tools")
     return ToolBroker(
         (
             ToolSpec(name, PICK_PLACE_V1_TOOL_VERSION, handlers[name])
-            for name in PICK_PLACE_V1_TOOLS
+            for name in declared
             if name in handlers
         ),
         manifest_version="1.0",
     )
+
+
+def pick_place_v1_broker(handlers: Mapping[str, Handler]) -> ToolBroker:
+    """Broker for the ``pick-place-v1`` tools. Undeclared tool names are refused."""
+    return tool_broker(handlers, PICK_PLACE_V1_TOOLS)

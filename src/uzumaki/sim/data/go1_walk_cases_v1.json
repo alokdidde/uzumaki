@@ -1,0 +1,905 @@
+{
+  "format": "uzumaki.baseline-cases/1.0",
+  "protocol": "fetch-v1",
+  "cases": [
+    {
+      "case_id": "nominal",
+      "geometry": "go1-walk-dev-001",
+      "box_size_m": 0.039087,
+      "initial_xy_m": [
+        0.017127,
+        -0.052671
+      ],
+      "initial_yaw_deg": -23.113742,
+      "target_xy_m": [
+        0.786576,
+        0.002113
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "unreachable-goal",
+      "geometry": "go1-walk-dev-002-target-between-tables",
+      "box_size_m": 0.044489,
+      "initial_xy_m": [
+        0.140268,
+        -0.180061
+      ],
+      "initial_yaw_deg": 3.868553,
+      "target_xy_m": [
+        0.4,
+        0.0
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "unreachable_target",
+        "progress": "partial",
+        "state": "completed",
+        "status": "blocked",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 1,
+          "pick": 1,
+          "place": 0
+        }
+      }
+    },
+    {
+      "case_id": "failed-grasp",
+      "geometry": "go1-walk-dev-003",
+      "box_size_m": 0.056003,
+      "initial_xy_m": [
+        0.044342,
+        -0.017381
+      ],
+      "initial_yaw_deg": 29.957771,
+      "target_xy_m": [
+        0.802256,
+        -0.110848
+      ],
+      "faults": {
+        "misgrasp_picks": 1,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 2,
+        "admitted": {
+          "go_to": 2,
+          "pick": 2,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "stopped-short",
+      "geometry": "go1-walk-dev-004",
+      "box_size_m": 0.03104,
+      "initial_xy_m": [
+        -0.03898,
+        0.104354
+      ],
+      "initial_yaw_deg": 33.176986,
+      "target_xy_m": [
+        0.793975,
+        0.037255
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null,
+        "stopped_short_drives": 1
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 2,
+        "admitted": {
+          "go_to": 3,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "stale-observation",
+      "geometry": "go1-walk-dev-005",
+      "box_size_m": 0.050941,
+      "initial_xy_m": [
+        -0.075087,
+        -0.194244
+      ],
+      "initial_yaw_deg": -43.443825,
+      "target_xy_m": [
+        0.694233,
+        -0.010883
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [
+          1
+        ],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 2,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "retry-exhausted",
+      "geometry": "go1-walk-dev-006",
+      "box_size_m": 0.034259,
+      "initial_xy_m": [
+        -0.042272,
+        -0.037652
+      ],
+      "initial_yaw_deg": -20.725364,
+      "target_xy_m": [
+        0.797243,
+        -0.030674
+      ],
+      "faults": {
+        "misgrasp_picks": 3,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "budget_exhausted",
+        "progress": "none",
+        "state": "completed",
+        "status": "budget_exhausted",
+        "attempts": 3,
+        "admitted": {
+          "go_to": 1,
+          "pick": 3,
+          "place": 0
+        }
+      }
+    },
+    {
+      "case_id": "cancellation",
+      "geometry": "go1-walk-dev-007",
+      "box_size_m": 0.033411,
+      "initial_xy_m": [
+        0.033077,
+        0.109105
+      ],
+      "initial_yaw_deg": 19.88082,
+      "target_xy_m": [
+        0.880754,
+        -0.165024
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": 4
+      },
+      "expected": {
+        "primary": "cancelled",
+        "progress": "partial",
+        "state": "cancelled",
+        "status": "cancelled",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 1,
+          "pick": 1,
+          "place": 0
+        }
+      }
+    },
+    {
+      "case_id": "worker-crash",
+      "geometry": "go1-walk-dev-008",
+      "box_size_m": 0.0408,
+      "initial_xy_m": [
+        -0.083299,
+        -0.162632
+      ],
+      "initial_yaw_deg": -30.581269,
+      "target_xy_m": [
+        0.773471,
+        -0.040885
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": 5,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "evaluation_failure",
+        "progress": "partial",
+        "state": "failed",
+        "status": "failed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 1,
+          "pick": 1,
+          "place": 0
+        }
+      }
+    },
+    {
+      "case_id": "go1-walk-dev-009",
+      "geometry": "go1-walk-dev-009",
+      "box_size_m": 0.05665,
+      "initial_xy_m": [
+        -0.101421,
+        0.047116
+      ],
+      "initial_yaw_deg": 42.911859,
+      "target_xy_m": [
+        0.728723,
+        -0.015564
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "go1-walk-dev-010",
+      "geometry": "go1-walk-dev-010",
+      "box_size_m": 0.049324,
+      "initial_xy_m": [
+        -0.125733,
+        -0.17391
+      ],
+      "initial_yaw_deg": -40.750093,
+      "target_xy_m": [
+        0.77664,
+        -0.020239
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "go1-walk-dev-011",
+      "geometry": "go1-walk-dev-011",
+      "box_size_m": 0.051247,
+      "initial_xy_m": [
+        0.012143,
+        -0.018161
+      ],
+      "initial_yaw_deg": -7.490724,
+      "target_xy_m": [
+        0.913128,
+        0.023452
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "go1-walk-dev-012",
+      "geometry": "go1-walk-dev-012",
+      "box_size_m": 0.053183,
+      "initial_xy_m": [
+        0.081414,
+        0.097434
+      ],
+      "initial_yaw_deg": 10.840203,
+      "target_xy_m": [
+        0.946139,
+        -0.034048
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "go1-walk-dev-013",
+      "geometry": "go1-walk-dev-013",
+      "box_size_m": 0.041098,
+      "initial_xy_m": [
+        -0.020159,
+        -0.102096
+      ],
+      "initial_yaw_deg": 26.859935,
+      "target_xy_m": [
+        0.872715,
+        -0.048214
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "go1-walk-dev-014",
+      "geometry": "go1-walk-dev-014",
+      "box_size_m": 0.059269,
+      "initial_xy_m": [
+        -0.006484,
+        0.008409
+      ],
+      "initial_yaw_deg": 21.289901,
+      "target_xy_m": [
+        0.890677,
+        0.088916
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "go1-walk-dev-015",
+      "geometry": "go1-walk-dev-015",
+      "box_size_m": 0.051336,
+      "initial_xy_m": [
+        -0.11118,
+        -0.164172
+      ],
+      "initial_yaw_deg": 28.348819,
+      "target_xy_m": [
+        0.846058,
+        -0.083059
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "go1-walk-dev-016",
+      "geometry": "go1-walk-dev-016",
+      "box_size_m": 0.047758,
+      "initial_xy_m": [
+        -0.043161,
+        -0.011782
+      ],
+      "initial_yaw_deg": 34.832203,
+      "target_xy_m": [
+        0.7236,
+        -0.045039
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "go1-walk-dev-017",
+      "geometry": "go1-walk-dev-017",
+      "box_size_m": 0.032179,
+      "initial_xy_m": [
+        -0.085102,
+        0.117199
+      ],
+      "initial_yaw_deg": -33.649954,
+      "target_xy_m": [
+        0.835254,
+        0.042086
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "go1-walk-dev-018",
+      "geometry": "go1-walk-dev-018",
+      "box_size_m": 0.033061,
+      "initial_xy_m": [
+        0.135105,
+        -0.175748
+      ],
+      "initial_yaw_deg": 26.22828,
+      "target_xy_m": [
+        0.946604,
+        -0.11186
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "go1-walk-dev-019",
+      "geometry": "go1-walk-dev-019",
+      "box_size_m": 0.049892,
+      "initial_xy_m": [
+        -0.104819,
+        0.033048
+      ],
+      "initial_yaw_deg": 40.985258,
+      "target_xy_m": [
+        0.762181,
+        -0.063927
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "go1-walk-dev-020",
+      "geometry": "go1-walk-dev-020",
+      "box_size_m": 0.035392,
+      "initial_xy_m": [
+        0.083318,
+        0.044892
+      ],
+      "initial_yaw_deg": 36.733431,
+      "target_xy_m": [
+        0.886981,
+        -0.070793
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "go1-walk-dev-021",
+      "geometry": "go1-walk-dev-021",
+      "box_size_m": 0.049624,
+      "initial_xy_m": [
+        -0.084361,
+        -0.035144
+      ],
+      "initial_yaw_deg": -30.946895,
+      "target_xy_m": [
+        0.875384,
+        -0.022563
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "go1-walk-dev-022",
+      "geometry": "go1-walk-dev-022",
+      "box_size_m": 0.038556,
+      "initial_xy_m": [
+        0.052765,
+        0.022384
+      ],
+      "initial_yaw_deg": -6.681173,
+      "target_xy_m": [
+        0.870052,
+        -0.084568
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "go1-walk-dev-023",
+      "geometry": "go1-walk-dev-023",
+      "box_size_m": 0.040655,
+      "initial_xy_m": [
+        0.02596,
+        -0.045803
+      ],
+      "initial_yaw_deg": -8.790115,
+      "target_xy_m": [
+        0.812128,
+        0.061438
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "go1-walk-dev-024",
+      "geometry": "go1-walk-dev-024",
+      "box_size_m": 0.032733,
+      "initial_xy_m": [
+        0.000634,
+        -0.102574
+      ],
+      "initial_yaw_deg": -16.834528,
+      "target_xy_m": [
+        0.905946,
+        0.104085
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "go1-walk-dev-025",
+      "geometry": "go1-walk-dev-025",
+      "box_size_m": 0.046978,
+      "initial_xy_m": [
+        -0.06347,
+        0.098367
+      ],
+      "initial_yaw_deg": -24.007369,
+      "target_xy_m": [
+        0.812126,
+        0.11253
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "go1-walk-dev-026",
+      "geometry": "go1-walk-dev-026",
+      "box_size_m": 0.051244,
+      "initial_xy_m": [
+        -0.129027,
+        -0.181589
+      ],
+      "initial_yaw_deg": -0.347555,
+      "target_xy_m": [
+        0.781626,
+        -0.035491
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "go1-walk-dev-027",
+      "geometry": "go1-walk-dev-027",
+      "box_size_m": 0.046826,
+      "initial_xy_m": [
+        0.071772,
+        0.00532
+      ],
+      "initial_yaw_deg": -32.18691,
+      "target_xy_m": [
+        0.703489,
+        0.026251
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "go1-walk-dev-028",
+      "geometry": "go1-walk-dev-028",
+      "box_size_m": 0.037568,
+      "initial_xy_m": [
+        -0.056777,
+        0.033302
+      ],
+      "initial_yaw_deg": 43.207448,
+      "target_xy_m": [
+        0.77813,
+        -0.022988
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    }
+  ]
+}

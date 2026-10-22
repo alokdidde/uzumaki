@@ -1,0 +1,878 @@
+{
+  "format": "uzumaki.baseline-cases/1.0",
+  "protocol": "pick-place-v1",
+  "cases": [
+    {
+      "case_id": "nominal",
+      "geometry": "dev-001",
+      "box_size_m": 0.054613,
+      "initial_xy_m": [
+        -0.121093,
+        0.118386
+      ],
+      "initial_yaw_deg": -16.832461,
+      "target_xy_m": [
+        0.116093,
+        0.133576
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "unreachable-goal",
+      "geometry": "dev-002-target-0.40",
+      "box_size_m": 0.04553,
+      "initial_xy_m": [
+        -0.085142,
+        0.062836
+      ],
+      "initial_yaw_deg": -23.699624,
+      "target_xy_m": [
+        0.4,
+        0.0
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "unreachable_target",
+        "progress": "partial",
+        "state": "completed",
+        "status": "blocked",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 0
+        }
+      }
+    },
+    {
+      "case_id": "failed-grasp",
+      "geometry": "dev-003",
+      "box_size_m": 0.031535,
+      "initial_xy_m": [
+        -0.053449,
+        -0.061066
+      ],
+      "initial_yaw_deg": -2.375005,
+      "target_xy_m": [
+        0.089459,
+        -0.114969
+      ],
+      "faults": {
+        "misgrasp_picks": 1,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 2,
+        "admitted": {
+          "pick": 2,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "stale-observation",
+      "geometry": "dev-004",
+      "box_size_m": 0.053462,
+      "initial_xy_m": [
+        -0.060652,
+        0.02959
+      ],
+      "initial_yaw_deg": 10.226027,
+      "target_xy_m": [
+        0.135355,
+        0.044644
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [
+          1
+        ],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 2,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "stale-after-pick",
+      "geometry": "dev-005",
+      "box_size_m": 0.04647,
+      "initial_xy_m": [
+        -0.130535,
+        -0.099562
+      ],
+      "initial_yaw_deg": -43.100336,
+      "target_xy_m": [
+        0.089156,
+        -0.068784
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [
+          2
+        ],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 2,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "retry-exhausted",
+      "geometry": "dev-006",
+      "box_size_m": 0.034349,
+      "initial_xy_m": [
+        -0.109911,
+        0.131946
+      ],
+      "initial_yaw_deg": 14.195264,
+      "target_xy_m": [
+        0.099754,
+        0.045609
+      ],
+      "faults": {
+        "misgrasp_picks": 3,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "budget_exhausted",
+        "progress": "none",
+        "state": "completed",
+        "status": "budget_exhausted",
+        "attempts": 3,
+        "admitted": {
+          "pick": 3,
+          "place": 0
+        }
+      }
+    },
+    {
+      "case_id": "cancellation",
+      "geometry": "dev-007",
+      "box_size_m": 0.054047,
+      "initial_xy_m": [
+        -0.144551,
+        0.078052
+      ],
+      "initial_yaw_deg": 6.356883,
+      "target_xy_m": [
+        0.058034,
+        0.044741
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": 2
+      },
+      "expected": {
+        "primary": "cancelled",
+        "progress": "partial",
+        "state": "cancelled",
+        "status": "cancelled",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 0
+        }
+      }
+    },
+    {
+      "case_id": "worker-crash",
+      "geometry": "dev-008",
+      "box_size_m": 0.030863,
+      "initial_xy_m": [
+        -0.117417,
+        0.125361
+      ],
+      "initial_yaw_deg": 43.402229,
+      "target_xy_m": [
+        0.055212,
+        0.138882
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": 3,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "evaluation_failure",
+        "progress": "partial",
+        "state": "failed",
+        "status": "failed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 0
+        }
+      }
+    },
+    {
+      "case_id": "spot-dev-001",
+      "geometry": "dev-001",
+      "box_size_m": 0.054613,
+      "initial_xy_m": [
+        -0.121093,
+        0.118386
+      ],
+      "initial_yaw_deg": -16.832461,
+      "target_xy_m": [
+        0.116093,
+        0.133576
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "spot-dev-002",
+      "geometry": "dev-002",
+      "box_size_m": 0.04553,
+      "initial_xy_m": [
+        -0.085142,
+        0.062836
+      ],
+      "initial_yaw_deg": -23.699624,
+      "target_xy_m": [
+        0.098784,
+        0.071695
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "spot-dev-003",
+      "geometry": "dev-003",
+      "box_size_m": 0.031535,
+      "initial_xy_m": [
+        -0.053449,
+        -0.061066
+      ],
+      "initial_yaw_deg": -2.375005,
+      "target_xy_m": [
+        0.089459,
+        -0.114969
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "spot-dev-004",
+      "geometry": "dev-004",
+      "box_size_m": 0.053462,
+      "initial_xy_m": [
+        -0.060652,
+        0.02959
+      ],
+      "initial_yaw_deg": 10.226027,
+      "target_xy_m": [
+        0.135355,
+        0.044644
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "spot-dev-005",
+      "geometry": "dev-005",
+      "box_size_m": 0.04647,
+      "initial_xy_m": [
+        -0.130535,
+        -0.099562
+      ],
+      "initial_yaw_deg": -43.100336,
+      "target_xy_m": [
+        0.089156,
+        -0.068784
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "spot-dev-006",
+      "geometry": "dev-006",
+      "box_size_m": 0.034349,
+      "initial_xy_m": [
+        -0.109911,
+        0.131946
+      ],
+      "initial_yaw_deg": 14.195264,
+      "target_xy_m": [
+        0.099754,
+        0.045609
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "spot-dev-007",
+      "geometry": "dev-007",
+      "box_size_m": 0.054047,
+      "initial_xy_m": [
+        -0.144551,
+        0.078052
+      ],
+      "initial_yaw_deg": 6.356883,
+      "target_xy_m": [
+        0.058034,
+        0.044741
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "spot-dev-008",
+      "geometry": "dev-008",
+      "box_size_m": 0.030863,
+      "initial_xy_m": [
+        -0.117417,
+        0.125361
+      ],
+      "initial_yaw_deg": 43.402229,
+      "target_xy_m": [
+        0.055212,
+        0.138882
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "spot-dev-009",
+      "geometry": "dev-009",
+      "box_size_m": 0.031221,
+      "initial_xy_m": [
+        -0.136258,
+        0.1081
+      ],
+      "initial_yaw_deg": 15.231241,
+      "target_xy_m": [
+        0.142904,
+        0.028401
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "spot-dev-010",
+      "geometry": "dev-010",
+      "box_size_m": 0.05017,
+      "initial_xy_m": [
+        -0.146163,
+        0.07013
+      ],
+      "initial_yaw_deg": -33.669252,
+      "target_xy_m": [
+        0.065059,
+        0.072145
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "spot-dev-011",
+      "geometry": "dev-011",
+      "box_size_m": 0.051564,
+      "initial_xy_m": [
+        -0.147229,
+        0.143512
+      ],
+      "initial_yaw_deg": 11.614274,
+      "target_xy_m": [
+        0.149663,
+        -0.049887
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "spot-dev-012",
+      "geometry": "dev-012",
+      "box_size_m": 0.037375,
+      "initial_xy_m": [
+        -0.137725,
+        -0.083149
+      ],
+      "initial_yaw_deg": -6.496349,
+      "target_xy_m": [
+        0.133032,
+        -0.093971
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "spot-dev-013",
+      "geometry": "dev-013",
+      "box_size_m": 0.058237,
+      "initial_xy_m": [
+        -0.070548,
+        0.062484
+      ],
+      "initial_yaw_deg": 39.080907,
+      "target_xy_m": [
+        0.076461,
+        -0.104866
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "spot-dev-014",
+      "geometry": "dev-014",
+      "box_size_m": 0.057448,
+      "initial_xy_m": [
+        -0.142601,
+        0.001943
+      ],
+      "initial_yaw_deg": 29.847108,
+      "target_xy_m": [
+        0.144247,
+        0.019019
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "spot-dev-015",
+      "geometry": "dev-015",
+      "box_size_m": 0.047447,
+      "initial_xy_m": [
+        -0.071937,
+        -0.135696
+      ],
+      "initial_yaw_deg": -11.68009,
+      "target_xy_m": [
+        0.124978,
+        -0.038837
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "spot-dev-016",
+      "geometry": "dev-016",
+      "box_size_m": 0.034633,
+      "initial_xy_m": [
+        -0.146748,
+        -0.129116
+      ],
+      "initial_yaw_deg": -38.913144,
+      "target_xy_m": [
+        0.091846,
+        -0.039692
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "spot-dev-017",
+      "geometry": "dev-017",
+      "box_size_m": 0.050946,
+      "initial_xy_m": [
+        -0.055199,
+        0.06509
+      ],
+      "initial_yaw_deg": 3.268647,
+      "target_xy_m": [
+        0.141021,
+        0.098657
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "spot-dev-018",
+      "geometry": "dev-018",
+      "box_size_m": 0.054323,
+      "initial_xy_m": [
+        -0.050034,
+        0.028125
+      ],
+      "initial_yaw_deg": 10.564295,
+      "target_xy_m": [
+        0.106698,
+        0.090548
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "spot-dev-019",
+      "geometry": "dev-019",
+      "box_size_m": 0.053548,
+      "initial_xy_m": [
+        -0.104867,
+        -0.054846
+      ],
+      "initial_yaw_deg": -44.566549,
+      "target_xy_m": [
+        0.132916,
+        0.031189
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "spot-dev-020",
+      "geometry": "dev-020",
+      "box_size_m": 0.05151,
+      "initial_xy_m": [
+        -0.063576,
+        0.035456
+      ],
+      "initial_yaw_deg": 15.37822,
+      "target_xy_m": [
+        0.067989,
+        -0.064896
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    }
+  ]
+}

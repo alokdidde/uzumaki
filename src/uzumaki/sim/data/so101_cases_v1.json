@@ -1,0 +1,878 @@
+{
+  "format": "uzumaki.baseline-cases/1.0",
+  "protocol": "pick-place-v1",
+  "cases": [
+    {
+      "case_id": "nominal",
+      "geometry": "so101-dev-001",
+      "box_size_m": 0.041687,
+      "initial_xy_m": [
+        -0.096413,
+        -0.011575
+      ],
+      "initial_yaw_deg": 9.466425,
+      "target_xy_m": [
+        0.114063,
+        -0.055334
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "unreachable-goal",
+      "geometry": "so101-dev-002-target-0.40",
+      "box_size_m": 0.04686,
+      "initial_xy_m": [
+        -0.104495,
+        -0.088594
+      ],
+      "initial_yaw_deg": 42.234188,
+      "target_xy_m": [
+        0.4,
+        0.0
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "unreachable_target",
+        "progress": "partial",
+        "state": "completed",
+        "status": "blocked",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 0
+        }
+      }
+    },
+    {
+      "case_id": "failed-grasp",
+      "geometry": "so101-dev-003",
+      "box_size_m": 0.057417,
+      "initial_xy_m": [
+        -0.108062,
+        -0.042851
+      ],
+      "initial_yaw_deg": 37.488089,
+      "target_xy_m": [
+        0.096659,
+        -0.046146
+      ],
+      "faults": {
+        "misgrasp_picks": 1,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 2,
+        "admitted": {
+          "pick": 2,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "stale-observation",
+      "geometry": "so101-dev-004",
+      "box_size_m": 0.044734,
+      "initial_xy_m": [
+        -0.129226,
+        -0.104473
+      ],
+      "initial_yaw_deg": -22.921281,
+      "target_xy_m": [
+        0.100485,
+        -0.068558
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [
+          1
+        ],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 2,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "stale-after-pick",
+      "geometry": "so101-dev-005",
+      "box_size_m": 0.031851,
+      "initial_xy_m": [
+        -0.122916,
+        -0.083441
+      ],
+      "initial_yaw_deg": 42.865474,
+      "target_xy_m": [
+        0.150113,
+        -0.079579
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [
+          2
+        ],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 2,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "retry-exhausted",
+      "geometry": "so101-dev-006",
+      "box_size_m": 0.047753,
+      "initial_xy_m": [
+        -0.168709,
+        -0.052935
+      ],
+      "initial_yaw_deg": -24.54461,
+      "target_xy_m": [
+        0.110425,
+        0.001355
+      ],
+      "faults": {
+        "misgrasp_picks": 3,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "budget_exhausted",
+        "progress": "none",
+        "state": "completed",
+        "status": "budget_exhausted",
+        "attempts": 3,
+        "admitted": {
+          "pick": 3,
+          "place": 0
+        }
+      }
+    },
+    {
+      "case_id": "cancellation",
+      "geometry": "so101-dev-007",
+      "box_size_m": 0.037498,
+      "initial_xy_m": [
+        -0.178551,
+        -0.074141
+      ],
+      "initial_yaw_deg": -38.866477,
+      "target_xy_m": [
+        0.155777,
+        -0.071105
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": 2
+      },
+      "expected": {
+        "primary": "cancelled",
+        "progress": "partial",
+        "state": "cancelled",
+        "status": "cancelled",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 0
+        }
+      }
+    },
+    {
+      "case_id": "worker-crash",
+      "geometry": "so101-dev-008",
+      "box_size_m": 0.056578,
+      "initial_xy_m": [
+        -0.118783,
+        -0.054559
+      ],
+      "initial_yaw_deg": -12.902641,
+      "target_xy_m": [
+        0.096727,
+        -0.042051
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": 3,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "evaluation_failure",
+        "progress": "partial",
+        "state": "failed",
+        "status": "failed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 0
+        }
+      }
+    },
+    {
+      "case_id": "so101-dev-009",
+      "geometry": "so101-dev-009",
+      "box_size_m": 0.050229,
+      "initial_xy_m": [
+        -0.123481,
+        -0.074965
+      ],
+      "initial_yaw_deg": 34.881113,
+      "target_xy_m": [
+        0.117794,
+        -0.08876
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "so101-dev-010",
+      "geometry": "so101-dev-010",
+      "box_size_m": 0.048344,
+      "initial_xy_m": [
+        -0.106294,
+        -0.027987
+      ],
+      "initial_yaw_deg": 31.708223,
+      "target_xy_m": [
+        0.158056,
+        -0.067853
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "so101-dev-011",
+      "geometry": "so101-dev-011",
+      "box_size_m": 0.038896,
+      "initial_xy_m": [
+        -0.147849,
+        -0.070147
+      ],
+      "initial_yaw_deg": 36.336955,
+      "target_xy_m": [
+        0.116217,
+        -0.024412
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "so101-dev-012",
+      "geometry": "so101-dev-012",
+      "box_size_m": 0.04502,
+      "initial_xy_m": [
+        -0.196498,
+        -0.08335
+      ],
+      "initial_yaw_deg": -38.004567,
+      "target_xy_m": [
+        0.08274,
+        -0.071104
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "so101-dev-013",
+      "geometry": "so101-dev-013",
+      "box_size_m": 0.037939,
+      "initial_xy_m": [
+        -0.170178,
+        -0.068023
+      ],
+      "initial_yaw_deg": 5.386314,
+      "target_xy_m": [
+        0.088096,
+        -0.030685
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "so101-dev-014",
+      "geometry": "so101-dev-014",
+      "box_size_m": 0.05573,
+      "initial_xy_m": [
+        -0.07603,
+        -0.05553
+      ],
+      "initial_yaw_deg": 24.647919,
+      "target_xy_m": [
+        0.185148,
+        -0.069848
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "so101-dev-015",
+      "geometry": "so101-dev-015",
+      "box_size_m": 0.045243,
+      "initial_xy_m": [
+        -0.088728,
+        -0.015138
+      ],
+      "initial_yaw_deg": -20.427562,
+      "target_xy_m": [
+        0.108429,
+        -0.033517
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "so101-dev-016",
+      "geometry": "so101-dev-016",
+      "box_size_m": 0.048109,
+      "initial_xy_m": [
+        -0.07681,
+        -0.070628
+      ],
+      "initial_yaw_deg": -6.202585,
+      "target_xy_m": [
+        0.125952,
+        -0.038156
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "so101-dev-017",
+      "geometry": "so101-dev-017",
+      "box_size_m": 0.042456,
+      "initial_xy_m": [
+        -0.130625,
+        -0.032186
+      ],
+      "initial_yaw_deg": -9.154836,
+      "target_xy_m": [
+        0.110442,
+        -0.023083
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "so101-dev-018",
+      "geometry": "so101-dev-018",
+      "box_size_m": 0.05429,
+      "initial_xy_m": [
+        -0.180978,
+        -0.066627
+      ],
+      "initial_yaw_deg": -31.266265,
+      "target_xy_m": [
+        0.1524,
+        -0.058825
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "so101-dev-019",
+      "geometry": "so101-dev-019",
+      "box_size_m": 0.05519,
+      "initial_xy_m": [
+        -0.087032,
+        -0.023039
+      ],
+      "initial_yaw_deg": 17.070097,
+      "target_xy_m": [
+        0.08913,
+        -0.055174
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "so101-dev-020",
+      "geometry": "so101-dev-020",
+      "box_size_m": 0.056686,
+      "initial_xy_m": [
+        -0.144071,
+        -0.06251
+      ],
+      "initial_yaw_deg": -40.743084,
+      "target_xy_m": [
+        0.079757,
+        -0.072719
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "so101-dev-021",
+      "geometry": "so101-dev-021",
+      "box_size_m": 0.036429,
+      "initial_xy_m": [
+        -0.13993,
+        -0.027226
+      ],
+      "initial_yaw_deg": 37.236343,
+      "target_xy_m": [
+        0.158702,
+        -0.057125
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "so101-dev-022",
+      "geometry": "so101-dev-022",
+      "box_size_m": 0.033077,
+      "initial_xy_m": [
+        -0.163051,
+        -0.09809
+      ],
+      "initial_yaw_deg": -41.314462,
+      "target_xy_m": [
+        0.130246,
+        -0.024949
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "so101-dev-023",
+      "geometry": "so101-dev-023",
+      "box_size_m": 0.037651,
+      "initial_xy_m": [
+        -0.143308,
+        -0.114406
+      ],
+      "initial_yaw_deg": 20.288978,
+      "target_xy_m": [
+        0.13464,
+        -0.055186
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "so101-dev-024",
+      "geometry": "so101-dev-024",
+      "box_size_m": 0.048493,
+      "initial_xy_m": [
+        -0.105356,
+        -0.084077
+      ],
+      "initial_yaw_deg": 42.011587,
+      "target_xy_m": [
+        0.112079,
+        -0.065469
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "so101-dev-025",
+      "geometry": "so101-dev-025",
+      "box_size_m": 0.03975,
+      "initial_xy_m": [
+        -0.137063,
+        -0.076603
+      ],
+      "initial_yaw_deg": 39.678926,
+      "target_xy_m": [
+        0.10242,
+        -0.070683
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "so101-dev-026",
+      "geometry": "so101-dev-026",
+      "box_size_m": 0.035503,
+      "initial_xy_m": [
+        -0.107401,
+        -0.079729
+      ],
+      "initial_yaw_deg": -33.952433,
+      "target_xy_m": [
+        0.139743,
+        -0.067336
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "so101-dev-027",
+      "geometry": "so101-dev-027",
+      "box_size_m": 0.053603,
+      "initial_xy_m": [
+        -0.134402,
+        -0.069444
+      ],
+      "initial_yaw_deg": 22.874305,
+      "target_xy_m": [
+        0.151043,
+        -0.111716
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "so101-dev-028",
+      "geometry": "so101-dev-028",
+      "box_size_m": 0.054152,
+      "initial_xy_m": [
+        -0.137202,
+        -0.06907
+      ],
+      "initial_yaw_deg": 30.58341,
+      "target_xy_m": [
+        0.178643,
+        -0.095852
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "place": 1
+        }
+      }
+    }
+  ]
+}

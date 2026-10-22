@@ -2,7 +2,7 @@
 
 A robotics harness that uses execution feedback to develop and reuse robot skills.
 
-**Status: planning bootstrap.** This repository currently contains architecture, an implementation roadmap, and a testing strategy. It does not yet contain a runnable harness, trained model, simulator integration, or hardware support.
+**Status: early implementation.** This repository contains the architecture, roadmap and testing strategy, an offline harness baseline, and an optional MuJoCo simulation of the SO-101 arm running that baseline. It does not yet contain a live model in the loop, a trained model, or hardware support. A model planner and a skill generator with trace-guided repair are implemented and tested offline.
 
 ## What we are building
 
@@ -44,6 +44,28 @@ Start with [issue 01 — freeze the first task and evaluation protocol](https://
 The proposed first task is one rigid-object pick-and-place family. Issue 01 proposes a candidate profile (`pick-place-v1`, not yet accepted) that freezes its task envelope, simulator, observations, budgets, evaluator, and thresholds before implementation. The first runnable slice will use deterministic fixtures, hand-authored skills, and a rule-based selector with no paid inference. Model generation and physics simulation follow in order.
 
 The MVP ends at feature 18: one reproducible simulator-backed loop that selects existing skills, generates and repairs a missing skill, evaluates it, and promotes an accepted version with preserved evidence. It does not claim general robotics competence or authorize powered robot experiments.
+
+## Simulation demo
+
+![SO-101 in MuJoCo picking a box and placing it on the blue target](docs/media/so101-nominal.gif)
+
+The harness now runs in MuJoCo on a Robot Studio SO-101 arm: the same rule selector, hand-authored skills, budgets, independent evaluator and evidence bundles as the offline baseline, with physics underneath. All 28 SO-101 cases meet their frozen expectations. See [MuJoCo SO-101 simulation](docs/features/so101-simulation.md) and [decision 0002](docs/decisions/0002-so101-simulation.md). A Franka Panda runs the same harness and skills unchanged, on the original frozen `pick-place-v1` geometry: 28 of 28 cases ([Panda simulation](docs/features/panda-simulation.md), [GIF](docs/media/panda-nominal.gif)). ALOHA, with two arms, runs a second task pack, `handover`: the left arm picks a bar up and hands it to the right arm, which places it, 28 of 28 cases including a dropped handover it recovers from ([ALOHA handover](docs/features/aloha-handover.md), [GIF](docs/media/aloha-nominal.gif)). Spot stands on its four legs and runs the same frozen pick-and-place with the arm on its back, 28 of 28 cases ([Spot simulation](docs/features/spot-simulation.md), [GIF](docs/media/spot-nominal.gif)). A Unitree G1 humanoid, its pelvis on a stand, runs it with its left Dex3 hand, 28 of 28 cases ([G1 simulation](docs/features/g1-simulation.md), [GIF](docs/media/g1-nominal.gif)). A Unitree Go1 dog stands at a low table and runs it with a jaw on its neck (the UMI gripper), 28 of 28 cases ([Go1 simulation](docs/features/go1-simulation.md), [GIF](docs/media/go1-nominal.gif)). TidyBot, a mobile manipulator, runs a third pack, `fetch`: it drives to a box on one table, picks it up, drives to a second table and places it, 28 of 28 cases including a drive that stops short ([TidyBot fetch](docs/features/tidybot-fetch.md), [GIF](docs/media/tidybot-nominal.gif)). The Go1 also walks: on a learned locomotion policy from MuJoCo Playground, it runs the same `fetch` pack, walking to the box, picking it up with its jaw and walking it to the other table, 28 of 28 cases ([Go1 walking fetch](docs/features/go1-walk-fetch.md), [GIF](docs/media/go1-walk-nominal.gif)). A Claude planner through the Vercel AI Gateway can replace the rule selector (`--planner model`, [feature note](docs/features/model-planner.md)); it is tested offline and has not yet made a live call. The generator role can also write a missing skill as a sandboxed program and repair it from execution traces in the simulator, then confirm it on cases it never saw (`python -m uzumaki.sim.generate`, [feature note](docs/features/skill-generation.md), [decision 0003](docs/decisions/0003-skill-program-representation.md)); this too is tested offline with a scripted model only.
+
+The whole loop also runs from one command: the planner abstains because no skill can move the box, the generator writes and repairs one, it is confirmed on withheld cases and promoted into a saved skill library, and the planner then completes the task with it (`python -m uzumaki.sim.demo`; `make demo-live PROVIDER=...` for a live run on any supported model; [feature note](docs/features/end-to-end-demo.md)). The model is configuration, not code: Anthropic, OpenAI, OpenRouter, the Vercel AI Gateway, a local Ollama or any OpenAI-compatible server, or the Codex CLI ([model backends](docs/features/model-backends.md)). The robot is configuration too: bodies are described as parts, effectors and capabilities, with ready-made configurations from a single arm to a humanoid or a quadruped with a jaw, and `python -m uzumaki.conformance` checks a new robot ([Add your robot](docs/guides/add-your-robot.md)).
+
+```
+python -m pip install -r requirements-dev.txt -r requirements-sim.txt && python -m pip install --no-deps -e .
+make sim-assets   # fetch the pinned SO-101, Panda, ALOHA, TidyBot, Spot, G1, Go1, UMI gripper and Go1 walking-policy files (SHA-256 verified)
+make sim          # simulator suite
+MUJOCO_GL=osmesa make sim-demo   # bundles, summary and MP4 videos in build/sim
+MUJOCO_GL=osmesa make sim-demo-panda   # the same on the Franka Panda
+MUJOCO_GL=osmesa make sim-demo-aloha   # ALOHA handing a bar between two arms
+MUJOCO_GL=osmesa make sim-demo-tidybot # TidyBot fetching a box between two tables
+MUJOCO_GL=osmesa make sim-demo-spot    # Spot standing, picking and placing with its arm
+MUJOCO_GL=osmesa make sim-demo-g1      # the G1 humanoid on a stand, with its left hand
+MUJOCO_GL=osmesa make sim-demo-go1     # the Go1 dog, gripping with a jaw on its neck
+MUJOCO_GL=osmesa make sim-demo-go1-walk # the Go1 walking on a learned policy to fetch a box
+```
 
 ## Testing today
 

@@ -4,6 +4,128 @@ Documentary changes to canonical contracts and protocols. Entries describe speci
 
 ## Unreleased
 
+### Added — The Go1 walks: a learned locomotion policy on the `fetch` pack
+
+- `uzumaki.sim.go1_walk` and the `go1_walk` embodiment (`QuadrupedWithJaw`, task pack `fetch`): the Go1 with its neck and jaw on MuJoCo Playground's Go1 model, its legs driven by Playground's Go1 joystick policy (ONNX, run with `onnxruntime`). Both are pinned from MuJoCo Playground at `12ad7f38` (Apache-2.0); the meshes come from the pinned Menagerie Go1. `go_to` walks to the work station. Case set `go1-walk-dev-v1` (28 cases, TidyBot's construction on seeds `go1-walk-1001` to `1028`).
+- `uzumaki.sim.assets.PinnedModel` gains `repository` and `commit`, so a pinned model can come from a repository other than Menagerie; `go1_walk` is the first. The simulator identity names the source.
+- `requirements-sim.txt` adds `onnxruntime` (with `flatbuffers` and `protobuf`).
+- No-op hooks for robots on soft legs: `SimWorld._replan_grasp` and `TidybotWorld._replan_place`. TidyBot's world reads its rig, reach and station from the instance, so the walking Go1 reuses it. `uzumaki.sim.go1.add_neck_and_jaw` builds the neck and jaw for either Go1.
+- `python -m uzumaki.sim --robot go1_walk`, `make sim-demo-go1-walk`, `tests/test_go1_walk.py`, [feature note](docs/features/go1-walk-fetch.md), GIFs in `docs/media/`.
+
+Not claimed: held-out results, walking while manipulating, navigation beyond a walk to a table, a policy trained for this neck and jaw, a physical Go1.
+
+### Added — Unitree Go1 with a jaw: a quadruped that grips with its head
+
+- `uzumaki.sim.go1` and the `go1` embodiment (`QuadrupedWithJaw`): the Unitree Go1 from MuJoCo Menagerie at `cda5236f` (BSD-3-Clause) standing on its legs with a free body, with a six-joint neck built on its trunk and the UMI gripper (MIT, also pinned) mounted on it as the jaw. It runs the frozen `pick-place-v1` geometry unchanged at a 0.2 m table (case set `go1-dev-v1`). 28/28 meet their expectations, conformance passes, and 200 extra geometries all complete.
+- `python -m uzumaki.sim --robot go1`, `make sim-demo-go1`, `tests/test_go1.py`, [feature note](docs/features/go1-simulation.md), GIFs in `docs/media/`.
+
+Not claimed: held-out results, walking, a real Go1 neck or jaw (both are modelled here), a physical robot.
+
+### Added — Unitree G1: a humanoid at the table
+
+- `uzumaki.sim.g1` and the `g1` embodiment (`Humanoid`): the Unitree G1 with Dex3 hands from MuJoCo Menagerie at `cda5236f` (SHA-256 pinned with its BSD-3-Clause license), its pelvis on a stand. The waist and left arm place the hand; the seven finger joints follow one grip value, the middle finger is coupled to the index finger, and flat pads on the fingertips and thumb grip the box. It runs the frozen `pick-place-v1` geometry unchanged (case set `g1-dev-v1`). 28/28 meet their expectations, conformance passes, and 187 of 200 extra geometries complete (the other 13 are refused as out of the left hand's reach, with no contact).
+- `python -m uzumaki.sim --robot g1`, `make sim-demo-g1`, `tests/test_g1.py`, [feature note](docs/features/g1-simulation.md), GIFs in `docs/media/`.
+
+Not claimed: held-out results, standing free or walking, the right hand, Unitree's hand controller, a physical G1.
+
+### Added — Spot with arm: a legged robot standing at the table
+
+- `uzumaki.sim.spot` and the `spot` embodiment (`QuadrupedWithArm`): Spot with its arm from MuJoCo Menagerie at `cda5236f` (SHA-256 pinned with its BSD-3-Clause license). It stands on its legs with a free body, and planning follows the stance the physics holds. It runs the frozen `pick-place-v1` geometry unchanged (case set `spot-dev-v1`). 28/28 meet their expectations, conformance passes, and 200 extra geometries all complete.
+- `uzumaki.sim.arm.ArmRig` gains `customize` (scene edits before compiling) and `world` (a `SimWorld` subclass per robot).
+- `python -m uzumaki.sim --robot spot`, `make sim-demo-spot`, `tests/test_spot.py`, [feature note](docs/features/spot-simulation.md), GIFs in `docs/media/`.
+
+Not claimed: held-out results, walking, Boston Dynamics' gripper force or controller, a physical Spot.
+
+### Added — TidyBot and the `fetch` task pack: a body that moves
+
+- `fetch-v1` and the `fetch` task pack (`uzumaki.tasks.FETCH`): needs `reach` and `grasp` and also `locomote`; tools `observe`, `go_to` (base or legs), `pick`, `place`, `abort`; observation fields `base_pose` and `within_reach`; case fault `stopped_short_drives`. Budgets, outcomes, evaluator contract and evidence are `pick-place-v1`'s, with `go_to` counted as actuation.
+- Skills `go-to`, `pick-box`, `place-box` (`tests/fixtures/skills_fetch_v1.json`), `fetch-selector-v1`, a planner task card, and a scripted offline world with two tables (`uzumaki.fetch_env`).
+- `uzumaki.sim.tidybot` and the `tidybot` embodiment (`MobileManipulator`): the Stanford TidyBot from MuJoCo Menagerie at `cda5236f` (SHA-256 pinned with its license and the Kinova Gen3 and Robotiq 2F-85 licenses) on the shared arm engine. Case set `tidybot-dev-v1`: eight fault cases including `stopped-short`, twenty nominal cases from a seed recipe. 28/28 meet their expectations, conformance passes, 197 of 200 extra geometries complete as expected.
+- `uzumaki.sim.arm`: unlimited joints get a ±π range for inverse kinematics.
+- `python -m uzumaki.sim --robot tidybot`, `make sim-demo-tidybot`, `tests/test_tidybot.py`, `tests/test_fetch.py`, [feature note](docs/features/tidybot-fetch.md), GIFs in `docs/media/`.
+
+Not claimed: held-out results, navigation beyond a straight drive to a table, part claims enforced at run time, the model planner or skill generation on `fetch`, a physical TidyBot.
+
+### Added — ALOHA and the `handover` task pack: two arms on one task
+
+- `handover-v1` and the `handover` task pack (`uzumaki.tasks.HANDOVER`): roles `giver` and `taker` bound to two grasping effectors; tools `observe`, `pick`, `handover`, `place`, `abort` with declared part claims; observation field `holder`; case fault `dropped_handovers`. Budgets, outcomes, evaluator contract and evidence are `pick-place-v1`'s.
+- Skills `pick-box`, `hand-over`, `place-box` (`tests/fixtures/skills_handover_v1.json`), `handover-selector-v1`, a planner task card, and a scripted offline world (`uzumaki.handover_env`). The driver, broker and fixture loader take the protocol as a parameter.
+- `uzumaki.sim.aloha` and the `aloha` embodiment (`TwoArms`): ALOHA from MuJoCo Menagerie at `cda5236f` (SHA-256 pinned with its BSD-3-Clause license) as two rigs on the shared arm engine. Case set `aloha-dev-v1`: eight fault cases including `dropped-handover`, twenty nominal cases from a seed recipe. 28/28 meet their expectations, conformance passes, 100 extra geometries all complete.
+- `python -m uzumaki.sim --robot aloha`, `make sim-demo-aloha`, `tests/test_aloha.py`, `tests/test_handover.py`, [feature note](docs/features/aloha-handover.md), GIFs in `docs/media/`.
+
+Not claimed: held-out results, part claims enforced at run time, the model planner or skill generation on `handover`, a physical ALOHA.
+
+### Added — Franka Panda: a second arm on a shared simulation engine
+
+- `uzumaki.sim.arm`: the SO-101's kinematics, planning, scene and world code as one engine driven by an `ArmRig` (robot description, pinned model, base placement, actuators, gripper, tool-centre site, pads, IK seeds). All 28 SO-101 cases give byte-identical bundles after the move.
+- `uzumaki.sim.panda` and the `panda` embodiment: the Franka Emika Panda from MuJoCo Menagerie at `cda5236f` (SHA-256 pinned with its license). It runs the frozen `pick-place-v1` geometry unchanged: case set `panda-dev-v1` is the eight frozen fault cases plus nominal cases on `dev-001` to `dev-020`. 28/28 meet their expectations, conformance passes, and 200 extra geometries all complete.
+- `uzumaki.sim.assets.PinnedModel`: one pinned Menagerie directory per robot (`so101`, `panda`, `aloha`); `python -m uzumaki.sim.assets fetch so101 panda aloha`.
+- `python -m uzumaki.sim --robot panda`, `make sim-demo-panda`, `tests/test_panda.py`, [feature note](docs/features/panda-simulation.md), GIFs in `docs/media/`.
+
+Not claimed: held-out results, a physical Panda, the real robot's torque interface.
+
+### Added — robot-neutral interfaces: body model, components, task packs, conformance
+
+- `uzumaki.body`: any robot as parts, effectors, sensors and capabilities (`locomote`, `reach`, `grasp`, `see`, implicit `stop`), validated, with a canonical document and SHA-256; `PartClaims` admits concurrent calls only on disjoint parts and lets `stop` preempt.
+- `uzumaki.robots`: components (`Arm`, `Gripper`, `Hand`, `Legs`, `WheeledBase`, `Torso`, `Neck`, `Head`, `Camera`) and configurations (`SingleArm`, `TwoArms`, `MobileManipulator`, `Humanoid`, `Quadruped`, `QuadrupedWithArm`, `QuadrupedWithJaw`) that compile to the body model.
+- `uzumaki.tasks`: task packs that bind to any body with the capabilities they need; `pick-place` is the first. `uzumaki.planner.TaskCard`: the planner prompt comes from the pack (byte-identical for `pick-place`).
+- `uzumaki.embodiments`: `fixture-arm` and `so101` as `SingleArm` embodiments with on-demand adapters (`uzumaki.sim.adapter`).
+- `python -m uzumaki.conformance --embodiment NAME --task NAME`: eight checks; both embodiments pass.
+- [Decision 0004](docs/decisions/0004-embodiments.md), [Add your robot](docs/guides/add-your-robot.md). Tests: `test_body.py`, `test_robots.py`, `test_tasks.py`, `test_conformance.py`, and SO-101 conformance in `test_sim.py`.
+
+Not claimed: any robot other than the SO-101 and the fixture arm running a task; claims enforced in the driver; generic observations (contracts v2).
+
+### Added — model backends: any model for the planner and the generator
+
+- `uzumaki.backends`: a registry of backends selected with `--provider`/`--model`/`--base-url`/`--api-key-env` (or `UZUMAKI_PROVIDER`, `UZUMAKI_MODEL`, `UZUMAKI_BASE_URL`, `UZUMAKI_API_KEY_ENV`): `vercel` (alias `gateway`), `anthropic`, `openai`, `openrouter`, `ollama`, `openai-compatible` and `codex`. All three model CLIs use it.
+- `uzumaki.anthropic_api.AnthropicProvider`: the Anthropic Messages API, raw HTTP, with the same request, result and error contract.
+- `uzumaki.gateway.GatewayProvider`: any OpenAI-compatible base URL, keyless local servers (plain http only to localhost), and a reasoning dialect (`max_completion_tokens`, no temperature) for OpenAI's API.
+- Make targets take `PROVIDER`, `MODEL`, `BASE_URL` and `API_KEY_ENV`; the `*-codex` targets are shorthands for `PROVIDER=codex`.
+- Tests: `tests/test_backends.py`, `tests/test_anthropic_api.py`, new cases in `tests/test_gateway.py`; the demo test now runs through the `anthropic` backend. [Feature note](docs/features/model-backends.md).
+
+Not claimed: a live run on any of these backends.
+
+### Added — promotion with provenance and the one-command demo (features [17](https://github.com/alokdidde/uzumaki/issues/17) and [18](https://github.com/alokdidde/uzumaki/issues/18), slim)
+
+- `uzumaki.promotion`: `promote` (validates an accepted generated skill only with passing, non-overlapping confirmation evidence for that exact version; the record keeps digests, prompt, model, lineage and every bundle's SHA-256), `save_library`, `load_library` (checks each program against its skill's and record's digest) and `rollback` (deprecates, with an appended record).
+- `python -m uzumaki.sim.demo`: before-run with the planner abstaining, then generation, confirmation, promotion into `<out>/library`, and the after-run from the reloaded library. `make demo-live`, `make demo-live-codex`. `uzumaki.sim.generate` gains shared `--provider`/`--model`/`--record`/`--replay` helpers.
+- Tests: `tests/test_promotion.py` (in `make containment`), the demo end to end in `tests/test_sim.py`, and `DemoModel` in `tests/generated_programs.py`. [Feature note](docs/features/end-to-end-demo.md).
+
+Not claimed: a live run of the demo, held-out acceptance or physical-robot behaviour.
+
+### Added — generated skills with trace-guided repair in simulation (features [12](https://github.com/alokdidde/uzumaki/issues/12), [13](https://github.com/alokdidde/uzumaki/issues/13) and [16](https://github.com/alokdidde/uzumaki/issues/16), first cut)
+
+- [Decision 0003](docs/decisions/0003-skill-program-representation.md): a generated skill is a Python program `run(tools, payload)` against the broker tools, wrapped in a harness-defined `CapabilitySpec`.
+- `uzumaki.generator`: the generator role (prompt `generator-v1`), `check_program` static checks before registration, `SandboxedProgram` (a skill body that runs the program in `RestrictedWorker` with broker handlers that are the driver's recorded tool calls), `evaluate_program`, and `generate_skill`: a bounded session of generate, check, register, evaluate on development cases and repair from trace feedback, with lineage, repeated-program detection and `rejected` marking. The capability is `TRANSFER_BOX`.
+- `uzumaki.baseline.SkillContext.fail`: a skill body can fail the run with a fixed detail.
+- `python -m uzumaki.sim.generate [--record|--replay] [--video]`: 16 SO-101 development cases for repair, 12 withheld cases for a frozen confirmation run. `make generate-live`; `make containment` now also runs the worker tests of the generator.
+- Tests: `tests/test_generator.py`, `tests/test_generator_worker.py`, `tests/generated_programs.py` (scripted model) and an end-to-end generation test in `tests/test_sim.py`. [Feature note](docs/features/skill-generation.md).
+
+Not claimed: live generation by Claude (only a scripted model has been used), held-out acceptance, or promotion (feature 17).
+
+### Added — Codex CLI provider (ChatGPT sign-in) and planner prompt v2
+
+- `uzumaki.codex`: `CodexProvider` runs each planner request as one read-only, ephemeral `codex exec` turn signed in with a ChatGPT account; same request/result contract and error classes as `GatewayProvider`, usage from `turn.completed`. `python -m uzumaki.sim --provider codex`, `make live-smoke-codex`. Tests: `tests/test_codex.py`.
+- `uzumaki.planner`: prompt `planner-v2` says listed skills already passed their applicability checks. Under `planner-v1` the first live run abstained because the context omits the box pose the model was asked to judge.
+
+### Added — Claude planner through the Vercel AI Gateway (features [09](https://github.com/alokdidde/uzumaki/issues/9) and [10](https://github.com/alokdidde/uzumaki/issues/10), first cut)
+
+- `uzumaki.gateway`: `GatewayProvider` (OpenAI-compatible chat completions, default Vercel AI Gateway, key from `AI_GATEWAY_API_KEY`, fixed-code errors, transient/timeout/rejected classification, usage only when reported) and `RecordingProvider` (live exchanges as `RecordedProvider` files).
+- `uzumaki.planner`: `ModelPlanner` (prompt `planner-v1`, bounded data-only context from the pinned snapshot, strict JSON select/abstain answers validated before the driver validates again).
+- `uzumaki.baseline`: `MODEL_BUDGETS`; `run_case`, `plan_case` and `replay_case` take a planner ID, budgets and a provider; `correctness_failures(..., model_calls=None)`. `uzumaki.supervisor`: model and tool calls are numbered separately, so tool call IDs replay without model calls.
+- `python -m uzumaki.sim --planner model [--record|--replay]`, `make live-smoke`. Tests: `tests/test_gateway.py`, `tests/test_planner.py`, model-planner cases in `tests/test_sim.py`. [Feature note](docs/features/model-planner.md).
+
+Not claimed: any live model behaviour. The gateway host is blocked in the cloud environment used here, so nothing has called the live gateway yet.
+
+### Added — MuJoCo SO-101 simulation (early slice of [feature 15](https://github.com/alokdidde/uzumaki/issues/15))
+
+- `uzumaki.sim` (optional, `requirements-sim.txt`): the pinned Menagerie SO-101 model, fetched and SHA-256 verified (`uzumaki.sim.assets`); the `so101-dev-v1` case set (`uzumaki.sim.cases`, `src/uzumaki/sim/data/so101_cases_v1.json`); the scene; top-down inverse kinematics and collision-checked grasp and place planning (`uzumaki.sim.so101`); `SimWorld` and `SimEvaluator`, which add physics, forbidden-contact detection and a reset check to the fixture contracts; and a runner and CLI (`python -m uzumaki.sim`) with optional MP4 video.
+- `uzumaki.baseline`: `run_case` with an injectable `CaseEnvironment`; `run_fixture_case` now uses it, with behaviour unchanged.
+- Tests: `tests/test_sim.py`. The case-set and asset-pin checks always run. The simulator tests skip without the simulator, and fail instead under `make sim`. CI gains a `sim` job. Makefile: `sim-assets`, `sim`, `sim-demo`. Demo GIFs are in `docs/media/`.
+- [Decision 0002](docs/decisions/0002-so101-simulation.md) records why the SO-101 needs its own case set; [feature note](docs/features/so101-simulation.md).
+
+Not changed: `pick-place-v1` rules, contracts 1.0, the fixture baseline and its cases, and every other module. Not claimed: held-out acceptance, physical-robot behaviour, or any model-driven behaviour.
+
 ### Added — offline task-execution baseline ([issue 08](https://github.com/alokdidde/uzumaki/issues/8))
 
 - `uzumaki.fixture_env`: the frozen case format `uzumaki.baseline-cases/1.0` (`load_cases`), a deterministic fixture clock and `FixtureWorld`, which holds privileged state, decides admission for the four `pick-place-v1` tools behind the broker and logs every actuation. It also adds `FixtureEvaluator`, the only outcome authority (protocol completion, primary-outcome precedence, violation counting, `candidate_verdict`), and `FixtureBackend`, which injects worker crashes and goal withdrawal. Kinematics are scripted, there is no contact model, and timings are fixture constants.

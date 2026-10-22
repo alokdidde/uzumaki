@@ -155,7 +155,9 @@ class BoundedRun:
         self._ledger = Ledger(budgets)
         self._started_ms: int | None = None
         self._attempt_id: str | None = None
-        self._seq = 0
+        #: Call numbers per kind, so tool call IDs do not depend on how many model calls were
+        #: made (recorded-decision replay makes none).
+        self._seq = {"model": 0, "tool": 0}
         self._open: dict[str, Ticket] = {}
         self._abandoned: set[str] = set()
         self._settled: set[str] = set()
@@ -427,10 +429,9 @@ class BoundedRun:
         assert self._started_ms is not None and self._attempt_id is not None
         remaining = self._started_ms + self.budgets.wall_ms - now
         timeout = remaining if per_call is None else min(per_call, remaining)
-        self._seq += 1
-        ticket = Ticket(
-            self.run_id, self._attempt_id, f"{kind[0]}{self._seq}", kind, now + timeout, timeout
-        )
+        self._seq[kind] += 1
+        call_id = f"{kind[0]}{self._seq[kind]}"
+        ticket = Ticket(self.run_id, self._attempt_id, call_id, kind, now + timeout, timeout)
         self._open[ticket.call_id] = ticket
         return ticket
 

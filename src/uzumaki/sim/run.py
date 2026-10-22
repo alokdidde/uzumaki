@@ -1,0 +1,307 @@
+"""Run simulated cases (SO-101, Panda, Spot, G1, Go1, ALOHA, TidyBot or the walking Go1) through
+the unchanged harness: same driver, selector, skills and evidence. The single arms, Spot's arm,
+the G1's left hand and the Go1's jaw run ``pick-place-v1``; ALOHA runs the two-arm
+``handover-v1`` with its own skill set (``tests/fixtures/skills_handover_v1.json``), and TidyBot
+and the walking Go1 (``go1_walk``) the mobile ``fetch-v1``
+(``tests/fixtures/skills_fetch_v1.json``).
+
+``run_sim_case`` is ``uzumaki.baseline.run_case`` with a MuJoCo environment, so every bundle is a
+normal ``uzumaki.events/1.0`` bundle and replays with ``uzumaki.baseline.replay_case``.
+
+Command line (after ``pip install -r requirements-sim.txt`` and fetching assets)::
+
+    python -m uzumaki.sim [--robot so101|panda|spot|g1|go1|aloha|tidybot|go1_walk] [--case ID]
+        [--out DIR] [--video] [--planner rule|model] [--provider NAME] [--model ID]
+        [--record FILE | --replay FILE]
+
+writes ``<case>.json`` bundles, optional ``<case>.mp4`` videos and ``summary.json`` with the
+outcome, correctness failures and true final pose error of each case and the simulator identity.
+
+``--planner model`` replaces the rule selector with ``uzumaki.planner.ModelPlanner``. It calls
+the model live through the backend chosen with ``--provider`` and ``--model`` (see
+``uzumaki.backends``: Vercel AI Gateway, Anthropic, OpenAI, OpenRouter, Ollama, any
+OpenAI-compatible URL, or the Codex CLI); ``--record FILE`` also keeps every exchange as a
+``RecordedProvider`` file, and ``--replay FILE`` answers from such a file with no network.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import sys
+import tempfile
+import time
+from collections.abc import Callable, Mapping
+from pathlib import Path
+from typing import Any
+
+import mujoco
+
+from uzumaki.backends import add_model_options, model_provider, save_exchanges
+from uzumaki.baseline import (
+    BASELINE_BUDGETS,
+    BASELINE_SKILL_BODIES,
+    MODEL_BUDGETS,
+    RULE_SELECTORS,
+    CaseEnvironment,
+    CaseRun,
+    SkillBody,
+    correctness_failures,
+    export_evidence,
+    run_case,
+)
+from uzumaki.broker import PICK_PLACE_V1_TOOL_VERSION
+from uzumaki.budgets import Budgets
+from uzumaki.evidence import DecisionSource
+from uzumaki.fixture_env import (
+    FETCH_PROTOCOL,
+    HANDOVER_PROTOCOL,
+    PROTOCOL_TOOLS,
+    TASK_PROTOCOL,
+    FixtureCase,
+    FixtureClock,
+)
+from uzumaki.planner import (
+    FETCH_CARD,
+    HANDOVER_CARD,
+    PICK_PLACE_CARD,
+    PROMPT_VERSION,
+    ModelPlanner,
+)
+from uzumaki.registry import RegistrySnapshot, load_skill_set, seal_skill
+from uzumaki.sim import SimUnavailable, assets
+from uzumaki.sim.arm import RIGS, ArmRig, default_rig, rig_named
+from uzumaki.sim.world import FrameHook, SimEvaluator, SimWorld, new_world
+
+DEFAULT_SKILLS = Path("tests/fixtures/skills_pick_place_v1.json")
+HANDOVER_SKILLS = Path("tests/fixtures/skills_handover_v1.json")
+FETCH_SKILLS = Path("tests/fixtures/skills_fetch_v1.json")
+
+
+def simulator_identity(rig: ArmRig | None = None) -> dict[str, str]:
+    """Versions and hashes that pin a simulated run (recorded in ``summary.json``)."""
+    rig = rig or default_rig()
+    source = rig.assets.repository.rsplit("_", 1)[-1]
+    return {
+        "simulator": f"mujoco-{mujoco.__version__}",
+        "robot": f"{source}/{rig.assets.directory or rig.assets.entry}@{rig.assets.commit}",
+        "assets_manifest_sha256": rig.assets.manifest_sha256(),
+        "case_set": rig.case_set,
+        "cases_sha256": hashlib.sha256(rig.cases_file.read_bytes()).hexdigest(),
+    }
+
+
+def sim_environment(
+    asset_dir: Path, frame_hook: FrameHook | None = None, rig: ArmRig | None = None
+) -> Callable[[FixtureCase], CaseEnvironment]:
+    """Environment factory for ``run_case``: a fresh physics world and evaluator per case."""
+
+    def build(case: FixtureCase) -> CaseEnvironment:
+        clock = FixtureClock()
+        world = new_world(case, clock, asset_dir, frame_hook, rig)
+        return CaseEnvironment(clock, world, SimEvaluator(world))
+
+    return build
+
+
+def run_sim_case(
+    case: FixtureCase,
+    snapshot: RegistrySnapshot,
+    *,
+    asset_dir: Path | None = None,
+    frame_hook: FrameHook | None = None,
+    candidate: tuple[str, int] | None = None,
+    bodies: Mapping[str, SkillBody] | None = None,
+    selector: DecisionSource | None = None,
+    planner_id: str | None = None,
+    budgets: Budgets = BASELINE_BUDGETS,
+    provider: Any = None,
+    rig: ArmRig | None = None,
+    protocol: str = TASK_PROTOCOL,
+) -> tuple[CaseRun, SimWorld]:
+    """Run one case in simulation; also returns the world for its true final state. For
+    ``handover-v1`` the world is ALOHA's (``uzumaki.sim.aloha``), for ``fetch-v1`` TidyBot's
+    (``uzumaki.sim.tidybot``) or, with its rig, the walking Go1's (``uzumaki.sim.go1_walk``)."""
+    worlds: list[SimWorld] = []
+    if protocol == FETCH_PROTOCOL and rig is not None and rig.name == "go1_walk":
+        from uzumaki.sim.go1_walk import go1_walk_environment
+
+        factory = go1_walk_environment(rig.assets.verify(asset_dir), frame_hook)
+    elif protocol == FETCH_PROTOCOL:
+        from uzumaki.sim.tidybot import RIG as TIDYBOT_RIG
+        from uzumaki.sim.tidybot import tidybot_environment
+
+        root = (rig or TIDYBOT_RIG).assets.verify(asset_dir)
+        factory = tidybot_environment(root, frame_hook)
+    elif protocol == HANDOVER_PROTOCOL:
+        from uzumaki.sim.aloha import GIVER, aloha_environment
+
+        root = (rig or GIVER).assets.verify(asset_dir)
+
+        factory = aloha_environment(root, frame_hook)
+    else:
+        root = (rig.assets.verify if rig else assets.verify_assets)(asset_dir)
+        factory = sim_environment(root, frame_hook, rig)
+
+    def build(case: FixtureCase) -> CaseEnvironment:
+        env = factory(case)
+        assert isinstance(env.world, SimWorld)
+        worlds.append(env.world)
+        return env
+
+    run = run_case(
+        case,
+        snapshot,
+        build,
+        candidate=candidate,
+        bodies=bodies,
+        selector=selector,
+        planner_id=planner_id,
+        budgets=budgets,
+        provider=provider,
+        protocol=protocol,
+    )
+    return run, worlds[0]
+
+
+def load_snapshot(path: Path, tools: Mapping[str, str] | None = None) -> RegistrySnapshot:
+    """A registry snapshot of a hand-authored ``uzumaki.skillset/1.0`` file, sealing each
+    artifact first (the fixture skill files carry unsealed artifacts)."""
+    document = json.loads(path.read_text(encoding="utf-8"))
+    document["skills"] = [
+        dict(entry, artifact=seal_skill(entry["artifact"])) for entry in document["skills"]
+    ]
+    with tempfile.TemporaryDirectory() as directory:
+        sealed = Path(directory) / "skills.json"
+        sealed.write_text(json.dumps(document), encoding="utf-8")
+        return load_skill_set(sealed, tools=tools).snapshot()
+
+
+def main(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(prog="python -m uzumaki.sim", description=__doc__)
+    parser.add_argument(
+        "--robot",
+        choices=(*sorted(RIGS), "aloha", "tidybot", "go1_walk"),
+        default="so101",
+        help="robot to simulate",
+    )
+    parser.add_argument("--case", action="append", help="case ID to run (default: all)")
+    parser.add_argument("--skills", type=Path, default=DEFAULT_SKILLS)
+    parser.add_argument("--out", type=Path, default=Path("build/sim"))
+    parser.add_argument("--video", action="store_true", help="also write <case>.mp4")
+    parser.add_argument("--planner", choices=("rule", "model"), default="rule")
+    add_model_options(parser)
+    options = parser.parse_args(argv)
+    provider: Any = None
+    if options.planner == "model":
+        provider = model_provider(options)
+        if provider is None:
+            return 1
+    elif options.record or options.replay:
+        parser.error("--record and --replay need --planner model")
+    protocol, card = TASK_PROTOCOL, PICK_PLACE_CARD
+    if options.robot == "aloha":
+        from uzumaki.sim import aloha
+
+        rig, protocol, card = aloha.GIVER, HANDOVER_PROTOCOL, HANDOVER_CARD
+        if options.skills == DEFAULT_SKILLS:
+            options.skills = HANDOVER_SKILLS
+    elif options.robot in ("tidybot", "go1_walk"):
+        from uzumaki.sim import go1_walk, tidybot
+
+        rig = tidybot.RIG if options.robot == "tidybot" else go1_walk.RIG
+        protocol, card = FETCH_PROTOCOL, FETCH_CARD
+        if options.skills == DEFAULT_SKILLS:
+            options.skills = FETCH_SKILLS
+    else:
+        rig = rig_named(options.robot)
+    try:
+        asset_dir = rig.assets.verify()
+    except SimUnavailable as error:
+        print(error, file=sys.stderr)
+        return 1
+    cases = rig.cases()
+    if options.case:
+        unknown = set(options.case) - {case.case_id for case in cases}
+        if unknown:
+            print(f"unknown case: {', '.join(sorted(unknown))}", file=sys.stderr)
+            return 2
+        cases = tuple(case for case in cases if case.case_id in options.case)
+    if options.out.exists() and any(options.out.iterdir()):
+        print(
+            f"output directory is not empty (evidence is never overwritten): {options.out}",
+            file=sys.stderr,
+        )
+        return 2
+    snapshot = load_snapshot(
+        options.skills, {tool: PICK_PLACE_V1_TOOL_VERSION for tool in PROTOCOL_TOOLS[protocol]}
+    )
+    options.out.mkdir(parents=True, exist_ok=True)
+    rows: list[dict[str, Any]] = []
+    runs: list[CaseRun] = []
+    for case in cases:
+        recorder = None
+        if options.video:
+            from uzumaki.sim.video import VideoRecorder
+
+            recorder = VideoRecorder(camera=rig.camera)
+        started = time.monotonic()
+        planner: ModelPlanner | None = None
+        if provider is not None:
+            planner = ModelPlanner(
+                snapshot, options.model, frozenset(BASELINE_SKILL_BODIES), card=card
+            )
+        try:
+            run, world = run_sim_case(
+                case,
+                snapshot,
+                asset_dir=asset_dir,
+                frame_hook=recorder,
+                selector=planner,
+                planner_id=None if planner is None else planner.model_version,
+                budgets=BASELINE_BUDGETS if planner is None else MODEL_BUDGETS,
+                provider=provider,
+                rig=rig,
+                protocol=protocol,
+            )
+        finally:
+            save_exchanges(options, provider)
+        runs.append(run)
+        failures = correctness_failures(case, run, model_calls=None if planner else 0)
+        verdict = run.verdict or {}
+        row = {
+            "case_id": case.case_id,
+            "primary": verdict.get("primary"),
+            "progress": verdict.get("progress"),
+            "status": run.report.status,
+            "attempts": run.report.usage["attempts"]["used"],
+            "model_calls": run.report.usage["model_calls"]["used"],
+            "detail": run.report.detail,
+            "violations": verdict.get("violations"),
+            "contacts": run.audit.get("contacts", []),
+            "correctness_failures": failures,
+            "final": world.final_state(),
+            "wall_s": round(time.monotonic() - started, 2),
+        }
+        if recorder is not None:
+            row["video"] = recorder.write(options.out / f"{case.case_id}.mp4").name
+            recorder.close()
+        rows.append(row)
+        mark = "ok  " if not failures else "FAIL"
+        print(
+            f"{mark} {case.case_id:24} {row['primary']:20} attempts={row['attempts']} "
+            f"xy_err={row['final']['xy_error_m']:.4f} yaw_err={row['final']['yaw_error_deg']:.1f}"
+        )
+    digests = export_evidence(runs, options.out)
+    for row in rows:
+        row["bundle_sha256"] = digests[row["case_id"]]
+    identity = simulator_identity(rig)
+    identity["planner"] = (
+        RULE_SELECTORS[protocol][0] if provider is None else f"{options.model}+{PROMPT_VERSION}"
+    )
+    summary = {"identity": identity, "cases": rows}
+    (options.out / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
+    passed = sum(1 for row in rows if not row["correctness_failures"])
+    print(f"{passed}/{len(rows)} cases met their frozen expectations; evidence in {options.out}")
+    return 0 if passed == len(rows) else 1

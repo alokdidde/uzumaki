@@ -27,6 +27,13 @@ failure in the chosen skill's ``stop_on`` ends the case (status ``blocked``); an
 is retried from the state actually reached. After a successful place the harness observes up to
 ``SETTLE_OBSERVES`` times while the evaluator checks the settling window.
 
+The same driver runs the two-effector ``handover-v1`` variant (``protocol=HANDOVER_PROTOCOL``):
+its eligible skills are those that declare that protocol, the selector also sees which role holds
+the object (``holder``), and ``handover-selector-v1`` picks with the giver, hands over, then places
+with the taker. ``hand_over`` is its one extra skill body. The mobile ``fetch-v1`` variant adds
+``go_to``: ``fetch-selector-v1`` moves the body until the object is within reach (observation
+field ``within_reach``), picks, moves until the target is within reach, then places.
+
 ``replay_case`` re-drives the same logic against a recorded bundle (recorded-decision replay: the
 recorded selector outputs and tool/monitor results) and compares semantic outcomes; it never runs
 the world or the evaluator again.
@@ -55,6 +62,8 @@ from uzumaki.evidence import (
 )
 from uzumaki.faults import WorkerFailure
 from uzumaki.fixture_env import (
+    FETCH_PROTOCOL,
+    HANDOVER_PROTOCOL,
     MAX_OBSERVATION_AGE_MS,
     MONITOR_TOOL,
     OBSERVATION_SOURCE,
@@ -75,9 +84,11 @@ from uzumaki.registry import (
     SkillError,
 )
 from uzumaki.replay import ReplayDivergence, ReplayMode, ReplayReport, replay, semantic_outcome
-from uzumaki.supervisor import BoundedRun, RunReport, RunStopped
+from uzumaki.supervisor import BoundedRun, ModelProvider, RunReport, RunStopped
 
 BASELINE_ID = "rule-selector-v1"
+HANDOVER_SELECTOR_ID = "handover-selector-v1"
+FETCH_SELECTOR_ID = "fetch-selector-v1"
 TRIAL_SELECTOR_ID = "trial-selector-v1"
 PLANNER_ROLE = "planner"
 #: Observes after a successful place while the evaluator checks the 0.5 s settling window. With
@@ -94,6 +105,17 @@ BASELINE_BUDGETS = Budgets(
     retries=0,
     max_output_bytes=4096,
     max_total_output_bytes=65536,
+    attempts=3,
+)
+#: Budgets for a model planner (``uzumaki.planner``): the protocol's 20 model calls per case,
+#: retries of invalid or transient model answers within that count, and room for model outputs.
+MODEL_BUDGETS = Budgets(
+    wall_ms=120_000,
+    model_calls=20,
+    steps=40,
+    retries=2,
+    max_output_bytes=8192,
+    max_total_output_bytes=262_144,
     attempts=3,
 )
 #: Fixed names of the frozen per-case correctness checks (``correctness_failures``).
@@ -179,6 +201,11 @@ class SkillContext:
             self.observation = observation
         return observation
 
+    def fail(self, detail: str) -> NoReturn:
+        """End the run as ``failed`` because this skill's implementation broke (for example a
+        generated program that crashed in the restricted worker). ``detail`` is a fixed code."""
+        self._driver._stop(detail)
+
 
 def pick_box(ctx: SkillContext, parameters: Mapping[str, Any]) -> SkillResult:
     """``pick-box@1``: pick at the latest object pose estimate with the given grasp height."""
@@ -222,6 +249,39 @@ def place_box(ctx: SkillContext, parameters: Mapping[str, Any]) -> SkillResult:
     return SkillResult({"released": False}, "placement_failure")
 
 
+def hand_over(ctx: SkillContext, parameters: Mapping[str, Any]) -> SkillResult:
+    """``hand-over@1`` (``handover-v1``): pass the held object from the giver to the taker."""
+    result = ctx.call("handover", {"observation_id": ctx.observation["observation_id"]})
+    if result.status == "ok" and result.result.get("holder") == "taker":
+        return SkillResult({"handed_over": True})
+    if result.status == "rejected":
+        return SkillResult({"handed_over": False}, rejection_outcome(result.result.get("reason")))
+    # The taker did not end up holding it: a failed grasp, whatever the giver did.
+    return SkillResult({"handed_over": False}, "misgrasp")
+
+
+def go_to(ctx: SkillContext, parameters: Mapping[str, Any]) -> SkillResult:
+    """``go-to@1`` (``fetch-v1``): move the body until the observed object (``to: object``) or
+    target (``to: target``) is within reach. A move that ends anywhere else is a failed base
+    placement (``placement_failure``)."""
+    pose = ctx.observation[
+        "object_pose_estimate" if parameters["to"] == "object" else "target_pose"
+    ]
+    result = ctx.call(
+        "go_to",
+        {
+            "observation_id": ctx.observation["observation_id"],
+            "x_m": pose["x_m"],
+            "y_m": pose["y_m"],
+        },
+    )
+    if result.status == "ok":
+        return SkillResult({"arrived": True})
+    if result.status == "rejected":
+        return SkillResult({"arrived": False}, rejection_outcome(result.result.get("reason")))
+    return SkillResult({"arrived": False}, "placement_failure")
+
+
 def pick_and_place(ctx: SkillContext, parameters: Mapping[str, Any]) -> SkillResult:
     """``pick-and-place@1``: ``pick-box``, a fresh observe, then ``place-box``."""
     picked = pick_box(ctx, parameters)
@@ -238,6 +298,16 @@ BASELINE_SKILL_BODIES: Mapping[str, SkillBody] = MappingProxyType(
         "pick-box@1": pick_box,
         "place-box@1": place_box,
         "pick-and-place@1": pick_and_place,
+        "hand-over@1": hand_over,
+        "go-to@1": go_to,
+    }
+)
+#: Observation fields the selector sees, per protocol (besides ``observation_id``).
+DECISION_FIELDS: Mapping[str, tuple[str, ...]] = MappingProxyType(
+    {
+        TASK_PROTOCOL: ("gripper_state", "target_pose"),
+        HANDOVER_PROTOCOL: ("gripper_state", "holder", "target_pose"),
+        FETCH_PROTOCOL: ("gripper_state", "within_reach", "target_pose"),
     }
 )
 
@@ -284,6 +354,68 @@ class RuleSelector:
         return _select(entry, {"grasp_height_m": height})
 
 
+class HandoverSelector:
+    """``handover-selector-v1``: pick with the giver, hand over, then place with the taker.
+
+    Like ``rule-selector-v1`` it chooses only among the listed skills and abstains otherwise."""
+
+    def decide(self, decision_id: str, role: str, request: dict[str, Any]) -> dict[str, Any]:
+        eligible = {entry["skill_id"]: entry for entry in request["eligible"]}
+        holder = request["observation"].get("holder")
+        if request["observation"]["gripper_state"] == "holding":
+            skill, parameters = (
+                ("hand-over", {}) if holder == "giver" else ("place-box", {"approach": "vertical"})
+            )
+            entry = eligible.get(skill)
+            return _abstain("no_eligible_skill") if entry is None else _select(entry, parameters)
+        entry = eligible.get("pick-box")
+        height = _grasp_height(request)
+        if entry is None or height is None:
+            return _abstain("no_eligible_skill")
+        return _select(entry, {"grasp_height_m": height})
+
+
+class FetchSelector:
+    """``fetch-selector-v1``: move to the object, pick, move to the target, place.
+
+    It reads ``within_reach`` and, like ``rule-selector-v1``, chooses only among the listed skills
+    and abstains otherwise."""
+
+    def decide(self, decision_id: str, role: str, request: dict[str, Any]) -> dict[str, Any]:
+        eligible = {entry["skill_id"]: entry for entry in request["eligible"]}
+        reach = request["observation"].get("within_reach")
+        if not isinstance(reach, dict):
+            return _abstain("no_reach_information")
+        holding = request["observation"]["gripper_state"] == "holding"
+        here = reach.get("target" if holding else "object") is True
+        if not here:
+            entry = eligible.get("go-to")
+            to = "target" if holding else "object"
+            return _abstain("no_eligible_skill") if entry is None else _select(entry, {"to": to})
+        if holding:
+            entry = eligible.get("place-box")
+            return (
+                _abstain("no_eligible_skill")
+                if entry is None
+                else _select(entry, {"approach": "vertical"})
+            )
+        entry = eligible.get("pick-box")
+        height = _grasp_height(request)
+        if entry is None or height is None:
+            return _abstain("no_eligible_skill")
+        return _select(entry, {"grasp_height_m": height})
+
+
+#: Protocol -> its rule selector and that selector's recorded ID.
+RULE_SELECTORS: Mapping[str, tuple[str, Callable[[], DecisionSource]]] = MappingProxyType(
+    {
+        TASK_PROTOCOL: (BASELINE_ID, lambda: RuleSelector()),
+        HANDOVER_PROTOCOL: (HANDOVER_SELECTOR_ID, lambda: HandoverSelector()),
+        FETCH_PROTOCOL: (FETCH_SELECTOR_ID, lambda: FetchSelector()),
+    }
+)
+
+
 class TrialSelector:
     """Development-trial selector: always picks the declared trial candidate."""
 
@@ -310,10 +442,14 @@ class CasePlan:
     pins: Mapping[str, PinnedSkill]
     trial: Skill | None
     bodies: Mapping[str, SkillBody]
+    planner_id: str | None = None
+    protocol: str = TASK_PROTOCOL
 
     @property
     def selector_id(self) -> str:
-        return BASELINE_ID if self.trial is None else TRIAL_SELECTOR_ID
+        if self.planner_id is not None:
+            return self.planner_id
+        return RULE_SELECTORS[self.protocol][0] if self.trial is None else TRIAL_SELECTOR_ID
 
     @property
     def candidate_id(self) -> str | None:
@@ -340,19 +476,24 @@ def plan_case(
     *,
     candidate: tuple[str, int] | None = None,
     bodies: Mapping[str, SkillBody] | None = None,
+    planner_id: str | None = None,
+    protocol: str = TASK_PROTOCOL,
 ) -> CasePlan:
     """Pin every eligible validated skill for one run and check the optional trial candidate.
 
     A trial candidate must be registered as ``candidate`` or ``validated``, apply to
-    ``pick-place-v1``, verify, and have a resolvable validated dependency closure and a body.
-    Trials never change registry state.
+    ``protocol``, verify, and have a resolvable validated dependency closure and a body.
+    Trials never change registry state. ``planner_id`` names a non-rule decision source (a model
+    planner's recorded model version); it must be the same for a run and its replay.
     """
     if not isinstance(case_id, str) or not ID_PATTERN.match(case_id):
         raise ValueError("case_id is not a valid identifier")
+    if protocol not in RULE_SELECTORS:
+        raise ValueError("unknown task protocol")
     run_id = f"{'baseline' if candidate is None else 'trial'}.{case_id}"
     pins = {
         skill.skill_id: snapshot.pin(skill.skill_id, skill.skill_version, run_id=run_id)
-        for skill in snapshot.eligible(TASK_PROTOCOL)
+        for skill in snapshot.eligible(protocol)
     }
     implementations = dict(BASELINE_SKILL_BODIES)
     implementations.update(bodies or {})
@@ -362,8 +503,8 @@ def plan_case(
         trial = snapshot.get(skill_id, skill_version)
         if snapshot.state(skill_id, skill_version) not in ("candidate", "validated"):
             raise ValueError("trial candidate must be in state candidate or validated")
-        if TASK_PROTOCOL not in trial.applicability["task_protocols"]:
-            raise ValueError("trial candidate does not apply to pick-place-v1")
+        if protocol not in trial.applicability["task_protocols"]:
+            raise ValueError(f"trial candidate does not apply to {protocol}")
         trial.verify()
         snapshot.resolve_dependencies(trial)
         if trial.label not in implementations:
@@ -375,6 +516,8 @@ def plan_case(
         pins=MappingProxyType(pins),
         trial=trial,
         bodies=MappingProxyType(implementations),
+        planner_id=planner_id,
+        protocol=protocol,
     )
 
 
@@ -470,8 +613,12 @@ class _Driver:
         decisions: DecisionSource,
         tools: ToolExecutor,
         clock: Callable[[], int],
+        budgets: Budgets = BASELINE_BUDGETS,
+        provider: ModelProvider | None = None,
     ) -> None:
         self.plan = plan
+        self.budgets = budgets
+        self.provider = provider
         self.recorder = recorder
         self.decisions = decisions
         self.tools = tools
@@ -491,10 +638,14 @@ class _Driver:
     def execute(self) -> tuple[dict[str, Any], RunReport]:
         self._run = BoundedRun(
             run_id=self.plan.run_id,
-            budgets=BASELINE_BUDGETS,
+            budgets=self.budgets,
+            provider=self.provider,
             tools=self.world_tools,
             clock=self.clock,
         )
+        bind = getattr(self.decisions, "bind", None)
+        if callable(bind):  # a model planner makes its model calls through this run
+            bind(self._run)
         report = self._run.execute(self._logic)
         if self.world_tools.diverged is not None:
             raise self.world_tools.diverged
@@ -614,10 +765,9 @@ class _Driver:
             return None
         return copy.deepcopy(observation)
 
-    @staticmethod
-    def _applicable(skill: Skill, observation: Mapping[str, Any]) -> bool:
+    def _applicable(self, skill: Skill, observation: Mapping[str, Any]) -> bool:
         applicability = skill.applicability
-        if TASK_PROTOCOL not in applicability["task_protocols"]:
+        if self.plan.protocol not in applicability["task_protocols"]:
             return False
         required = applicability["required_observations"]
         return all(observation.get(name) is not None for name in required)
@@ -629,7 +779,7 @@ class _Driver:
             eligible_set_id=f"e{self._views}",
             based_on_observation_id=observation["observation_id"],
             computed_at_ms=observation["at_ms"],
-            task_protocol=TASK_PROTOCOL,
+            task_protocol=self.plan.protocol,
         )["payload"]
         allowed: dict[tuple[str, int], Skill] = {}
         for entry in view["skills"]:
@@ -645,13 +795,12 @@ class _Driver:
             allowed[candidate.key] = candidate
             trial = {**_listing(candidate), "inputs": sorted(candidate.inputs["properties"])}
         request = {
-            "task_protocol": TASK_PROTOCOL,
+            "task_protocol": self.plan.protocol,
             "eligible_set_id": view["eligible_set_id"],
             "registry_version": view["registry_version"],
             "observation": {
                 "observation_id": observation["observation_id"],
-                "gripper_state": observation["gripper_state"],
-                "target_pose": observation.get("target_pose"),
+                **{name: observation.get(name) for name in DECISION_FIELDS[self.plan.protocol]},
             },
             "eligible": listed,
             "trial_candidate": trial,
@@ -709,6 +858,84 @@ class CaseRun:
     candidate: CandidateVerdict | None
 
 
+@dataclass(frozen=True)
+class CaseEnvironment:
+    """The world side of one case: shared clock, privileged world and independent evaluator.
+
+    ``world`` and ``evaluator`` are the fixture classes or subclasses with the same contract, such
+    as the MuJoCo world in ``uzumaki.sim``."""
+
+    clock: FixtureClock
+    world: FixtureWorld
+    evaluator: FixtureEvaluator
+
+
+def fixture_environment(case: FixtureCase) -> CaseEnvironment:
+    """A fresh scripted fixture world and evaluator for one case."""
+    clock = FixtureClock()
+    world = FixtureWorld(case, clock)
+    return CaseEnvironment(clock, world, FixtureEvaluator(world))
+
+
+def run_case(
+    case: FixtureCase,
+    snapshot: RegistrySnapshot,
+    environment: Callable[[FixtureCase], CaseEnvironment],
+    *,
+    candidate: tuple[str, int] | None = None,
+    bodies: Mapping[str, SkillBody] | None = None,
+    selector: DecisionSource | None = None,
+    planner_id: str | None = None,
+    budgets: Budgets = BASELINE_BUDGETS,
+    provider: ModelProvider | None = None,
+    protocol: str = TASK_PROTOCOL,
+) -> CaseRun:
+    """Execute one case of ``protocol`` against a fresh environment built by ``environment``.
+
+    ``selector`` replaces the rule (or trial) selector: a model planner (with ``planner_id``, model
+    ``budgets`` and its ``provider``), or a test double for decision validation.
+    """
+    plan = plan_case(
+        case.case_id,
+        snapshot,
+        candidate=candidate,
+        bodies=bodies,
+        planner_id=planner_id,
+        protocol=protocol,
+    )
+    env = environment(case)
+    backend = FixtureBackend(env.world, env.evaluator)
+    recorder = EventRecorder(
+        run_id=plan.run_id,
+        task_id=plan.task_id,
+        candidate_id=plan.candidate_id,
+        skill_versions=plan.skill_versions,
+        model_versions=plan.model_versions,
+        clock=env.clock,
+    )
+    if selector is None and plan.trial is None:
+        selector = RULE_SELECTORS[protocol][1]()
+    elif selector is None:
+        selector = TrialSelector()
+    driver = _Driver(plan, recorder, selector, backend, env.clock, budgets, provider)
+    bundle, report = driver.execute()
+    trial_verdict: CandidateVerdict | None = None
+    if plan.trial is not None:
+        trial_verdict = env.evaluator.candidate_verdict(
+            plan.trial.skill_id,
+            plan.trial.skill_version,
+            plan.trial.completion["expected_progress"],
+        )
+    return CaseRun(
+        case_id=case.case_id,
+        bundle=bundle,
+        report=report,
+        verdict=copy.deepcopy(env.evaluator.verdict),
+        audit=env.world.audit(),
+        candidate=trial_verdict,
+    )
+
+
 def run_fixture_case(
     case: FixtureCase,
     snapshot: RegistrySnapshot,
@@ -721,38 +948,13 @@ def run_fixture_case(
 
     ``selector`` replaces the rule (or trial) selector, for tests of decision validation only.
     """
-    plan = plan_case(case.case_id, snapshot, candidate=candidate, bodies=bodies)
-    clock = FixtureClock()
-    world = FixtureWorld(case, clock)
-    evaluator = FixtureEvaluator(world)
-    backend = FixtureBackend(world, evaluator)
-    recorder = EventRecorder(
-        run_id=plan.run_id,
-        task_id=plan.task_id,
-        candidate_id=plan.candidate_id,
-        skill_versions=plan.skill_versions,
-        model_versions=plan.model_versions,
-        clock=clock,
-    )
-    if selector is None and plan.trial is None:
-        selector = RuleSelector()
-    elif selector is None:
-        selector = TrialSelector()
-    bundle, report = _Driver(plan, recorder, selector, backend, clock).execute()
-    trial_verdict: CandidateVerdict | None = None
-    if plan.trial is not None:
-        trial_verdict = evaluator.candidate_verdict(
-            plan.trial.skill_id,
-            plan.trial.skill_version,
-            plan.trial.completion["expected_progress"],
-        )
-    return CaseRun(
-        case_id=case.case_id,
-        bundle=bundle,
-        report=report,
-        verdict=copy.deepcopy(evaluator.verdict),
-        audit=world.audit(),
-        candidate=trial_verdict,
+    return run_case(
+        case,
+        snapshot,
+        fixture_environment,
+        candidate=candidate,
+        bodies=bodies,
+        selector=selector,
     )
 
 
@@ -762,6 +964,9 @@ def replay_case(
     *,
     candidate: tuple[str, int] | None = None,
     bodies: Mapping[str, SkillBody] | None = None,
+    planner_id: str | None = None,
+    budgets: Budgets = BASELINE_BUDGETS,
+    protocol: str = TASK_PROTOCOL,
 ) -> ReplayReport:
     """Recorded-decision replay of a case bundle through the same harness logic.
 
@@ -770,12 +975,20 @@ def replay_case(
     ``ReplayDivergence`` when the logic asks for something that was not recorded.
     """
     validate_bundle(bundle)
-    plan = plan_case(bundle["manifest"]["task_id"], snapshot, candidate=candidate, bodies=bodies)
+    plan = plan_case(
+        bundle["manifest"]["task_id"],
+        snapshot,
+        candidate=candidate,
+        bodies=bodies,
+        planner_id=planner_id,
+        protocol=protocol,
+    )
 
     def runner(
         recorder: EventRecorder, decisions: DecisionSource, tools: ToolExecutor
     ) -> dict[str, Any]:
-        replayed, _report = _Driver(plan, recorder, decisions, tools, _Counter()).execute()
+        driver = _Driver(plan, recorder, decisions, tools, _Counter(), budgets)
+        replayed, _report = driver.execute()
         return replayed
 
     return replay(
@@ -787,8 +1000,13 @@ def replay_case(
     )
 
 
-def correctness_failures(case: FixtureCase, run: CaseRun) -> list[str]:
-    """Names (from ``CORRECTNESS_CHECKS``) of the frozen checks this run fails; empty if none."""
+def correctness_failures(
+    case: FixtureCase, run: CaseRun, *, model_calls: int | None = 0
+) -> list[str]:
+    """Names (from ``CORRECTNESS_CHECKS``) of the frozen checks this run fails; empty if none.
+
+    ``model_calls`` is the expected model-call count; ``None`` skips that check (model planner).
+    """
     try:
         validate_bundle(run.bundle)
         semantic = semantic_outcome(run.bundle)
@@ -805,11 +1023,14 @@ def correctness_failures(case: FixtureCase, run: CaseRun) -> list[str]:
         "status": (run.report.status, expected["status"]),
         "attempts": (run.report.usage["attempts"]["used"], expected["attempts"]),
         "admitted": (
-            {tool: verdict["admitted"][tool] for tool in ("pick", "place")},
+            {tool: verdict["admitted"][tool] for tool in expected["admitted"]},
             dict(expected["admitted"]),
         ),
         "violations": (verdict["violations"], 0),
-        "model_calls": (run.report.usage["model_calls"]["used"], 0),
+        "model_calls": (
+            run.report.usage["model_calls"]["used"],
+            run.report.usage["model_calls"]["used"] if model_calls is None else model_calls,
+        ),
         "bundle_outcome": (semantic.outcome, (verdict["primary"], verdict["progress"])),
         "bundle_state": (semantic.status, run.report.state),
     }
