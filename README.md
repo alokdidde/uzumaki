@@ -2,7 +2,7 @@
 
 A robotics harness that uses execution feedback to develop and reuse robot skills.
 
-**Status: planning bootstrap.** This repository currently contains architecture, an implementation roadmap, and a testing strategy. It does not yet contain a runnable harness, trained model, simulator integration, or hardware support.
+**Status: early implementation.** This repository contains the architecture, roadmap and testing strategy, an offline harness baseline, and an optional MuJoCo simulation of the SO-101 arm running that baseline. It does not yet contain a live model in the loop, a trained model, or hardware support.
 
 ## What we are building
 
@@ -44,6 +44,19 @@ Start with [issue 01 — freeze the first task and evaluation protocol](https://
 The proposed first task is one rigid-object pick-and-place family. Issue 01 proposes a candidate profile (`pick-place-v1`, not yet accepted) that freezes its task envelope, simulator, observations, budgets, evaluator, and thresholds before implementation. The first runnable slice will use deterministic fixtures, hand-authored skills, and a rule-based selector with no paid inference. Model generation and physics simulation follow in order.
 
 The MVP ends at feature 18: one reproducible simulator-backed loop that selects existing skills, generates and repairs a missing skill, evaluates it, and promotes an accepted version with preserved evidence. It does not claim general robotics competence or authorize powered robot experiments.
+
+## Simulation demo
+
+![SO-101 in MuJoCo picking a box and placing it on the blue target](docs/media/so101-nominal.gif)
+
+The harness now runs in MuJoCo on a Robot Studio SO-101 arm: the same rule selector, hand-authored skills, budgets, independent evaluator and evidence bundles as the offline baseline, with physics underneath. All 28 SO-101 cases meet their frozen expectations. See [MuJoCo SO-101 simulation](docs/features/so101-simulation.md) and [decision 0002](docs/decisions/0002-so101-simulation.md). No model is in the loop yet.
+
+```
+python -m pip install -r requirements-dev.txt -r requirements-sim.txt && python -m pip install --no-deps -e .
+make sim-assets   # fetch the pinned SO-101 model (SHA-256 verified)
+make sim          # simulator suite
+MUJOCO_GL=osmesa make sim-demo   # bundles, summary and MP4 videos in build/sim
+```
 
 ## Testing today
 

@@ -14,7 +14,7 @@ dependencies = []
 where = ["src"]
 
 [tool.setuptools.package-data]
-uzumaki = ["py.typed"]
+uzumaki = ["py.typed", "sim/data/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -23,6 +23,12 @@ addopts = "-ra"
 [tool.mypy]
 strict = true
 files = ["src"]
+
+# The optional simulator stack (requirements-sim.txt) ships without type information for MuJoCo,
+# and NumPy is absent from the default offline environment.
+[[tool.mypy.overrides]]
+module = ["mujoco", "mujoco.*", "numpy", "numpy.*"]
+ignore_missing_imports = true
 
 [tool.ruff]
 line-length = 100

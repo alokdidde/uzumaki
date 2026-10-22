@@ -4,6 +4,15 @@ Documentary changes to canonical contracts and protocols. Entries describe speci
 
 ## Unreleased
 
+### Added — MuJoCo SO-101 simulation (early slice of [feature 15](https://github.com/alokdidde/uzumaki/issues/15))
+
+- `uzumaki.sim` (optional, `requirements-sim.txt`): the pinned Menagerie SO-101 model, fetched and SHA-256 verified (`uzumaki.sim.assets`); the `so101-dev-v1` case set (`uzumaki.sim.cases`, `src/uzumaki/sim/data/so101_cases_v1.json`); the scene; top-down inverse kinematics and collision-checked grasp and place planning (`uzumaki.sim.so101`); `SimWorld` and `SimEvaluator`, which add physics, forbidden-contact detection and a reset check to the fixture contracts; and a runner and CLI (`python -m uzumaki.sim`) with optional MP4 video.
+- `uzumaki.baseline`: `run_case` with an injectable `CaseEnvironment`; `run_fixture_case` now uses it, with behaviour unchanged.
+- Tests: `tests/test_sim.py`. The case-set and asset-pin checks always run. The simulator tests skip without the simulator, and fail instead under `make sim`. CI gains a `sim` job. Makefile: `sim-assets`, `sim`, `sim-demo`. Demo GIFs are in `docs/media/`.
+- [Decision 0002](docs/decisions/0002-so101-simulation.md) records why the SO-101 needs its own case set; [feature note](docs/features/so101-simulation.md).
+
+Not changed: `pick-place-v1` rules, contracts 1.0, the fixture baseline and its cases, and every other module. Not claimed: held-out acceptance, physical-robot behaviour, or any model-driven behaviour.
+
 ### Added — offline task-execution baseline ([issue 08](https://github.com/alokdidde/uzumaki/issues/8))
 
 - `uzumaki.fixture_env`: the frozen case format `uzumaki.baseline-cases/1.0` (`load_cases`), a deterministic fixture clock and `FixtureWorld`, which holds privileged state, decides admission for the four `pick-place-v1` tools behind the broker and logs every actuation. It also adds `FixtureEvaluator`, the only outcome authority (protocol completion, primary-outcome precedence, violation counting, `candidate_verdict`), and `FixtureBackend`, which injects worker crashes and goal withdrawal. Kinematics are scripted, there is no contact model, and timings are fixture constants.

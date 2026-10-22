@@ -709,6 +709,71 @@ class CaseRun:
     candidate: CandidateVerdict | None
 
 
+@dataclass(frozen=True)
+class CaseEnvironment:
+    """The world side of one case: shared clock, privileged world and independent evaluator.
+
+    ``world`` and ``evaluator`` are the fixture classes or subclasses with the same contract, such
+    as the MuJoCo world in ``uzumaki.sim``."""
+
+    clock: FixtureClock
+    world: FixtureWorld
+    evaluator: FixtureEvaluator
+
+
+def fixture_environment(case: FixtureCase) -> CaseEnvironment:
+    """A fresh scripted fixture world and evaluator for one case."""
+    clock = FixtureClock()
+    world = FixtureWorld(case, clock)
+    return CaseEnvironment(clock, world, FixtureEvaluator(world))
+
+
+def run_case(
+    case: FixtureCase,
+    snapshot: RegistrySnapshot,
+    environment: Callable[[FixtureCase], CaseEnvironment],
+    *,
+    candidate: tuple[str, int] | None = None,
+    bodies: Mapping[str, SkillBody] | None = None,
+    selector: DecisionSource | None = None,
+) -> CaseRun:
+    """Execute one case against a fresh environment built by ``environment``.
+
+    ``selector`` replaces the rule (or trial) selector, for tests of decision validation only.
+    """
+    plan = plan_case(case.case_id, snapshot, candidate=candidate, bodies=bodies)
+    env = environment(case)
+    backend = FixtureBackend(env.world, env.evaluator)
+    recorder = EventRecorder(
+        run_id=plan.run_id,
+        task_id=plan.task_id,
+        candidate_id=plan.candidate_id,
+        skill_versions=plan.skill_versions,
+        model_versions=plan.model_versions,
+        clock=env.clock,
+    )
+    if selector is None and plan.trial is None:
+        selector = RuleSelector()
+    elif selector is None:
+        selector = TrialSelector()
+    bundle, report = _Driver(plan, recorder, selector, backend, env.clock).execute()
+    trial_verdict: CandidateVerdict | None = None
+    if plan.trial is not None:
+        trial_verdict = env.evaluator.candidate_verdict(
+            plan.trial.skill_id,
+            plan.trial.skill_version,
+            plan.trial.completion["expected_progress"],
+        )
+    return CaseRun(
+        case_id=case.case_id,
+        bundle=bundle,
+        report=report,
+        verdict=copy.deepcopy(env.evaluator.verdict),
+        audit=env.world.audit(),
+        candidate=trial_verdict,
+    )
+
+
 def run_fixture_case(
     case: FixtureCase,
     snapshot: RegistrySnapshot,
@@ -721,38 +786,13 @@ def run_fixture_case(
 
     ``selector`` replaces the rule (or trial) selector, for tests of decision validation only.
     """
-    plan = plan_case(case.case_id, snapshot, candidate=candidate, bodies=bodies)
-    clock = FixtureClock()
-    world = FixtureWorld(case, clock)
-    evaluator = FixtureEvaluator(world)
-    backend = FixtureBackend(world, evaluator)
-    recorder = EventRecorder(
-        run_id=plan.run_id,
-        task_id=plan.task_id,
-        candidate_id=plan.candidate_id,
-        skill_versions=plan.skill_versions,
-        model_versions=plan.model_versions,
-        clock=clock,
-    )
-    if selector is None and plan.trial is None:
-        selector = RuleSelector()
-    elif selector is None:
-        selector = TrialSelector()
-    bundle, report = _Driver(plan, recorder, selector, backend, clock).execute()
-    trial_verdict: CandidateVerdict | None = None
-    if plan.trial is not None:
-        trial_verdict = evaluator.candidate_verdict(
-            plan.trial.skill_id,
-            plan.trial.skill_version,
-            plan.trial.completion["expected_progress"],
-        )
-    return CaseRun(
-        case_id=case.case_id,
-        bundle=bundle,
-        report=report,
-        verdict=copy.deepcopy(evaluator.verdict),
-        audit=world.audit(),
-        candidate=trial_verdict,
+    return run_case(
+        case,
+        snapshot,
+        fixture_environment,
+        candidate=candidate,
+        bodies=bodies,
+        selector=selector,
     )
 
 
