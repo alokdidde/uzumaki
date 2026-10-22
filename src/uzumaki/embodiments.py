@@ -35,7 +35,9 @@ from uzumaki.robots import (
     Humanoid,
     Legs,
     MobileManipulator,
+    Neck,
     QuadrupedWithArm,
+    QuadrupedWithJaw,
     Robot,
     SingleArm,
     Torso,
@@ -133,6 +135,20 @@ G1 = Humanoid(
     right_hand=Hand(tuple(f"right_hand_{j}_joint" for j in _G1_HAND), site="right_tcp"),
     legs=Legs(tuple(tuple(f"{side}_{j}_joint" for j in _G1_LEG) for side in ("left", "right"))),
 )
+#: Unitree Go1 with a six-joint neck and the UMI gripper as its jaw, both added by the MuJoCo
+#: scene (``uzumaki.sim.go1``), as a ``QuadrupedWithJaw``.
+GO1 = QuadrupedWithJaw(
+    "go1",
+    model="unitree_go1/go1.xml",
+    legs=Legs(
+        tuple(
+            tuple(f"{leg}_{j}_joint" for j in ("hip", "thigh", "calf"))
+            for leg in ("FR", "FL", "RR", "RL")
+        )
+    ),
+    neck=Neck(("neck_yaw", "neck_pitch", "neck_elbow", "head_pitch", "head_turn", "head_roll")),
+    jaw=Gripper(("jaw/left_finger_joint", "jaw/right_finger_joint"), site="tcp"),
+)
 #: The scripted fixture arm of the offline baseline: exact kinematics, no model file.
 FIXTURE_ARM = SingleArm("fixture_arm", arm=Arm(("arm",)), gripper=Gripper(("gripper",)))
 
@@ -225,6 +241,15 @@ EMBODIMENTS: Mapping[str, Embodiment] = MappingProxyType(
             " requirements-sim.txt and assets)",
             ("pick-place",),
             "uzumaki.sim.adapter:G1Adapter",
+        ),
+        "go1": Embodiment(
+            "go1",
+            GO1,
+            "mujoco",
+            "Unitree Go1 standing, gripping with a jaw on its neck (the UMI gripper), in MuJoCo"
+            " (needs requirements-sim.txt and assets)",
+            ("pick-place",),
+            "uzumaki.sim.adapter:Go1Adapter",
         ),
     }
 )

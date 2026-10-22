@@ -611,6 +611,51 @@ G1_FILES: Mapping[str, str] = MappingProxyType(
 )
 
 
+#: Unitree Go1 (BSD-3-Clause, Unitree Robotics), ``go1.xml``.
+GO1_FILES: Mapping[str, str] = MappingProxyType(
+    {
+        "LICENSE": "2b794acf1e250f5545ae5a47d81e5685ea5488ce077d1087ed8be5f81e9ba5c0",
+        "go1.xml": "d5a7466784c8e72fd174cc7fa5a92754a1a0a6d458a1dec79e7ca0abc9525c4a",
+        "assets/trunk.stl": "051a57995dc6f892fc9bc53cd94e9a894f3dc209fd646e94d55d764150013970",
+        "assets/hip.stl": "b6599b9dd2751ebd87449203223f5683a6c235268b76fcc443e00e0d974a06c0",
+        "assets/thigh_mirror.stl": (
+            "1a90b89de47a57cb12a2d703f6b008a6ace8a1890a381c27723296fd0d00b9d8"
+        ),
+        "assets/calf.stl": "ad3685e132454fd64e4ca3e5089f0d812fb53958e95c14913a22e3193e9e9ed8",
+        "assets/thigh.stl": "bbf7c0a441323088c59276dbec8a32e708a1c61f42d30a6f6775176366ea23f8",
+    }
+)
+
+#: The UMI gripper (MIT, Columbia Artificial Intelligence and Robotics Lab), ``umi_gripper.xml``;
+#: ``uzumaki.sim.go1`` mounts it on the Go1 as a jaw.
+UMI_FILES: Mapping[str, str] = MappingProxyType(
+    {
+        "LICENSE": "304e99a48271e10820f71a1b86ef395c06c100d7f68dd1d308790d1064fc4d41",
+        "umi_gripper.xml": "12b6bbd5e94758164141d54417cad9cde6acdc073311c7c9657dca1ae3fde6ec",
+        "assets/base_link.stl": "ff7a08fd2a590881854760190d9a2960f165c4f5b1e96aefb538ad15fd74c39f",
+        "assets/left_finger_holder.stl": (
+            "6362f14b463459daf2b3e9c8b66ec2b40dda16b84948ec64134950515e423d88"
+        ),
+        "assets/left_finger.stl": (
+            "142a917051f92f449f12c58ce16299547459f2936d78acb2f723e640c1356301"
+        ),
+        "assets/right_finger_holder.stl": (
+            "50c75605ea879e451ab12a6ab94616f6f8683866790878c92e3443a45898e139"
+        ),
+        "assets/right_finger.stl": (
+            "720a15851c3e4110cc66f62341843e3a9c16b561717d2d4807611ab3f1a7dbaa"
+        ),
+        "assets/gopro.stl": "4fb4aff15691c6580c9f8fbdbbbc5bc18e1f9a610e220fa82dece62527e39e93",
+        "assets/right_aruco_sticker.png": (
+            "0f83f53f9ff658108bf12ce21731149e976a24db91e78b0b8539c6a99170e5bc"
+        ),
+        "assets/left_aruco_sticker.png": (
+            "5cfe40d2a25bb4720d98bd1332ff104463ad4d287fdbc11454df31ff2b476359"
+        ),
+    }
+)
+
+
 @dataclass(frozen=True)
 class PinnedModel:
     """One Menagerie model directory at ``MENAGERIE_COMMIT`` with its pinned files."""
@@ -696,6 +741,9 @@ class PinnedModel:
             "aloha": "ALOHA",
             "tidybot": "TidyBot",
             "spot": "Spot",
+            "g1": "G1",
+            "go1": "Go1",
+            "umi": "UMI gripper",
         }
         return labels.get(self.name, self.name)
 
@@ -708,10 +756,21 @@ TIDYBOT_MODEL = PinnedModel(
 )
 SPOT_MODEL = PinnedModel("spot", "boston_dynamics_spot", SPOT_FILES, "spot_arm.xml")
 G1_MODEL = PinnedModel("g1", "unitree_g1", G1_FILES, "g1_with_hands.xml")
+GO1_MODEL = PinnedModel("go1", "unitree_go1", GO1_FILES, "go1.xml")
+UMI_MODEL = PinnedModel("umi", "umi_gripper", UMI_FILES, "umi_gripper.xml")
 MODELS: Mapping[str, PinnedModel] = MappingProxyType(
     {
         m.name: m
-        for m in (SO101_MODEL, PANDA_MODEL, ALOHA_MODEL, TIDYBOT_MODEL, SPOT_MODEL, G1_MODEL)
+        for m in (
+            SO101_MODEL,
+            PANDA_MODEL,
+            ALOHA_MODEL,
+            TIDYBOT_MODEL,
+            SPOT_MODEL,
+            G1_MODEL,
+            GO1_MODEL,
+            UMI_MODEL,
+        )
     }
 )
 

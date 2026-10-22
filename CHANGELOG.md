@@ -4,6 +4,13 @@ Documentary changes to canonical contracts and protocols. Entries describe speci
 
 ## Unreleased
 
+### Added — Unitree Go1 with a jaw: a quadruped that grips with its head
+
+- `uzumaki.sim.go1` and the `go1` embodiment (`QuadrupedWithJaw`): the Unitree Go1 from MuJoCo Menagerie at `cda5236f` (BSD-3-Clause) standing on its legs with a free body, with a six-joint neck built on its trunk and the UMI gripper (MIT, also pinned) mounted on it as the jaw. It runs the frozen `pick-place-v1` geometry unchanged at a 0.2 m table (case set `go1-dev-v1`). 28/28 meet their expectations, conformance passes, and 200 extra geometries all complete.
+- `python -m uzumaki.sim --robot go1`, `make sim-demo-go1`, `tests/test_go1.py`, [feature note](docs/features/go1-simulation.md), GIFs in `docs/media/`.
+
+Not claimed: held-out results, walking, a real Go1 neck or jaw (both are modelled here), a physical robot.
+
 ### Added — Unitree G1: a humanoid at the table
 
 - `uzumaki.sim.g1` and the `g1` embodiment (`Humanoid`): the Unitree G1 with Dex3 hands from MuJoCo Menagerie at `cda5236f` (SHA-256 pinned with its BSD-3-Clause license), its pelvis on a stand. The waist and left arm place the hand; the seven finger joints follow one grip value, the middle finger is coupled to the index finger, and flat pads on the fingertips and thumb grip the box. It runs the frozen `pick-place-v1` geometry unchanged (case set `g1-dev-v1`). 28/28 meet their expectations, conformance passes, and 187 of 200 extra geometries complete (the other 13 are refused as out of the left hand's reach, with no contact).

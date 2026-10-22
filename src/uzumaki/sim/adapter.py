@@ -136,3 +136,7 @@ def SpotAdapter() -> ArmAdapter:  # noqa: N802
 
 def G1Adapter() -> ArmAdapter:  # noqa: N802
     return ArmAdapter("g1")
+
+
+def Go1Adapter() -> ArmAdapter:  # noqa: N802
+    return ArmAdapter("go1")

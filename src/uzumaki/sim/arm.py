@@ -122,6 +122,7 @@ RIGS: Mapping[str, str] = MappingProxyType(
         "panda": "uzumaki.sim.panda:RIG",
         "spot": "uzumaki.sim.spot:RIG",
         "g1": "uzumaki.sim.g1:RIG",
+        "go1": "uzumaki.sim.go1:RIG",
     }
 )
 

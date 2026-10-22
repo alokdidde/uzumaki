@@ -68,6 +68,8 @@ The adapter also enforces your robot's physical limits and safety envelope. Skil
 
 **A humanoid's hand is an arm too.** The G1 is one `ArmRig` whose arm is the waist plus the left arm (ten joints) and whose gripper is a seven-joint Dex3 hand (`uzumaki/sim/g1.py`). Its world drives all seven finger joints from one grip value (a synergy), and `customize` couples two fingers so they act as one jaw. See [G1 simulation](../features/g1-simulation.md).
 
+**A part the model lacks can be built and mounted.** The Go1 model has no neck or gripper. Its rig's `customize` builds a six-joint neck on the trunk and attaches a second pinned model, the UMI gripper, as its jaw (`MjSpec.attach`), so a `QuadrupedWithJaw` runs on the same engine (`uzumaki/sim/go1.py`). See [Go1 simulation](../features/go1-simulation.md).
+
 ## 3. Register it
 
 Add one entry to `EMBODIMENTS` in `uzumaki/embodiments.py`: the name, the robot, the backend, the task packs (`pick-place`, `handover` for a body with two grippers, or `fetch` for a body that can move), and `"module:Factory"` for the adapter. The adapter module is imported only when the embodiment is used, so its dependencies never reach the core.
