@@ -28,7 +28,7 @@ from types import MappingProxyType
 from typing import Any, Protocol
 
 from uzumaki.fixture_env import FixtureCase, load_cases
-from uzumaki.robots import Arm, Gripper, Robot, SingleArm
+from uzumaki.robots import Arm, Gripper, Robot, SingleArm, TwoArms
 
 REPO = Path(__file__).resolve().parents[2]
 FIXTURE_CASES = REPO / "tests" / "fixtures" / "baseline_cases_v1.json"
@@ -74,6 +74,17 @@ PANDA = SingleArm(
     model="franka_emika_panda/panda.xml",
     arm=Arm(tuple(f"joint{i}" for i in range(1, 8))),
     gripper=Gripper(("finger_joint1", "finger_joint2"), site="tcp"),
+)
+_VX300S = ("waist", "shoulder", "elbow", "forearm_roll", "wrist_angle", "wrist_rotate")
+#: ALOHA (two ViperX 300 S arms facing each other) as ``TwoArms``; the ``tcp`` sites are added by
+#: the MuJoCo scene between each gripper's fingertips.
+ALOHA = TwoArms(
+    "aloha",
+    model="aloha/aloha.xml",
+    left=Arm(tuple(f"left/{j}" for j in _VX300S)),
+    right=Arm(tuple(f"right/{j}" for j in _VX300S)),
+    left_gripper=Gripper(("left/left_finger", "left/right_finger"), site="left/tcp"),
+    right_gripper=Gripper(("right/left_finger", "right/right_finger"), site="right/tcp"),
 )
 #: The scripted fixture arm of the offline baseline: exact kinematics, no model file.
 FIXTURE_ARM = SingleArm("fixture_arm", arm=Arm(("arm",)), gripper=Gripper(("gripper",)))
@@ -132,6 +143,14 @@ EMBODIMENTS: Mapping[str, Embodiment] = MappingProxyType(
             "Franka Emika Panda arm in MuJoCo (needs requirements-sim.txt and assets)",
             ("pick-place",),
             "uzumaki.sim.adapter:PandaAdapter",
+        ),
+        "aloha": Embodiment(
+            "aloha",
+            ALOHA,
+            "mujoco",
+            "ALOHA, two ViperX 300 S arms, in MuJoCo (needs requirements-sim.txt and assets)",
+            ("handover",),
+            "uzumaki.sim.adapter:AlohaAdapter",
         ),
     }
 )

@@ -1,4 +1,4 @@
-.PHONY: check containment baseline-evidence sim-assets sim sim-demo sim-demo-panda live-smoke live-smoke-codex generate-live generate-live-codex demo-live demo-live-codex
+.PHONY: check containment baseline-evidence sim-assets sim sim-demo sim-demo-panda sim-demo-aloha live-smoke live-smoke-codex generate-live generate-live-codex demo-live demo-live-codex
 # Offline check: no installs, network or live providers. Run after
 # `python -m pip install -r requirements-dev.txt` and `python -m pip install --no-deps -e .`.
 check:
@@ -27,7 +27,7 @@ sim-assets:
 
 # Simulator suite with the missing-simulator skip turned into a failure.
 sim:
-	UZUMAKI_REQUIRE_SIM=1 python -m pytest tests/test_sim.py tests/test_panda.py
+	UZUMAKI_REQUIRE_SIM=1 python -m pytest tests/test_sim.py tests/test_panda.py tests/test_aloha.py
 
 # Every SO-101 case with bundles, summary and MP4 videos in build/sim (headless: MUJOCO_GL=osmesa).
 sim-demo:
@@ -38,6 +38,11 @@ sim-demo:
 sim-demo-panda:
 	rm -rf build/sim-panda
 	python -m uzumaki.sim --robot panda --video --out build/sim-panda
+
+# ALOHA handing a bar between its two arms (handover-v1), in build/sim-aloha.
+sim-demo-aloha:
+	rm -rf build/sim-aloha
+	python -m uzumaki.sim --robot aloha --video --out build/sim-aloha
 
 # Live model runs (never in CI). Pick the backend with PROVIDER and MODEL, for example
 #   make demo-live PROVIDER=anthropic                    (ANTHROPIC_API_KEY)

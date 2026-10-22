@@ -1,12 +1,13 @@
-"""Run simulated arm cases (SO-101 or Panda) through the unchanged harness: same driver, selector,
-skills and evidence.
+"""Run simulated cases (SO-101, Panda or ALOHA) through the unchanged harness: same driver,
+selector, skills and evidence. The single arms run ``pick-place-v1``; ALOHA runs the two-arm
+``handover-v1`` with its own skill set (``tests/fixtures/skills_handover_v1.json``).
 
 ``run_sim_case`` is ``uzumaki.baseline.run_case`` with a MuJoCo environment, so every bundle is a
 normal ``uzumaki.events/1.0`` bundle and replays with ``uzumaki.baseline.replay_case``.
 
 Command line (after ``pip install -r requirements-sim.txt`` and fetching assets)::
 
-    python -m uzumaki.sim [--robot so101|panda] [--case ID ...] [--out DIR] [--video]
+    python -m uzumaki.sim [--robot so101|panda|aloha] [--case ID ...] [--out DIR] [--video]
         [--planner rule|model] [--provider NAME] [--model ID]
         [--record FILE | --replay FILE]
 
@@ -39,6 +40,7 @@ from uzumaki.baseline import (
     BASELINE_BUDGETS,
     BASELINE_SKILL_BODIES,
     MODEL_BUDGETS,
+    RULE_SELECTORS,
     CaseEnvironment,
     CaseRun,
     SkillBody,
@@ -46,16 +48,24 @@ from uzumaki.baseline import (
     export_evidence,
     run_case,
 )
+from uzumaki.broker import PICK_PLACE_V1_TOOL_VERSION
 from uzumaki.budgets import Budgets
 from uzumaki.evidence import DecisionSource
-from uzumaki.fixture_env import FixtureCase, FixtureClock
-from uzumaki.planner import PROMPT_VERSION, ModelPlanner
+from uzumaki.fixture_env import (
+    HANDOVER_PROTOCOL,
+    PROTOCOL_TOOLS,
+    TASK_PROTOCOL,
+    FixtureCase,
+    FixtureClock,
+)
+from uzumaki.planner import HANDOVER_CARD, PICK_PLACE_CARD, PROMPT_VERSION, ModelPlanner
 from uzumaki.registry import RegistrySnapshot, load_skill_set, seal_skill
 from uzumaki.sim import SimUnavailable, assets
 from uzumaki.sim.arm import RIGS, ArmRig, default_rig, rig_named
 from uzumaki.sim.world import FrameHook, SimEvaluator, SimWorld, new_world
 
 DEFAULT_SKILLS = Path("tests/fixtures/skills_pick_place_v1.json")
+HANDOVER_SKILLS = Path("tests/fixtures/skills_handover_v1.json")
 
 
 def simulator_identity(rig: ArmRig | None = None) -> dict[str, str]:
@@ -96,11 +106,20 @@ def run_sim_case(
     budgets: Budgets = BASELINE_BUDGETS,
     provider: Any = None,
     rig: ArmRig | None = None,
+    protocol: str = TASK_PROTOCOL,
 ) -> tuple[CaseRun, SimWorld]:
-    """Run one case in simulation; also returns the world for its true final state."""
-    root = (rig.assets.verify if rig else assets.verify_assets)(asset_dir)
+    """Run one case in simulation; also returns the world for its true final state. For
+    ``handover-v1`` the world is ALOHA's (``uzumaki.sim.aloha``)."""
     worlds: list[SimWorld] = []
-    factory = sim_environment(root, frame_hook, rig)
+    if protocol == HANDOVER_PROTOCOL:
+        from uzumaki.sim.aloha import GIVER, aloha_environment
+
+        root = (rig or GIVER).assets.verify(asset_dir)
+
+        factory = aloha_environment(root, frame_hook)
+    else:
+        root = (rig.assets.verify if rig else assets.verify_assets)(asset_dir)
+        factory = sim_environment(root, frame_hook, rig)
 
     def build(case: FixtureCase) -> CaseEnvironment:
         env = factory(case)
@@ -118,11 +137,12 @@ def run_sim_case(
         planner_id=planner_id,
         budgets=budgets,
         provider=provider,
+        protocol=protocol,
     )
     return run, worlds[0]
 
 
-def load_snapshot(path: Path) -> RegistrySnapshot:
+def load_snapshot(path: Path, tools: Mapping[str, str] | None = None) -> RegistrySnapshot:
     """A registry snapshot of a hand-authored ``uzumaki.skillset/1.0`` file, sealing each
     artifact first (the fixture skill files carry unsealed artifacts)."""
     document = json.loads(path.read_text(encoding="utf-8"))
@@ -132,12 +152,14 @@ def load_snapshot(path: Path) -> RegistrySnapshot:
     with tempfile.TemporaryDirectory() as directory:
         sealed = Path(directory) / "skills.json"
         sealed.write_text(json.dumps(document), encoding="utf-8")
-        return load_skill_set(sealed).snapshot()
+        return load_skill_set(sealed, tools=tools).snapshot()
 
 
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(prog="python -m uzumaki.sim", description=__doc__)
-    parser.add_argument("--robot", choices=sorted(RIGS), default="so101", help="arm to simulate")
+    parser.add_argument(
+        "--robot", choices=(*sorted(RIGS), "aloha"), default="so101", help="robot to simulate"
+    )
     parser.add_argument("--case", action="append", help="case ID to run (default: all)")
     parser.add_argument("--skills", type=Path, default=DEFAULT_SKILLS)
     parser.add_argument("--out", type=Path, default=Path("build/sim"))
@@ -152,7 +174,15 @@ def main(argv: list[str]) -> int:
             return 1
     elif options.record or options.replay:
         parser.error("--record and --replay need --planner model")
-    rig = rig_named(options.robot)
+    protocol, card = TASK_PROTOCOL, PICK_PLACE_CARD
+    if options.robot == "aloha":
+        from uzumaki.sim import aloha
+
+        rig, protocol, card = aloha.GIVER, HANDOVER_PROTOCOL, HANDOVER_CARD
+        if options.skills == DEFAULT_SKILLS:
+            options.skills = HANDOVER_SKILLS
+    else:
+        rig = rig_named(options.robot)
     try:
         asset_dir = rig.assets.verify()
     except SimUnavailable as error:
@@ -171,7 +201,9 @@ def main(argv: list[str]) -> int:
             file=sys.stderr,
         )
         return 2
-    snapshot = load_snapshot(options.skills)
+    snapshot = load_snapshot(
+        options.skills, {tool: PICK_PLACE_V1_TOOL_VERSION for tool in PROTOCOL_TOOLS[protocol]}
+    )
     options.out.mkdir(parents=True, exist_ok=True)
     rows: list[dict[str, Any]] = []
     runs: list[CaseRun] = []
@@ -184,7 +216,9 @@ def main(argv: list[str]) -> int:
         started = time.monotonic()
         planner: ModelPlanner | None = None
         if provider is not None:
-            planner = ModelPlanner(snapshot, options.model, frozenset(BASELINE_SKILL_BODIES))
+            planner = ModelPlanner(
+                snapshot, options.model, frozenset(BASELINE_SKILL_BODIES), card=card
+            )
         try:
             run, world = run_sim_case(
                 case,
@@ -196,6 +230,7 @@ def main(argv: list[str]) -> int:
                 budgets=BASELINE_BUDGETS if planner is None else MODEL_BUDGETS,
                 provider=provider,
                 rig=rig,
+                protocol=protocol,
             )
         finally:
             save_exchanges(options, provider)
@@ -230,7 +265,7 @@ def main(argv: list[str]) -> int:
         row["bundle_sha256"] = digests[row["case_id"]]
     identity = simulator_identity(rig)
     identity["planner"] = (
-        "rule-selector-v1" if provider is None else f"{options.model}+{PROMPT_VERSION}"
+        RULE_SELECTORS[protocol][0] if provider is None else f"{options.model}+{PROMPT_VERSION}"
     )
     summary = {"identity": identity, "cases": rows}
     (options.out / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")

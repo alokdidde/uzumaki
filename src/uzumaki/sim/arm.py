@@ -32,7 +32,7 @@ from typing import Any
 import mujoco
 import numpy as np
 
-from uzumaki.fixture_env import FixtureCase, load_cases
+from uzumaki.fixture_env import TASK_PROTOCOL, FixtureCase, load_cases
 from uzumaki.robots import SingleArm
 from uzumaki.sim.assets import PinnedModel
 
@@ -97,6 +97,8 @@ class ArmRig:
     gravity_compensation: bool = False
     #: Radius of a visual pedestal from the floor up to the base (0: the base stands on the table).
     pedestal_radius_m: float = 0.0
+    #: Task protocol of ``cases_file``.
+    protocol: str = TASK_PROTOCOL
     #: Overview camera for videos: look-at x, y, z (m), distance (m), azimuth, elevation (deg).
     camera: tuple[float, float, float, float, float, float] = (0.0, -0.05, 0.09, 0.85, -90.0, -32.0)
 
@@ -105,7 +107,7 @@ class ArmRig:
         return tuple(self.robot.arm.joints)
 
     def cases(self) -> tuple[FixtureCase, ...]:
-        return load_cases(self.cases_file)
+        return load_cases(self.cases_file, self.protocol)
 
 
 #: Rig name -> ``module:attribute`` of its ``ArmRig`` (imported on demand).
@@ -340,14 +342,16 @@ def plan_grasp(
     yaw_deg: float,
     grasp_height: float,
     goal: tuple[float, float, float, float] | None,
+    quarters: Sequence[int] = (0, 1, 2, 3),
 ) -> Grasp | None:
-    """Plan a grasp of a square box of size ``2 * grasp_height`` at the estimated pose."""
+    """Plan a grasp of a square box of size ``2 * grasp_height`` at the estimated pose; the jaw
+    yaw is the box yaw plus one of ``quarters`` quarter turns (``(1, 3)``: across a bar)."""
     rig = kin.rig
     box_yaw = math.radians(yaw_deg)
     size = 2 * grasp_height
     best: Grasp | None = None
     fallback: Grasp | None = None
-    for quarter in range(4):
+    for quarter in quarters:
         jaw_yaw = wrap(box_yaw + quarter * math.pi / 2)
         site = site_position(rig, (x, y, max(grasp_height, rig.min_site_z_m)), jaw_yaw, size)
         grasp_q = kin.solve(site, jaw_yaw)

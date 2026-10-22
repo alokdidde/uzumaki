@@ -37,5 +37,5 @@ jobs:
         run: make sim-assets
       - name: Typecheck with the simulator stack installed
         run: python -m mypy src
-      - name: MuJoCo SO-101 and Panda suites (fail if the simulator is unavailable)
+      - name: MuJoCo SO-101, Panda and ALOHA suites (fail if the simulator is unavailable)
         run: make sim

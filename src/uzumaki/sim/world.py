@@ -75,6 +75,17 @@ RETREAT_S = 0.6
 FrameHook = Callable[[Any, Any], None]
 
 
+class ArmState:
+    """One arm of a world: its rig, kinematics, actuator ids and gripper joint address."""
+
+    def __init__(self, model: Any, rig: ArmRig) -> None:
+        self.rig = rig
+        self.kin = arm.Kinematics(model, rig)
+        self.joints = np.array([model.actuator(name).id for name in rig.arm_actuators])
+        self.grip = model.actuator(rig.gripper_actuator).id
+        self.gripper_qpos = model.jnt_qposadr[model.joint(rig.gripper_joint).id]
+
+
 def _yaw_deg(quat: Any) -> float:
     w, x, y, z = (float(v) for v in quat)
     return math.degrees(math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z)))
@@ -98,6 +109,7 @@ class SimWorld(FixtureWorld):
         model: Any,
         frame_hook: FrameHook | None = None,
         rig: ArmRig | None = None,
+        others: tuple[ArmRig, ...] = (),
     ) -> None:
         super().__init__(case, clock)
         self.rig = rig = rig or arm.default_rig()
@@ -105,15 +117,17 @@ class SimWorld(FixtureWorld):
             raise ValueError("simulation timestep must be 5 ms")
         self.model = model
         self.data = mujoco.MjData(model)
-        self.kin = arm.Kinematics(model, rig)
+        #: Every arm; the first is the one ``pick`` and ``place`` use.
+        self.arms = [ArmState(model, each) for each in (rig, *others)]
+        self.kin = self.arms[0].kin
         self.frame_hook = frame_hook
         self.grasp: arm.Grasp | None = None
         self.contact_events: list[dict[str, Any]] = []
         self.settled_since_ms: int | None = None
         self.ready = False
-        self._arm = np.array([model.actuator(name).id for name in rig.arm_actuators])
-        self._grip = model.actuator(rig.gripper_actuator).id
-        self._gripper_qpos = model.jnt_qposadr[model.joint(rig.gripper_joint).id]
+        self._arm = self.arms[0].joints
+        self._grip = self.arms[0].grip
+        self._gripper_qpos = self.arms[0].gripper_qpos
         box_joint = model.body("box").jntadr[0]
         self._box_qpos = model.jnt_qposadr[box_joint]
         self._box_dof = model.jnt_dofadr[box_joint]
@@ -123,13 +137,19 @@ class SimWorld(FixtureWorld):
     # --------------------------------------------------------------------------- physics
     def _classify_geoms(self) -> None:
         model = self.model
-        root = model.body(self.rig.root_body).id
-        robot_bodies = {b for b in range(model.nbody) if self._descends(b, root)}
-        pad_bodies = {model.body(name).id for name in self.rig.pad_bodies}
+        roots = [model.body(each.rig.root_body).id for each in self.arms]
+        robot_bodies = {b for b in range(model.nbody) if any(self._descends(b, r) for r in roots)}
+        pad_bodies = {
+            model.body(n).id: index
+            for index, each in enumerate(self.arms)
+            for n in each.rig.pad_bodies
+        }
         priority = self.rig.pad_priority
         self._names: dict[int, str] = {}
         self._robot: set[int] = set()
         self._pads: set[int] = set()
+        #: Pad geom -> index of the arm whose gripper it belongs to.
+        self._pad_arm: dict[int, int] = {}
         for geom in range(model.ngeom):
             body = int(model.geom_bodyid[geom])
             self._names[geom] = model.geom(geom).name or f"{model.body(body).name}:{geom}"
@@ -139,6 +159,7 @@ class SimWorld(FixtureWorld):
                     priority is None or int(model.geom_priority[geom]) == priority
                 ):
                     self._pads.add(geom)
+                    self._pad_arm[geom] = pad_bodies[body]
         self._box = model.geom("box").id
         self._table = model.geom("table").id
         self._floor = model.geom("floor").id
@@ -154,7 +175,10 @@ class SimWorld(FixtureWorld):
         pair = {a, b}
         robot = pair & self._robot
         if len(robot) == 2:
-            return True  # self contact (MuJoCo already excludes parent/child pairs)
+            # Self contact (MuJoCo already excludes parent/child pairs), except the pads of one
+            # gripper touching each other when it closes on nothing.
+            arms = {self._pad_arm.get(geom) for geom in robot}
+            return not (robot <= self._pads and len(arms) == 1)
         if robot:
             other = (pair - robot).pop()
             return other != self._box or not robot <= self._pads
@@ -198,16 +222,20 @@ class SimWorld(FixtureWorld):
     def _steps(self, seconds: float) -> int:
         return max(1, round(seconds * 1000 / STEP_MS))
 
-    def _move(self, target: Any, seconds: float, grip: float | None = None) -> None:
-        """Smoothstep joint-space motion of the position actuators to ``target``."""
-        start = self.data.ctrl[self._arm].copy()
-        grip_start = float(self.data.ctrl[self._grip])
+    def _move(
+        self, target: Any, seconds: float, grip: float | None = None, arm: ArmState | None = None
+    ) -> None:
+        """Smoothstep joint-space motion of one arm's position actuators to ``target`` (the
+        first arm by default); the other arms hold their commands."""
+        arm = arm or self.arms[0]
+        start = self.data.ctrl[arm.joints].copy()
+        grip_start = float(self.data.ctrl[arm.grip])
         count = self._steps(seconds)
         for k in range(count):
             a = _smoothstep((k + 1) / count)
-            self.data.ctrl[self._arm] = start + (np.asarray(target) - start) * a
+            self.data.ctrl[arm.joints] = start + (np.asarray(target) - start) * a
             if grip is not None:
-                self.data.ctrl[self._grip] = grip_start + (grip - grip_start) * a
+                self.data.ctrl[arm.grip] = grip_start + (grip - grip_start) * a
             self._step(1)
 
     def _hold(self, seconds: float) -> None:
@@ -215,12 +243,13 @@ class SimWorld(FixtureWorld):
 
     def _reset(self) -> None:
         """Ready pose, open gripper, box settled on the tabletop; the case clock does not run."""
-        ready = np.array(self.rig.ready)
-        self.data.qpos[self.kin.qpos] = ready
-        self.data.ctrl[self._arm] = ready
-        for adr, value in zip(self.kin.finger_qpos, self.kin.open_fingers, strict=True):
-            self.data.qpos[adr] = value
-        self.data.ctrl[self._grip] = self.rig.grip_open
+        for each in self.arms:
+            ready = np.array(each.rig.ready)
+            self.data.qpos[each.kin.qpos] = ready
+            self.data.ctrl[each.joints] = ready
+            for adr, value in zip(each.kin.finger_qpos, each.kin.open_fingers, strict=True):
+                self.data.qpos[adr] = value
+            self.data.ctrl[each.grip] = each.rig.grip_open
         mujoco.mj_forward(self.model, self.data)
         clean = True
         for _ in range(round(RESET_SETTLE_S * 1000 / STEP_MS)):
@@ -259,9 +288,10 @@ class SimWorld(FixtureWorld):
             or _wrapped_deg(yaw - before[2]) > MOVED_DEG
         )
 
-    def _gripper_holding(self) -> bool:
-        closed = float(self.data.ctrl[self._grip]) < self.rig.closed_below
-        return closed and float(self.data.qpos[self._gripper_qpos]) > self.rig.opening_above
+    def _gripper_holding(self, arm: ArmState | None = None) -> bool:
+        arm = arm or self.arms[0]
+        closed = float(self.data.ctrl[arm.grip]) < arm.rig.closed_below
+        return closed and float(self.data.qpos[arm.gripper_qpos]) > arm.rig.opening_above
 
     def _goal(self) -> tuple[float, float, float, float] | None:
         x, y = self.case.target_xy_m
@@ -274,7 +304,7 @@ class SimWorld(FixtureWorld):
         if args:
             return self._reply("rejected", reason="malformed_arguments")
         self._hold(OBSERVE_MS / 1000)
-        self.held = self.held and self._gripper_holding()
+        self.held = self.held and self._still_holding()
         self.observes += 1
         now = self.clock()
         stamp = now - STALE_LAG_MS if self.observes in self.case.stale_observes else now
@@ -301,7 +331,16 @@ class SimWorld(FixtureWorld):
             },
             gripper_state="holding" if self.held else "open",
             tool_result=self._last_result,
+            **self._observation_extra(),
         )
+
+    def _still_holding(self) -> bool:
+        """Whether the effector that holds the object still reports holding it."""
+        return self._gripper_holding()
+
+    def _observation_extra(self) -> dict[str, Any]:
+        """Observation fields a protocol adds (none for ``pick-place-v1``)."""
+        return {}
 
     def pick(self, args: dict[str, Any]) -> dict[str, Any]:
         reason, context = self._admission(args, ("x_m", "y_m", "yaw_deg", "grasp_height_m"))

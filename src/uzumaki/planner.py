@@ -88,6 +88,19 @@ PICK_PLACE_CARD = TaskCard(
     observation_fields=("gripper_state", "target_pose"),
 )
 SYSTEM_PROMPT = PICK_PLACE_CARD.system_prompt()
+#: The task card of the ``handover`` task pack (``handover-v1``).
+HANDOVER_CARD = TaskCard(
+    intro=(
+        "You are the planner of a two-arm robot harness for a tabletop handover task: one arm"
+        " (the giver) picks the object, hands it to the other (the taker), which places it."
+    ),
+    eligibility_rule=PICK_PLACE_CARD.eligibility_rule.replace("the box is held", "who holds it"),
+    goal=(
+        "Move the object to target_pose (x, y, yaw) on the tabletop and release it; the giver"
+        " cannot reach the target, so it must be handed over first."
+    ),
+    observation_fields=("gripper_state", "holder", "target_pose"),
+)
 
 
 def _skill_card(snapshot: RegistrySnapshot, skill_id: str, version: int) -> dict[str, Any]:

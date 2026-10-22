@@ -4,6 +4,15 @@ Documentary changes to canonical contracts and protocols. Entries describe speci
 
 ## Unreleased
 
+### Added — ALOHA and the `handover` task pack: two arms on one task
+
+- `handover-v1` and the `handover` task pack (`uzumaki.tasks.HANDOVER`): roles `giver` and `taker` bound to two grasping effectors; tools `observe`, `pick`, `handover`, `place`, `abort` with declared part claims; observation field `holder`; case fault `dropped_handovers`. Budgets, outcomes, evaluator contract and evidence are `pick-place-v1`'s.
+- Skills `pick-box`, `hand-over`, `place-box` (`tests/fixtures/skills_handover_v1.json`), `handover-selector-v1`, a planner task card, and a scripted offline world (`uzumaki.handover_env`). The driver, broker and fixture loader take the protocol as a parameter.
+- `uzumaki.sim.aloha` and the `aloha` embodiment (`TwoArms`): ALOHA from MuJoCo Menagerie at `cda5236f` (SHA-256 pinned with its BSD-3-Clause license) as two rigs on the shared arm engine. Case set `aloha-dev-v1`: eight fault cases including `dropped-handover`, twenty nominal cases from a seed recipe. 28/28 meet their expectations, conformance passes, 100 extra geometries all complete.
+- `python -m uzumaki.sim --robot aloha`, `make sim-demo-aloha`, `tests/test_aloha.py`, `tests/test_handover.py`, [feature note](docs/features/aloha-handover.md), GIFs in `docs/media/`.
+
+Not claimed: held-out results, part claims enforced at run time, the model planner or skill generation on `handover`, a physical ALOHA.
+
 ### Added — Franka Panda: a second arm on a shared simulation engine
 
 - `uzumaki.sim.arm`: the SO-101's kinematics, planning, scene and world code as one engine driven by an `ArmRig` (robot description, pinned model, base placement, actuators, gripper, tool-centre site, pads, IK seeds). All 28 SO-101 cases give byte-identical bundles after the move.

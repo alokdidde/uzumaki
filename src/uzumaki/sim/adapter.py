@@ -1,13 +1,15 @@
-"""Environment adapters for the simulated arms: the ``so101`` and ``panda`` embodiments in MuJoCo
-(``uzumaki.embodiments``). Both are one ``ArmAdapter`` over the arm's ``ArmRig``."""
+"""Environment adapters for the simulated robots in MuJoCo (``uzumaki.embodiments``): ``so101``
+and ``panda`` are one ``ArmAdapter`` over the arm's ``ArmRig``; ``aloha`` is ``AlohaAdapter``, two
+arms on the ``handover`` task pack."""
 
 from __future__ import annotations
 
 from collections.abc import Callable
 from typing import Any
 
-from uzumaki.fixture_env import FixtureCase
+from uzumaki.fixture_env import FixtureCase, FixtureClock
 from uzumaki.sim.arm import rig_named
+from uzumaki.sim.assets import ALOHA_MODEL
 
 
 class ArmAdapter:
@@ -55,3 +57,39 @@ def SO101Adapter() -> ArmAdapter:  # noqa: N802 - the embodiment's adapter facto
 
 def PandaAdapter() -> ArmAdapter:  # noqa: N802
     return ArmAdapter("panda")
+
+
+class AlohaAdapter:
+    """ALOHA's two arms (``uzumaki.sim.aloha``) for the ``handover`` task pack."""
+
+    def __init__(self) -> None:
+        from uzumaki.sim import aloha
+
+        self.aloha = aloha
+        self.asset_dir = ALOHA_MODEL.verify()
+
+    def cases(self, task: str) -> tuple[FixtureCase, ...]:
+        self._only_handover(task)
+        return self.aloha.load_aloha_cases()
+
+    def environment(self, task: str) -> Callable[[FixtureCase], Any]:
+        self._only_handover(task)
+        return self.aloha.aloha_environment(self.asset_dir)
+
+    def model_names(self) -> tuple[frozenset[str], frozenset[str]] | None:
+        model = self.aloha.new_aloha_world(
+            self.cases("handover")[0], FixtureClock(), self.asset_dir
+        ).model
+        joints = frozenset(model.joint(i).name for i in range(model.njnt))
+        sites = frozenset(model.site(i).name for i in range(model.nsite))
+        return joints, sites
+
+    def identity(self) -> dict[str, str]:
+        from uzumaki.sim.run import simulator_identity
+
+        return simulator_identity(self.aloha.GIVER)
+
+    @staticmethod
+    def _only_handover(task: str) -> None:
+        if task != "handover":
+            raise KeyError(f"the ALOHA adapter supports only the handover task, not {task!r}")

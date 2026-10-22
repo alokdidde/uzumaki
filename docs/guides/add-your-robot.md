@@ -60,9 +60,11 @@ The adapter also enforces your robot's physical limits and safety envelope. Skil
 
 **A single arm in MuJoCo needs no adapter code.** Write an `ArmRig` (`uzumaki/sim/arm.py`) and add it to `RIGS`; the shared engine supplies the scene, kinematics, world, evaluator and adapter (`ArmAdapter`). The Panda took one file, `uzumaki/sim/panda.py`, about 100 lines: its pinned model, base placement, actuators, gripper control values, a tool-centre site (added to the model when it has none), finger pad bodies, IK seeds and, because it is heavy, gravity compensation. See [Panda simulation](../features/panda-simulation.md).
 
+**Two arms reuse the same engine.** ALOHA is two `ArmRig`s in one model file (`uzumaki/sim/aloha.py`): the scene mounts both (`others=`), and a world class implements the task's tools on them. A new task pack needs its own world for its tools; the evaluator, evidence and driver stay the same. See [ALOHA handover](../features/aloha-handover.md).
+
 ## 3. Register it
 
-Add one entry to `EMBODIMENTS` in `uzumaki/embodiments.py`: the name, the robot, the backend, the task packs, and `"module:Factory"` for the adapter. The adapter module is imported only when the embodiment is used, so its dependencies never reach the core.
+Add one entry to `EMBODIMENTS` in `uzumaki/embodiments.py`: the name, the robot, the backend, the task packs (`pick-place`, or `handover` for a body with two grippers), and `"module:Factory"` for the adapter. The adapter module is imported only when the embodiment is used, so its dependencies never reach the core.
 
 ## 4. Check conformance
 

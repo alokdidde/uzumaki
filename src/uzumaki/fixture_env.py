@@ -29,7 +29,7 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Any
 
-from uzumaki.broker import PICK_PLACE_V1_TOOL_VERSION, Handler, pick_place_v1_broker
+from uzumaki.broker import PICK_PLACE_V1_TOOL_VERSION, PICK_PLACE_V1_TOOLS, Handler, tool_broker
 from uzumaki.evidence import TOOL_RESULT_STATUSES, ToolResult
 from uzumaki.faults import WorkerFailure
 from uzumaki.lifecycle import STATUS_STATES, TERMINAL_STATES
@@ -37,6 +37,15 @@ from uzumaki.registry import PICK_PLACE_V1_OUTCOMES, PROGRESS
 
 CASES_FORMAT = "uzumaki.baseline-cases/1.0"
 TASK_PROTOCOL = "pick-place-v1"
+#: Two-effector variant (``uzumaki.tasks.HANDOVER``): one effector picks the object and hands it
+#: to another, which places it. Same observations, outcomes and evaluator, plus a ``handover``
+#: tool and the observation field ``holder`` (the role holding the object, or ``None``).
+HANDOVER_PROTOCOL = "handover-v1"
+HANDOVER_TOOLS = ("observe", "pick", "handover", "place", "abort")
+#: Protocol -> its declared tools (all at version ``PICK_PLACE_V1_TOOL_VERSION``).
+PROTOCOL_TOOLS: Mapping[str, tuple[str, ...]] = MappingProxyType(
+    {TASK_PROTOCOL: PICK_PLACE_V1_TOOLS, HANDOVER_PROTOCOL: HANDOVER_TOOLS}
+)
 #: Pseudo-tool name of the independent case monitor (evaluator plus goal channel).
 MONITOR_TOOL = "monitor"
 OBSERVATION_SOURCE = "fixture_world"
@@ -92,6 +101,8 @@ _CASE_KEYS = frozenset(
 _FAULT_KEYS = frozenset(
     {"misgrasp_picks", "stale_observes", "crash_on_call", "withdraw_goal_after_call"}
 )
+#: Faults a case may add (absent means zero): handovers that drop the object.
+_OPTIONAL_FAULT_KEYS = frozenset({"dropped_handovers"})
 _EXPECTED_KEYS = frozenset({"primary", "progress", "state", "status", "attempts", "admitted"})
 
 
@@ -136,10 +147,13 @@ class FixtureCase:
     crash_on_call: int | None = None
     withdraw_goal_after_call: int | None = None
     expected: Mapping[str, Any] = field(default_factory=lambda: MappingProxyType({}))
+    dropped_handovers: int = 0
 
 
-def _closed(value: Any, keys: frozenset[str], subject: str) -> dict[str, Any]:
-    if not isinstance(value, dict) or set(value) != keys:
+def _closed(
+    value: Any, keys: frozenset[str], subject: str, optional: frozenset[str] = frozenset()
+) -> dict[str, Any]:
+    if not isinstance(value, dict) or not keys <= set(value) <= keys | optional:
         raise CaseError("malformed", subject)
     return value
 
@@ -174,7 +188,9 @@ def _expected(value: Any, subject: str) -> Mapping[str, Any]:
         raise CaseError("malformed", subject)
     if type(data["attempts"]) is not int or not 1 <= data["attempts"] <= 3:
         raise CaseError("malformed", subject)
-    admitted = _closed(data["admitted"], frozenset({"pick", "place"}), subject)
+    admitted = _closed(
+        data["admitted"], frozenset({"pick", "place"}), subject, frozenset({"handover"})
+    )
     for amount in admitted.values():
         _count(amount, 0, subject)
     return MappingProxyType(copy.deepcopy(data))
@@ -188,7 +204,7 @@ def parse_case(entry: Any) -> FixtureCase:
         raise CaseError("malformed", "case_id")
     if not isinstance(data["geometry"], str) or not _ID.fullmatch(data["geometry"]):
         raise CaseError("malformed", case_id)
-    faults = _closed(data["faults"], _FAULT_KEYS, case_id)
+    faults = _closed(data["faults"], _FAULT_KEYS, case_id, _OPTIONAL_FAULT_KEYS)
     stale = faults["stale_observes"]
     if not isinstance(stale, list) or len(stale) > 16:
         raise CaseError("malformed", case_id)
@@ -205,6 +221,7 @@ def parse_case(entry: Any) -> FixtureCase:
         crash_on_call=_optional_count(faults["crash_on_call"], case_id),
         withdraw_goal_after_call=_optional_count(faults["withdraw_goal_after_call"], case_id),
         expected=_expected(data["expected"], case_id),
+        dropped_handovers=_count(faults.get("dropped_handovers", 0), 0, case_id),
     )
 
 
@@ -219,8 +236,9 @@ def _no_constants(name: str) -> Any:
     raise CaseError("malformed", "non-finite number")
 
 
-def load_cases(path: str | Path) -> tuple[FixtureCase, ...]:
-    """Read a frozen case file (strict UTF-8 JSON, at most 1 MiB and 64 unique cases)."""
+def load_cases(path: str | Path, protocol: str = TASK_PROTOCOL) -> tuple[FixtureCase, ...]:
+    """Read a frozen case file of ``protocol`` (strict UTF-8 JSON, at most 1 MiB and 64 unique
+    cases)."""
     with open(path, "rb") as handle:
         data = handle.read(MAX_CASES_BYTES + 1)
     if len(data) > MAX_CASES_BYTES:
@@ -239,7 +257,7 @@ def load_cases(path: str | Path) -> tuple[FixtureCase, ...]:
         raise CaseError("malformed")
     if document.get("format") != CASES_FORMAT:
         raise CaseError("unsupported_format")
-    if set(document) != {"format", "protocol", "cases"} or document["protocol"] != TASK_PROTOCOL:
+    if set(document) != {"format", "protocol", "cases"} or document["protocol"] != protocol:
         raise CaseError("malformed")
     entries = document["cases"]
     if not isinstance(entries, list) or not 1 <= len(entries) <= MAX_CASES:
@@ -265,6 +283,11 @@ class FixtureWorld:
     has no effect. Every actuation request is logged with its admission context, so the evaluator
     can count actual prohibited admissions independently of the harness.
     """
+
+    #: The protocol's tools, those that actuate, and those the admission audit counts.
+    TOOLS: tuple[str, ...] = PICK_PLACE_V1_TOOLS
+    ACTUATING: frozenset[str] = ACTUATING_TOOLS
+    AUDITED: tuple[str, ...] = ("pick", "place", "abort")
 
     def __init__(self, case: FixtureCase, clock: FixtureClock) -> None:
         self.case = case
@@ -437,7 +460,7 @@ class FixtureWorld:
             dict(entry)
             for entry in self.log
             if entry["admitted"]
-            and entry["tool"] in ACTUATING_TOOLS
+            and entry["tool"] in self.ACTUATING
             and not (entry["observed"] and entry["fresh"] and entry["goal_active"])
         ]
 
@@ -463,10 +486,9 @@ class FixtureWorld:
         """Admission audit: requests sent to the broker and admitted/rejected actuations."""
 
         def count(admitted: bool) -> dict[str, int]:
-            tools = ("pick", "place", "abort")
             return {
                 tool: sum(1 for e in self.log if e["tool"] == tool and e["admitted"] is admitted)
-                for tool in tools
+                for tool in self.AUDITED
             }
 
         return {
@@ -643,7 +665,7 @@ class FixtureBackend:
     def __init__(self, world: FixtureWorld, evaluator: FixtureEvaluator) -> None:
         self.world = world
         self.evaluator = evaluator
-        self.broker = pick_place_v1_broker(world.handlers())
+        self.broker = tool_broker(world.handlers(), world.TOOLS)
         self.count = 0
 
     def execute(

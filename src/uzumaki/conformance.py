@@ -103,6 +103,9 @@ def check(target: Embodiment, pack: TaskPack, case_id: str | None = None) -> lis
         state["binding"] = pack.bind(model)
         bound: TaskBinding = state["binding"]
         claims = ", ".join(f"{t}: {'+'.join(sorted(p)) or '-'}" for t, p in bound.claims.items())
+        if bound.roles:
+            roles = ", ".join(f"{role} {effector}" for role, effector in bound.roles.items())
+            return f"roles {roles}; claims {claims}"
         return f"effector {bound.effector}; claims {claims}"
 
     if not record("task_binding", binding):
@@ -139,8 +142,8 @@ def check(target: Embodiment, pack: TaskPack, case_id: str | None = None) -> lis
     environment = adapter.environment(pack.name)
 
     def reset() -> str:
-        first = run_case(chosen, snapshot, environment)
-        second = run_case(chosen, snapshot, environment)
+        first = run_case(chosen, snapshot, environment, protocol=pack.protocol)
+        second = run_case(chosen, snapshot, environment, protocol=pack.protocol)
         a, b = (json.dumps(r.bundle, sort_keys=True) for r in (first, second))
         if a != b:
             raise AssertionError("two fresh runs of the same case produced different evidence")
@@ -152,7 +155,7 @@ def check(target: Embodiment, pack: TaskPack, case_id: str | None = None) -> lis
     run = state["run"]
 
     def replayed() -> str:
-        report = replay_case(run.bundle, snapshot)
+        report = replay_case(run.bundle, snapshot, protocol=pack.protocol)
         if not report.matches:
             raise AssertionError(f"replay differs: {', '.join(report.differences)}")
         return "recorded-decision replay matches"

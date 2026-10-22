@@ -1,0 +1,905 @@
+{
+  "format": "uzumaki.baseline-cases/1.0",
+  "protocol": "handover-v1",
+  "cases": [
+    {
+      "case_id": "nominal",
+      "geometry": "aloha-dev-001",
+      "box_size_m": 0.0331,
+      "initial_xy_m": [
+        -0.087525,
+        -0.071679
+      ],
+      "initial_yaw_deg": 24.112505,
+      "target_xy_m": [
+        0.075068,
+        0.026138
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "handover": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "unreachable-goal",
+      "geometry": "aloha-dev-002-target-0.40",
+      "box_size_m": 0.032393,
+      "initial_xy_m": [
+        -0.109871,
+        0.079125
+      ],
+      "initial_yaw_deg": 16.148435,
+      "target_xy_m": [
+        0.4,
+        0.0
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "unreachable_target",
+        "progress": "partial",
+        "state": "completed",
+        "status": "blocked",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "handover": 1,
+          "place": 0
+        }
+      }
+    },
+    {
+      "case_id": "failed-grasp",
+      "geometry": "aloha-dev-003",
+      "box_size_m": 0.028185,
+      "initial_xy_m": [
+        -0.091476,
+        -0.003077
+      ],
+      "initial_yaw_deg": 28.226753,
+      "target_xy_m": [
+        0.106887,
+        -0.052767
+      ],
+      "faults": {
+        "misgrasp_picks": 1,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 2,
+        "admitted": {
+          "pick": 2,
+          "handover": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "dropped-handover",
+      "geometry": "aloha-dev-004",
+      "box_size_m": 0.0326,
+      "initial_xy_m": [
+        -0.107205,
+        0.004856
+      ],
+      "initial_yaw_deg": -16.512057,
+      "target_xy_m": [
+        0.078656,
+        0.048658
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null,
+        "dropped_handovers": 1
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 2,
+        "admitted": {
+          "pick": 2,
+          "handover": 2,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "stale-observation",
+      "geometry": "aloha-dev-005",
+      "box_size_m": 0.036269,
+      "initial_xy_m": [
+        -0.104552,
+        0.057938
+      ],
+      "initial_yaw_deg": 4.130534,
+      "target_xy_m": [
+        0.085594,
+        -0.072472
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [
+          1
+        ],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 2,
+        "admitted": {
+          "pick": 1,
+          "handover": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "retry-exhausted",
+      "geometry": "aloha-dev-006",
+      "box_size_m": 0.037952,
+      "initial_xy_m": [
+        -0.076152,
+        -0.001464
+      ],
+      "initial_yaw_deg": 22.449293,
+      "target_xy_m": [
+        0.081912,
+        0.016042
+      ],
+      "faults": {
+        "misgrasp_picks": 3,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "budget_exhausted",
+        "progress": "none",
+        "state": "completed",
+        "status": "budget_exhausted",
+        "attempts": 3,
+        "admitted": {
+          "pick": 3,
+          "handover": 0,
+          "place": 0
+        }
+      }
+    },
+    {
+      "case_id": "cancellation",
+      "geometry": "aloha-dev-007",
+      "box_size_m": 0.038705,
+      "initial_xy_m": [
+        -0.100635,
+        0.019543
+      ],
+      "initial_yaw_deg": 0.788219,
+      "target_xy_m": [
+        0.109089,
+        -0.067725
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": 2
+      },
+      "expected": {
+        "primary": "cancelled",
+        "progress": "partial",
+        "state": "cancelled",
+        "status": "cancelled",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "handover": 0,
+          "place": 0
+        }
+      }
+    },
+    {
+      "case_id": "worker-crash",
+      "geometry": "aloha-dev-008",
+      "box_size_m": 0.035202,
+      "initial_xy_m": [
+        -0.082697,
+        -0.050144
+      ],
+      "initial_yaw_deg": -8.597779,
+      "target_xy_m": [
+        0.081565,
+        0.029938
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": 3,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "evaluation_failure",
+        "progress": "partial",
+        "state": "failed",
+        "status": "failed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "handover": 0,
+          "place": 0
+        }
+      }
+    },
+    {
+      "case_id": "aloha-dev-009",
+      "geometry": "aloha-dev-009",
+      "box_size_m": 0.027117,
+      "initial_xy_m": [
+        -0.077121,
+        -0.068924
+      ],
+      "initial_yaw_deg": 19.24285,
+      "target_xy_m": [
+        0.075829,
+        0.075484
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "handover": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "aloha-dev-010",
+      "geometry": "aloha-dev-010",
+      "box_size_m": 0.031006,
+      "initial_xy_m": [
+        -0.075999,
+        0.059237
+      ],
+      "initial_yaw_deg": 15.816795,
+      "target_xy_m": [
+        0.099907,
+        -0.075265
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "handover": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "aloha-dev-011",
+      "geometry": "aloha-dev-011",
+      "box_size_m": 0.029874,
+      "initial_xy_m": [
+        -0.092865,
+        -0.032926
+      ],
+      "initial_yaw_deg": 14.238262,
+      "target_xy_m": [
+        0.075213,
+        -0.043893
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "handover": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "aloha-dev-012",
+      "geometry": "aloha-dev-012",
+      "box_size_m": 0.027477,
+      "initial_xy_m": [
+        -0.072173,
+        -0.032612
+      ],
+      "initial_yaw_deg": -20.759734,
+      "target_xy_m": [
+        0.088482,
+        -0.058474
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "handover": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "aloha-dev-013",
+      "geometry": "aloha-dev-013",
+      "box_size_m": 0.027157,
+      "initial_xy_m": [
+        -0.072264,
+        -0.039802
+      ],
+      "initial_yaw_deg": -13.948736,
+      "target_xy_m": [
+        0.109217,
+        0.019666
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "handover": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "aloha-dev-014",
+      "geometry": "aloha-dev-014",
+      "box_size_m": 0.034804,
+      "initial_xy_m": [
+        -0.083697,
+        -0.053512
+      ],
+      "initial_yaw_deg": 24.182605,
+      "target_xy_m": [
+        0.106938,
+        -0.03832
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "handover": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "aloha-dev-015",
+      "geometry": "aloha-dev-015",
+      "box_size_m": 0.038611,
+      "initial_xy_m": [
+        -0.094371,
+        0.076155
+      ],
+      "initial_yaw_deg": -8.591763,
+      "target_xy_m": [
+        0.105206,
+        -0.008639
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "handover": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "aloha-dev-016",
+      "geometry": "aloha-dev-016",
+      "box_size_m": 0.026644,
+      "initial_xy_m": [
+        -0.091724,
+        0.000359
+      ],
+      "initial_yaw_deg": 21.088817,
+      "target_xy_m": [
+        0.08274,
+        0.048171
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "handover": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "aloha-dev-017",
+      "geometry": "aloha-dev-017",
+      "box_size_m": 0.032236,
+      "initial_xy_m": [
+        -0.108541,
+        0.06784
+      ],
+      "initial_yaw_deg": -5.058472,
+      "target_xy_m": [
+        0.101448,
+        0.021616
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "handover": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "aloha-dev-018",
+      "geometry": "aloha-dev-018",
+      "box_size_m": 0.0359,
+      "initial_xy_m": [
+        -0.100073,
+        -0.026682
+      ],
+      "initial_yaw_deg": -21.146175,
+      "target_xy_m": [
+        0.071017,
+        -0.01153
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "handover": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "aloha-dev-019",
+      "geometry": "aloha-dev-019",
+      "box_size_m": 0.0273,
+      "initial_xy_m": [
+        -0.074385,
+        -0.027419
+      ],
+      "initial_yaw_deg": -23.804984,
+      "target_xy_m": [
+        0.107447,
+        -0.076105
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "handover": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "aloha-dev-020",
+      "geometry": "aloha-dev-020",
+      "box_size_m": 0.034245,
+      "initial_xy_m": [
+        -0.091845,
+        -0.000363
+      ],
+      "initial_yaw_deg": 10.724677,
+      "target_xy_m": [
+        0.074888,
+        0.012892
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "handover": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "aloha-dev-021",
+      "geometry": "aloha-dev-021",
+      "box_size_m": 0.029301,
+      "initial_xy_m": [
+        -0.104817,
+        0.047242
+      ],
+      "initial_yaw_deg": 29.079968,
+      "target_xy_m": [
+        0.096025,
+        0.066712
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "handover": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "aloha-dev-022",
+      "geometry": "aloha-dev-022",
+      "box_size_m": 0.027819,
+      "initial_xy_m": [
+        -0.104618,
+        -0.046615
+      ],
+      "initial_yaw_deg": 0.13798,
+      "target_xy_m": [
+        0.108688,
+        0.065927
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "handover": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "aloha-dev-023",
+      "geometry": "aloha-dev-023",
+      "box_size_m": 0.028796,
+      "initial_xy_m": [
+        -0.072441,
+        -0.001562
+      ],
+      "initial_yaw_deg": 9.623468,
+      "target_xy_m": [
+        0.094194,
+        -0.04094
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "handover": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "aloha-dev-024",
+      "geometry": "aloha-dev-024",
+      "box_size_m": 0.028947,
+      "initial_xy_m": [
+        -0.08557,
+        0.026799
+      ],
+      "initial_yaw_deg": -25.111747,
+      "target_xy_m": [
+        0.07624,
+        -0.010555
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "handover": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "aloha-dev-025",
+      "geometry": "aloha-dev-025",
+      "box_size_m": 0.025095,
+      "initial_xy_m": [
+        -0.070423,
+        -0.013984
+      ],
+      "initial_yaw_deg": 6.994006,
+      "target_xy_m": [
+        0.10656,
+        -0.013436
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "handover": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "aloha-dev-026",
+      "geometry": "aloha-dev-026",
+      "box_size_m": 0.033439,
+      "initial_xy_m": [
+        -0.106692,
+        0.03382
+      ],
+      "initial_yaw_deg": 17.30161,
+      "target_xy_m": [
+        0.10821,
+        -0.020462
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "handover": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "aloha-dev-027",
+      "geometry": "aloha-dev-027",
+      "box_size_m": 0.029053,
+      "initial_xy_m": [
+        -0.083252,
+        -0.056599
+      ],
+      "initial_yaw_deg": 21.269064,
+      "target_xy_m": [
+        0.093404,
+        -0.053967
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "handover": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "aloha-dev-028",
+      "geometry": "aloha-dev-028",
+      "box_size_m": 0.03599,
+      "initial_xy_m": [
+        -0.097914,
+        -0.039369
+      ],
+      "initial_yaw_deg": 3.001526,
+      "target_xy_m": [
+        0.085152,
+        0.077259
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "pick": 1,
+          "handover": 1,
+          "place": 1
+        }
+      }
+    }
+  ]
+}
