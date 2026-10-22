@@ -4,6 +4,17 @@ Documentary changes to canonical contracts and protocols. Entries describe speci
 
 ## Unreleased
 
+### Added — robot-neutral interfaces: body model, components, task packs, conformance
+
+- `uzumaki.body`: any robot as parts, effectors, sensors and capabilities (`locomote`, `reach`, `grasp`, `see`, implicit `stop`), validated, with a canonical document and SHA-256; `PartClaims` admits concurrent calls only on disjoint parts and lets `stop` preempt.
+- `uzumaki.robots`: components (`Arm`, `Gripper`, `Hand`, `Legs`, `WheeledBase`, `Torso`, `Neck`, `Head`, `Camera`) and configurations (`SingleArm`, `TwoArms`, `MobileManipulator`, `Humanoid`, `Quadruped`, `QuadrupedWithArm`, `QuadrupedWithJaw`) that compile to the body model.
+- `uzumaki.tasks`: task packs that bind to any body with the capabilities they need; `pick-place` is the first. `uzumaki.planner.TaskCard`: the planner prompt comes from the pack (byte-identical for `pick-place`).
+- `uzumaki.embodiments`: `fixture-arm` and `so101` as `SingleArm` embodiments with on-demand adapters (`uzumaki.sim.adapter`).
+- `python -m uzumaki.conformance --embodiment NAME --task NAME`: eight checks; both embodiments pass.
+- [Decision 0004](docs/decisions/0004-embodiments.md), [Add your robot](docs/guides/add-your-robot.md). Tests: `test_body.py`, `test_robots.py`, `test_tasks.py`, `test_conformance.py`, and SO-101 conformance in `test_sim.py`.
+
+Not claimed: any robot other than the SO-101 and the fixture arm running a task; claims enforced in the driver; generic observations (contracts v2).
+
 ### Added — model backends: any model for the planner and the generator
 
 - `uzumaki.backends`: a registry of backends selected with `--provider`/`--model`/`--base-url`/`--api-key-env` (or `UZUMAKI_PROVIDER`, `UZUMAKI_MODEL`, `UZUMAKI_BASE_URL`, `UZUMAKI_API_KEY_ENV`): `vercel` (alias `gateway`), `anthropic`, `openai`, `openrouter`, `ollama`, `openai-compatible` and `codex`. All three model CLIs use it.

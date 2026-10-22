@@ -352,3 +352,27 @@ def test_one_command_demo_closes_the_loop_on_the_so101(
     assert list(bodies) == ["transfer-box@3"]
     generator_requests = [r for r in model.requests if r["role"] == "generator"]
     assert demo.DEFAULT_CASE not in json.dumps(generator_requests)
+
+
+def test_so101_is_a_conformant_single_arm(sim: None) -> None:
+    """The SO-101 is described as a ``SingleArm``; its names match the model file, and the
+    pick-place pack binds to it, resets deterministically, replays and is judged by the
+    evaluator."""
+    from uzumaki import conformance
+    from uzumaki.embodiments import embodiment
+    from uzumaki.tasks import PICK_PLACE
+
+    results = conformance.check(embodiment("so101"), PICK_PLACE, "so101-dev-009")
+    assert {r.name: r.status for r in results} == {
+        name: "pass"
+        for name in (
+            "body",
+            "model_names",
+            "task_binding",
+            "skill_catalog",
+            "stop_preempts",
+            "deterministic_reset",
+            "replay",
+            "evaluator_outcome",
+        )
+    }

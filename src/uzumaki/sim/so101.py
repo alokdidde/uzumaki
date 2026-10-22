@@ -24,9 +24,12 @@ from typing import Any
 import mujoco
 import numpy as np
 
-ARM_JOINTS = ("shoulder_pan", "shoulder_lift", "elbow_flex", "wrist_flex", "wrist_roll")
-GRIPPER_JOINT = "gripper"
-SITE = "gripperframe"
+from uzumaki.embodiments import SO101
+
+#: Names from the SO-101's ``SingleArm`` description (``uzumaki.embodiments.SO101``).
+ARM_JOINTS: tuple[str, ...] = SO101.arm.joints
+GRIPPER_JOINT: str = SO101.gripper.joints[0]
+SITE: str = SO101.gripper.site or "gripperframe"
 #: Raised pose the arm starts in and passes through before every approach.
 READY = (0.0, -0.84, -0.73, 1.58, 0.0)
 GRIP_OPEN = 1.2
