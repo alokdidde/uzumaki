@@ -124,6 +124,8 @@ python -m uzumaki.sim.demo                 # scripted model, offline
 make demo-live PROVIDER=codex              # a live model (see below)
 ```
 
+**It has run live.** On 2026-10-22, through the Codex CLI signed in with ChatGPT, the planner abstained, Codex wrote `transfer-box` on its first attempt, it passed 16/16 development and 12/12 unseen cases, was promoted as `transfer-box@1`, and the planner then completed the task with 0 violations, all in 3 model calls ([live runs](docs/features/end-to-end-demo.md#live-runs)).
+
 ## Any model
 
 The model is configuration, not code. Pick a backend with `--provider` and `--model`, or `UZUMAKI_PROVIDER` and `UZUMAKI_MODEL` ([model backends](docs/features/model-backends.md)):
@@ -136,7 +138,9 @@ The model is configuration, not code. Pick a backend with `--provider` and `--mo
 | Vercel AI Gateway (default) | `make demo-live` |
 | Ollama (local) | `make demo-live PROVIDER=ollama MODEL=qwen3` |
 | Any OpenAI-compatible server | `make demo-live PROVIDER=openai-compatible BASE_URL=https://host/v1 MODEL=m API_KEY_ENV=MY_KEY` |
-| Codex CLI (ChatGPT sign-in) | `make demo-live PROVIDER=codex` |
+| Codex CLI (ChatGPT sign-in) ✅ run live | `make demo-live PROVIDER=codex` |
+
+All backends are tested offline; so far only the Codex CLI has run live.
 
 ## Any body
 
@@ -173,7 +177,7 @@ MUJOCO_GL=osmesa make sim-demo-go1-walk # the Go1 walking on a learned policy
 
 ## Status
 
-Early implementation. The harness, eight simulated bodies, the model planner and the skill generator with trace-guided repair are implemented. The planner and generator are tested offline with a scripted model, and `make demo-live` runs them on a live one. There are no held-out evaluation sets yet, no trained model of our own, and no hardware support; the GIFs above are simulation only. The MVP ends at feature 18 of the [roadmap](docs/roadmap.md): one reproducible simulator-backed loop that selects, generates, repairs, evaluates and promotes skills with preserved evidence. It does not claim general robotics competence or authorize powered robot experiments.
+Early implementation. The harness, eight simulated bodies, the model planner and the skill generator with trace-guided repair are implemented. The planner and generator are tested offline with a scripted model, and the whole loop has run live once, through the Codex CLI. There are no held-out evaluation sets yet, no trained model of our own, and no hardware support; the GIFs above are simulation only. The MVP ends at feature 18 of the [roadmap](docs/roadmap.md): one reproducible simulator-backed loop that selects, generates, repairs, evaluates and promotes skills with preserved evidence. It does not claim general robotics competence or authorize powered robot experiments.
 
 <details>
 <summary>Feature history and what each test suite covers</summary>
