@@ -1,6 +1,6 @@
 # Generated skills with trace-guided repair in the SO-101 simulation (features 12, 13 and 16, first cut)
 
-Status: implemented and tested offline with a scripted model in place of Claude (`uzumaki.generator`, `uzumaki.sim.generate`). No live model has generated a program yet; `make generate-live PROVIDER=...` is that run, with any [model backend](model-backends.md). The representation is chosen in [decision 0003](../decisions/0003-skill-program-representation.md).
+Status: implemented and tested offline with a scripted model in place of Claude (`uzumaki.generator`, `uzumaki.sim.generate`). A live model has generated a program once: in the Codex CLI run of the [one-command demo](end-to-end-demo.md#live-runs) on 2026-10-22, Codex wrote `transfer-box` on its first attempt and it passed 16 of 16 development and 12 of 12 withheld cases. `make generate-live PROVIDER=...` runs generation on its own, with any [model backend](model-backends.md). The representation is chosen in [decision 0003](../decisions/0003-skill-program-representation.md).
 
 ## What it does
 
@@ -59,7 +59,7 @@ Output: `round-<n>.py`, `round-<n>/<case>.json` bundles, `confirmation/` bundles
 
 ## Limitations
 
-- No live generation yet. How many rounds Claude needs, and at what cost, is unmeasured.
+- One live generation so far (Codex, first attempt, no repair needed). How many rounds a model needs in general, and at what cost, is unmeasured.
 - One capability (`transfer-box`) and one representation. The planner does not yet hand a missing capability to the generator; that hand-off is part of Step 4.
 - Feedback is per round from the parent only, with no memory of older rounds or reusable repair guidance (feature 19).
 - Development acceptance is all-or-nothing on 16 cases, with no uncertainty estimate (feature 14).

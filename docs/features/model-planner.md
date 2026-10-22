@@ -1,6 +1,6 @@
 # Claude planner through the Vercel AI Gateway (features 09 and 10, first cut)
 
-Status: implemented and tested offline (`uzumaki.gateway`, `uzumaki.planner`). It has not yet run against the live gateway, because this cloud environment's network policy blocks `ai-gateway.vercel.sh` and no key is configured in it. `make live-smoke` is the first live run once both are in place. No claim about live model behaviour is made here.
+Status: implemented and tested offline (`uzumaki.gateway`, `uzumaki.planner`). It has run live through the Codex CLI backend: on 2026-10-22 `live-smoke` completed the nominal case with the box within 1.3 mm of the target, and the planner both abstained and then completed the task in the [one-command demo](end-to-end-demo.md#live-runs). It has not yet run against the live gateway, because this cloud environment's network policy blocks `ai-gateway.vercel.sh` and no key is configured in it. `make live-smoke` is the first gateway run once both are in place. Beyond these single runs, no claim about live model behaviour is made here.
 
 ## What it does
 
@@ -37,6 +37,6 @@ python -m uzumaki.sim --planner model --replay build/live-exchanges.json --case 
 
 ## Limitations
 
-- No live run yet. Model behaviour, latency and cost through the gateway are unmeasured, and so is the comparison with `rule-selector-v1` on the same cases.
+- No live run through the gateway yet, and only single runs through Codex. Model behaviour, latency and cost through the gateway are unmeasured, and so is the comparison with `rule-selector-v1` on the same cases.
 - The case clock is simulated time, so model latency does not count against the 120 s case budget yet. Latency is recorded with each decision.
 - Context is the current decision only: no history of earlier attempts or retrieved guidance (the rest of feature 11).

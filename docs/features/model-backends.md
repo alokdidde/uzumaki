@@ -1,6 +1,6 @@
 # Model backends: any model for the planner and the generator
 
-Status: implemented and tested offline with injected transports (`uzumaki.backends`, `uzumaki.gateway`, `uzumaki.anthropic_api`, `uzumaki.codex`). None of these backends has yet answered a live run in this repository.
+Status: implemented and tested offline with injected transports (`uzumaki.backends`, `uzumaki.gateway`, `uzumaki.anthropic_api`, `uzumaki.codex`). Only `codex` has answered a live run in this repository: on 2026-10-22 it completed the [one-command demo](end-to-end-demo.md#live-runs) and the planner smoke test. The other backends are untested live.
 
 The harness depends only on the provider interface: `request(dict) -> dict`, and optionally `request_within(request, timeout_ms)`. Requests and results are provider-neutral (see `uzumaki.gateway`), and every call runs inside `BoundedRun`, whatever answers it. Which model answers is configuration.
 
