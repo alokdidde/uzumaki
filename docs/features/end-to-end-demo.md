@@ -1,6 +1,6 @@
 # One-command demo: missing skill to promoted skill on the SO-101 (features 17 and 18, slim)
 
-Status: implemented and tested offline with a scripted model for both roles (`uzumaki.promotion`, `uzumaki.sim.demo`). No live model has run the whole demo yet. `make demo-live PROVIDER=...` is that run, with any [model backend](model-backends.md).
+Status: implemented and tested offline with a scripted model for both roles (`uzumaki.promotion`, `uzumaki.sim.demo`). One live run so far, through the Codex CLI (see [Live runs](#live-runs)); `make demo-live PROVIDER=...` runs it with any [model backend](model-backends.md).
 
 ## The loop
 
@@ -60,6 +60,12 @@ Do not commit the exchanges file, bundles or library.
   - tampered, mismatched or missing programs;
   - rollback.
 - `tests/test_sim.py::test_one_command_demo_closes_the_loop_on_the_so101` runs the demo CLI end to end on the SO-101. It also checks that the task case never reaches the generator.
+
+
+## Live runs
+
+- **Codex CLI, 2026-10-22.** On 2026-10-22, at commit `9f9bc55`, `make demo-live-codex` (the Codex CLI signed in with a ChatGPT account, its default model) ended `completed`. The planner abstained for lack of a skill. Codex wrote `transfer-box` on its first attempt; it passed 16 of 16 development cases and 12 of 12 withheld confirmation cases and was promoted as `transfer-box@1`. The planner then completed the task with it with 0 violations. The whole run used 3 model calls. An earlier `live-smoke` run through the same backend completed the nominal case with the box placed within 1.3 mm of the target.
+- One run on one backend and one case is a demonstration, not a measured success rate. Other backends have not run live yet.
 
 ## Limitations
 

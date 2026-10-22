@@ -1,6 +1,6 @@
 # Model backends: any model for the planner and the generator
 
-Status: implemented and tested offline with injected transports or a scripted local agent (`uzumaki.backends`, `uzumaki.gateway`, `uzumaki.anthropic_api`, `uzumaki.codex`, `uzumaki.claude_acp`), with one record per call (`uzumaki.provenance`). Only `codex` has answered a live run in this repository (the planner smoke run); `claude` has not run live.
+Status: implemented and tested offline with injected transports or a scripted local agent (`uzumaki.backends`, `uzumaki.gateway`, `uzumaki.anthropic_api`, `uzumaki.codex`, `uzumaki.claude_acp`), with one record per call (`uzumaki.provenance`). Only `codex` has answered a live run in this repository: on 2026-10-22 it completed the [one-command demo](end-to-end-demo.md#live-runs) and the planner smoke test, and a live planner run wrote a valid `model-provenance.json` record with reported usage. `claude` and the other backends are untested live.
 
 The harness depends only on the provider interface: `request(dict) -> dict`, and optionally `request_within(request, timeout_ms)`. Requests and results are provider-neutral (see `uzumaki.gateway`), and every call runs inside `BoundedRun`, whatever answers it. Which model answers is configuration.
 
