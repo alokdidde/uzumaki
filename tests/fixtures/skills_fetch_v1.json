@@ -1,0 +1,261 @@
+{
+  "format": "uzumaki.skillset/1.0",
+  "skills": [
+    {
+      "state": "validated",
+      "evidence_ref": "hand-authored.review-1",
+      "artifact": {
+        "format": "uzumaki.skill/1.0",
+        "skill_id": "go-to",
+        "skill_version": 1,
+        "instructions": "Observe, then move the robot until the object (to: object) or the target (to: target) is within reach. Abort on a point that is on no table.",
+        "applicability": {
+          "summary": "Body can move; the object or target pose is fresh (at most 200 ms) and not yet within reach.",
+          "task_protocols": [
+            "fetch-v1"
+          ],
+          "required_observations": [
+            "within_reach"
+          ]
+        },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "to"
+          ],
+          "properties": {
+            "to": {
+              "type": "string",
+              "maxLength": 8,
+              "enum": [
+                "object",
+                "target"
+              ],
+              "description": "What to bring within reach."
+            }
+          }
+        },
+        "outputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "arrived"
+          ],
+          "properties": {
+            "arrived": {
+              "type": "boolean"
+            }
+          }
+        },
+        "tool_permissions": [
+          {
+            "name": "observe",
+            "version": "1.0"
+          },
+          {
+            "name": "go_to",
+            "version": "1.0"
+          },
+          {
+            "name": "abort",
+            "version": "1.0"
+          }
+        ],
+        "resource_bounds": {
+          "wall_ms": 30000,
+          "model_calls": 0,
+          "steps": 6,
+          "retries": 1,
+          "attempts": 1,
+          "max_output_bytes": 4096,
+          "max_total_output_bytes": 16384
+        },
+        "completion": {
+          "expected_progress": "none",
+          "success_authority": "environment_evaluator"
+        },
+        "failure": {
+          "retry_on": [
+            "placement_failure"
+          ],
+          "stop_on": [
+            "unreachable_target",
+            "ambiguous_goal"
+          ],
+          "otherwise": "return_to_coordinator"
+        },
+        "dependencies": []
+      }
+    },
+    {
+      "state": "validated",
+      "evidence_ref": "hand-authored.review-1",
+      "artifact": {
+        "format": "uzumaki.skill/1.0",
+        "skill_id": "pick-box",
+        "skill_version": 1,
+        "instructions": "Observe, then pick the object at the observed pose estimate with the given grasp height. Only when the object is within reach; abort on an unreachable pose.",
+        "applicability": {
+          "summary": "Object not held and within reach, pose estimate fresh (at most 200 ms) and on a table.",
+          "task_protocols": [
+            "fetch-v1"
+          ],
+          "required_observations": [
+            "object_pose_estimate",
+            "within_reach"
+          ]
+        },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "grasp_height_m"
+          ],
+          "properties": {
+            "grasp_height_m": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 0.2,
+              "description": "Grasp height above the tabletop."
+            }
+          }
+        },
+        "outputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "held"
+          ],
+          "properties": {
+            "held": {
+              "type": "boolean"
+            }
+          }
+        },
+        "tool_permissions": [
+          {
+            "name": "observe",
+            "version": "1.0"
+          },
+          {
+            "name": "pick",
+            "version": "1.0"
+          },
+          {
+            "name": "abort",
+            "version": "1.0"
+          }
+        ],
+        "resource_bounds": {
+          "wall_ms": 30000,
+          "model_calls": 0,
+          "steps": 6,
+          "retries": 1,
+          "attempts": 1,
+          "max_output_bytes": 4096,
+          "max_total_output_bytes": 16384
+        },
+        "completion": {
+          "expected_progress": "partial",
+          "success_authority": "environment_evaluator"
+        },
+        "failure": {
+          "retry_on": [
+            "misgrasp"
+          ],
+          "stop_on": [
+            "unreachable_target",
+            "ambiguous_goal"
+          ],
+          "otherwise": "return_to_coordinator"
+        },
+        "dependencies": []
+      }
+    },
+    {
+      "state": "validated",
+      "evidence_ref": "hand-authored.review-1",
+      "artifact": {
+        "format": "uzumaki.skill/1.0",
+        "skill_id": "place-box",
+        "skill_version": 1,
+        "instructions": "Observe, then place the held object at the observed target pose and release it. Only when the target is within reach.",
+        "applicability": {
+          "summary": "Object held, target within reach, target pose fresh (at most 200 ms) and on a table.",
+          "task_protocols": [
+            "fetch-v1"
+          ],
+          "required_observations": [
+            "target_pose",
+            "within_reach"
+          ]
+        },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [],
+          "properties": {
+            "approach": {
+              "type": "string",
+              "maxLength": 16,
+              "enum": [
+                "vertical",
+                "angled"
+              ]
+            }
+          }
+        },
+        "outputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "released"
+          ],
+          "properties": {
+            "released": {
+              "type": "boolean"
+            }
+          }
+        },
+        "tool_permissions": [
+          {
+            "name": "observe",
+            "version": "1.0"
+          },
+          {
+            "name": "place",
+            "version": "1.0"
+          },
+          {
+            "name": "abort",
+            "version": "1.0"
+          }
+        ],
+        "resource_bounds": {
+          "wall_ms": 30000,
+          "model_calls": 0,
+          "steps": 6,
+          "retries": 1,
+          "attempts": 1,
+          "max_output_bytes": 4096,
+          "max_total_output_bytes": 16384
+        },
+        "completion": {
+          "expected_progress": "goal_reached",
+          "success_authority": "environment_evaluator"
+        },
+        "failure": {
+          "retry_on": [
+            "placement_failure"
+          ],
+          "stop_on": [
+            "unreachable_target"
+          ],
+          "otherwise": "return_to_coordinator"
+        },
+        "dependencies": []
+      }
+    }
+  ]
+}

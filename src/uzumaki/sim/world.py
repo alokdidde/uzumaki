@@ -25,6 +25,7 @@ withdrawal are applied exactly as in the fixture.
 from __future__ import annotations
 
 import copy
+import importlib
 import math
 from collections.abc import Callable
 from typing import Any
@@ -368,6 +369,7 @@ class SimWorld(FixtureWorld):
         fumble = self.picks <= self.case.misgrasp_picks
         self._move(self.kin.ready_toward(grasp.hover), APPROACH_S, grip=self.rig.grip_open)
         self._move(grasp.hover, APPROACH_S)
+        grasp = self._replan_grasp(grasp)
         closing = grasp.hover if fumble else grasp.grasp
         if not fumble:
             self._move(grasp.grasp, DESCEND_S)
@@ -382,6 +384,11 @@ class SimWorld(FixtureWorld):
             return self._reply("ok", held=True)
         self._last_result = "misgrasp"
         return self._reply("error", held=False, reason="misgrasp")
+
+    def _replan_grasp(self, grasp: arm.Grasp) -> arm.Grasp:
+        """The descent, grasp and lift to use once the gripper hovers over the box (as planned
+        here; a robot on soft legs plans them again from where it now stands)."""
+        return grasp
 
     def place(self, args: dict[str, Any]) -> dict[str, Any]:
         reason, context = self._admission(args, ("x_m", "y_m", "z_m", "yaw_deg"))
@@ -492,5 +499,11 @@ def new_world(
     frame_hook: FrameHook | None = None,
     rig: ArmRig | None = None,
 ) -> SimWorld:
-    """Build the scene for ``case`` from verified assets and wrap it in a ``SimWorld``."""
-    return SimWorld(case, clock, build_model(case, assets, rig), frame_hook, rig)
+    """Build the scene for ``case`` from verified assets and wrap it in a ``SimWorld`` (or the
+    rig's own subclass of it)."""
+    rig = rig or arm.default_rig()
+    world_class: type[SimWorld] = SimWorld
+    if rig.world is not None:
+        module, _, name = rig.world.partition(":")
+        world_class = getattr(importlib.import_module(module), name)
+    return world_class(case, clock, build_model(case, assets, rig), frame_hook, rig)

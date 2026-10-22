@@ -133,4 +133,7 @@ def build_model(
     light = world.add_light()
     light.pos = [0.0, -0.1, 1.5]
     light.dir = [0.0, 0.0, -1.0]
+    for each in (rig, *others):
+        if each.customize is not None:
+            each.customize(spec)
     return spec.compile()

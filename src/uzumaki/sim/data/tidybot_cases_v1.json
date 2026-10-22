@@ -1,0 +1,905 @@
+{
+  "format": "uzumaki.baseline-cases/1.0",
+  "protocol": "fetch-v1",
+  "cases": [
+    {
+      "case_id": "nominal",
+      "geometry": "tidybot-dev-001",
+      "box_size_m": 0.051098,
+      "initial_xy_m": [
+        -0.072272,
+        -0.071931
+      ],
+      "initial_yaw_deg": -11.866741,
+      "target_xy_m": [
+        0.724025,
+        -0.125379
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "unreachable-goal",
+      "geometry": "tidybot-dev-002-target-between-tables",
+      "box_size_m": 0.032255,
+      "initial_xy_m": [
+        0.034129,
+        -0.012172
+      ],
+      "initial_yaw_deg": 1.326512,
+      "target_xy_m": [
+        0.4,
+        0.0
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "unreachable_target",
+        "progress": "partial",
+        "state": "completed",
+        "status": "blocked",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 1,
+          "pick": 1,
+          "place": 0
+        }
+      }
+    },
+    {
+      "case_id": "failed-grasp",
+      "geometry": "tidybot-dev-003",
+      "box_size_m": 0.037866,
+      "initial_xy_m": [
+        -0.033137,
+        -0.07623
+      ],
+      "initial_yaw_deg": 44.411088,
+      "target_xy_m": [
+        0.730604,
+        -0.002959
+      ],
+      "faults": {
+        "misgrasp_picks": 1,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 2,
+        "admitted": {
+          "go_to": 2,
+          "pick": 2,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "stopped-short",
+      "geometry": "tidybot-dev-004",
+      "box_size_m": 0.043113,
+      "initial_xy_m": [
+        0.049139,
+        -0.15751
+      ],
+      "initial_yaw_deg": -30.836154,
+      "target_xy_m": [
+        0.896834,
+        -0.089092
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null,
+        "stopped_short_drives": 1
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 2,
+        "admitted": {
+          "go_to": 3,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "stale-observation",
+      "geometry": "tidybot-dev-005",
+      "box_size_m": 0.047526,
+      "initial_xy_m": [
+        0.141038,
+        0.02267
+      ],
+      "initial_yaw_deg": -23.530425,
+      "target_xy_m": [
+        0.708681,
+        0.107753
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [
+          1
+        ],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 2,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "retry-exhausted",
+      "geometry": "tidybot-dev-006",
+      "box_size_m": 0.053011,
+      "initial_xy_m": [
+        -0.057301,
+        -0.091546
+      ],
+      "initial_yaw_deg": -4.717383,
+      "target_xy_m": [
+        0.831786,
+        -0.170839
+      ],
+      "faults": {
+        "misgrasp_picks": 3,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "budget_exhausted",
+        "progress": "none",
+        "state": "completed",
+        "status": "budget_exhausted",
+        "attempts": 3,
+        "admitted": {
+          "go_to": 1,
+          "pick": 3,
+          "place": 0
+        }
+      }
+    },
+    {
+      "case_id": "cancellation",
+      "geometry": "tidybot-dev-007",
+      "box_size_m": 0.046252,
+      "initial_xy_m": [
+        0.062155,
+        -0.136246
+      ],
+      "initial_yaw_deg": 23.566587,
+      "target_xy_m": [
+        0.935303,
+        -0.157177
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": 4
+      },
+      "expected": {
+        "primary": "cancelled",
+        "progress": "partial",
+        "state": "cancelled",
+        "status": "cancelled",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 1,
+          "pick": 1,
+          "place": 0
+        }
+      }
+    },
+    {
+      "case_id": "worker-crash",
+      "geometry": "tidybot-dev-008",
+      "box_size_m": 0.057764,
+      "initial_xy_m": [
+        0.055954,
+        -0.018432
+      ],
+      "initial_yaw_deg": 28.284429,
+      "target_xy_m": [
+        0.843906,
+        -0.037912
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": 5,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "evaluation_failure",
+        "progress": "partial",
+        "state": "failed",
+        "status": "failed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 1,
+          "pick": 1,
+          "place": 0
+        }
+      }
+    },
+    {
+      "case_id": "tidybot-dev-009",
+      "geometry": "tidybot-dev-009",
+      "box_size_m": 0.040237,
+      "initial_xy_m": [
+        0.073326,
+        0.004954
+      ],
+      "initial_yaw_deg": 0.938866,
+      "target_xy_m": [
+        0.724356,
+        -0.086678
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "tidybot-dev-010",
+      "geometry": "tidybot-dev-010",
+      "box_size_m": 0.058843,
+      "initial_xy_m": [
+        -0.146869,
+        0.031899
+      ],
+      "initial_yaw_deg": -6.868429,
+      "target_xy_m": [
+        0.867861,
+        -0.184838
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "tidybot-dev-011",
+      "geometry": "tidybot-dev-011",
+      "box_size_m": 0.052664,
+      "initial_xy_m": [
+        -0.113627,
+        -0.163771
+      ],
+      "initial_yaw_deg": -34.616481,
+      "target_xy_m": [
+        0.889242,
+        -0.044782
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "tidybot-dev-012",
+      "geometry": "tidybot-dev-012",
+      "box_size_m": 0.053803,
+      "initial_xy_m": [
+        0.133941,
+        -0.158093
+      ],
+      "initial_yaw_deg": 4.275143,
+      "target_xy_m": [
+        0.925701,
+        0.08176
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "tidybot-dev-013",
+      "geometry": "tidybot-dev-013",
+      "box_size_m": 0.030322,
+      "initial_xy_m": [
+        0.037706,
+        -0.170638
+      ],
+      "initial_yaw_deg": -13.498053,
+      "target_xy_m": [
+        0.864837,
+        -0.160769
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "tidybot-dev-014",
+      "geometry": "tidybot-dev-014",
+      "box_size_m": 0.042913,
+      "initial_xy_m": [
+        0.123182,
+        -0.087758
+      ],
+      "initial_yaw_deg": -40.352672,
+      "target_xy_m": [
+        0.762143,
+        -0.183938
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "tidybot-dev-015",
+      "geometry": "tidybot-dev-015",
+      "box_size_m": 0.057563,
+      "initial_xy_m": [
+        0.057324,
+        0.018989
+      ],
+      "initial_yaw_deg": 44.67898,
+      "target_xy_m": [
+        0.726575,
+        0.023502
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "tidybot-dev-016",
+      "geometry": "tidybot-dev-016",
+      "box_size_m": 0.033516,
+      "initial_xy_m": [
+        -0.0089,
+        -0.016808
+      ],
+      "initial_yaw_deg": 43.298443,
+      "target_xy_m": [
+        0.758494,
+        0.015138
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "tidybot-dev-017",
+      "geometry": "tidybot-dev-017",
+      "box_size_m": 0.042436,
+      "initial_xy_m": [
+        0.104477,
+        0.107445
+      ],
+      "initial_yaw_deg": 40.010594,
+      "target_xy_m": [
+        0.796667,
+        0.093682
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "tidybot-dev-018",
+      "geometry": "tidybot-dev-018",
+      "box_size_m": 0.041642,
+      "initial_xy_m": [
+        -0.014373,
+        -0.118145
+      ],
+      "initial_yaw_deg": -5.287577,
+      "target_xy_m": [
+        0.69308,
+        0.051265
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "tidybot-dev-019",
+      "geometry": "tidybot-dev-019",
+      "box_size_m": 0.050221,
+      "initial_xy_m": [
+        -0.075467,
+        -0.162631
+      ],
+      "initial_yaw_deg": 44.140704,
+      "target_xy_m": [
+        0.796791,
+        -0.146996
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "tidybot-dev-020",
+      "geometry": "tidybot-dev-020",
+      "box_size_m": 0.055214,
+      "initial_xy_m": [
+        0.106501,
+        -0.018404
+      ],
+      "initial_yaw_deg": -9.456777,
+      "target_xy_m": [
+        0.860292,
+        -0.024498
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "tidybot-dev-021",
+      "geometry": "tidybot-dev-021",
+      "box_size_m": 0.054791,
+      "initial_xy_m": [
+        0.034774,
+        -0.073508
+      ],
+      "initial_yaw_deg": 12.137966,
+      "target_xy_m": [
+        0.910138,
+        0.026647
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "tidybot-dev-022",
+      "geometry": "tidybot-dev-022",
+      "box_size_m": 0.059026,
+      "initial_xy_m": [
+        -0.040089,
+        -0.043657
+      ],
+      "initial_yaw_deg": 34.452772,
+      "target_xy_m": [
+        0.767627,
+        -0.131756
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "tidybot-dev-023",
+      "geometry": "tidybot-dev-023",
+      "box_size_m": 0.032633,
+      "initial_xy_m": [
+        0.042482,
+        0.078544
+      ],
+      "initial_yaw_deg": 28.748571,
+      "target_xy_m": [
+        0.65951,
+        -0.140484
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "tidybot-dev-024",
+      "geometry": "tidybot-dev-024",
+      "box_size_m": 0.056886,
+      "initial_xy_m": [
+        -0.081261,
+        -0.050685
+      ],
+      "initial_yaw_deg": -1.743821,
+      "target_xy_m": [
+        0.698385,
+        0.082536
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "tidybot-dev-025",
+      "geometry": "tidybot-dev-025",
+      "box_size_m": 0.052025,
+      "initial_xy_m": [
+        0.097279,
+        -0.076858
+      ],
+      "initial_yaw_deg": -29.55673,
+      "target_xy_m": [
+        0.682495,
+        0.117313
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "tidybot-dev-026",
+      "geometry": "tidybot-dev-026",
+      "box_size_m": 0.04258,
+      "initial_xy_m": [
+        0.047712,
+        -0.11396
+      ],
+      "initial_yaw_deg": -29.221699,
+      "target_xy_m": [
+        0.903652,
+        -0.161384
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "tidybot-dev-027",
+      "geometry": "tidybot-dev-027",
+      "box_size_m": 0.058792,
+      "initial_xy_m": [
+        -0.055847,
+        -0.160727
+      ],
+      "initial_yaw_deg": -10.354801,
+      "target_xy_m": [
+        0.727043,
+        0.096788
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    },
+    {
+      "case_id": "tidybot-dev-028",
+      "geometry": "tidybot-dev-028",
+      "box_size_m": 0.030035,
+      "initial_xy_m": [
+        -0.072051,
+        0.057723
+      ],
+      "initial_yaw_deg": -19.436071,
+      "target_xy_m": [
+        0.70146,
+        0.092329
+      ],
+      "faults": {
+        "misgrasp_picks": 0,
+        "stale_observes": [],
+        "crash_on_call": null,
+        "withdraw_goal_after_call": null
+      },
+      "expected": {
+        "primary": "completed",
+        "progress": "goal_reached",
+        "state": "completed",
+        "status": "completed",
+        "attempts": 1,
+        "admitted": {
+          "go_to": 2,
+          "pick": 1,
+          "place": 1
+        }
+      }
+    }
+  ]
+}

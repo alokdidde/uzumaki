@@ -101,6 +101,21 @@ HANDOVER_CARD = TaskCard(
     ),
     observation_fields=("gripper_state", "holder", "target_pose"),
 )
+#: The task card of the ``fetch`` task pack (``fetch-v1``).
+FETCH_CARD = TaskCard(
+    intro=(
+        "You are the planner of a mobile robot harness for a fetch task: the object is on one"
+        " table and its target on another, and the robot moves between them."
+    ),
+    eligibility_rule=PICK_PLACE_CARD.eligibility_rule.replace(
+        "whether the box is held", "whether the box is held and what is within reach"
+    ),
+    goal=(
+        "Move the box to target_pose (x, y, yaw) on the other table and release it. Pick and place"
+        " only what within_reach says is reachable; go to it first otherwise."
+    ),
+    observation_fields=("gripper_state", "within_reach", "target_pose"),
+)
 
 
 def _skill_card(snapshot: RegistrySnapshot, skill_id: str, version: int) -> dict[str, Any]:

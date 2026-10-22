@@ -42,9 +42,19 @@ TASK_PROTOCOL = "pick-place-v1"
 #: tool and the observation field ``holder`` (the role holding the object, or ``None``).
 HANDOVER_PROTOCOL = "handover-v1"
 HANDOVER_TOOLS = ("observe", "pick", "handover", "place", "abort")
+#: Mobile variant (``uzumaki.tasks.FETCH``): the object starts on one table and its target is on
+#: another, out of reach from where the object is picked. A ``go_to`` tool moves the body until
+#: a given point is within reach, and the observation field ``within_reach`` says whether the
+#: object and the target are. Same outcomes and evaluator; the target pose is in the room frame.
+FETCH_PROTOCOL = "fetch-v1"
+FETCH_TOOLS = ("observe", "go_to", "pick", "place", "abort")
 #: Protocol -> its declared tools (all at version ``PICK_PLACE_V1_TOOL_VERSION``).
 PROTOCOL_TOOLS: Mapping[str, tuple[str, ...]] = MappingProxyType(
-    {TASK_PROTOCOL: PICK_PLACE_V1_TOOLS, HANDOVER_PROTOCOL: HANDOVER_TOOLS}
+    {
+        TASK_PROTOCOL: PICK_PLACE_V1_TOOLS,
+        HANDOVER_PROTOCOL: HANDOVER_TOOLS,
+        FETCH_PROTOCOL: FETCH_TOOLS,
+    }
 )
 #: Pseudo-tool name of the independent case monitor (evaluator plus goal channel).
 MONITOR_TOOL = "monitor"
@@ -101,8 +111,9 @@ _CASE_KEYS = frozenset(
 _FAULT_KEYS = frozenset(
     {"misgrasp_picks", "stale_observes", "crash_on_call", "withdraw_goal_after_call"}
 )
-#: Faults a case may add (absent means zero): handovers that drop the object.
-_OPTIONAL_FAULT_KEYS = frozenset({"dropped_handovers"})
+#: Faults a case may add (absent means zero): handovers that drop the object, and ``go_to``
+#: moves that stop short of where they were sent.
+_OPTIONAL_FAULT_KEYS = frozenset({"dropped_handovers", "stopped_short_drives"})
 _EXPECTED_KEYS = frozenset({"primary", "progress", "state", "status", "attempts", "admitted"})
 
 
@@ -148,6 +159,7 @@ class FixtureCase:
     withdraw_goal_after_call: int | None = None
     expected: Mapping[str, Any] = field(default_factory=lambda: MappingProxyType({}))
     dropped_handovers: int = 0
+    stopped_short_drives: int = 0
 
 
 def _closed(
@@ -189,7 +201,7 @@ def _expected(value: Any, subject: str) -> Mapping[str, Any]:
     if type(data["attempts"]) is not int or not 1 <= data["attempts"] <= 3:
         raise CaseError("malformed", subject)
     admitted = _closed(
-        data["admitted"], frozenset({"pick", "place"}), subject, frozenset({"handover"})
+        data["admitted"], frozenset({"pick", "place"}), subject, frozenset({"handover", "go_to"})
     )
     for amount in admitted.values():
         _count(amount, 0, subject)
@@ -222,6 +234,7 @@ def parse_case(entry: Any) -> FixtureCase:
         withdraw_goal_after_call=_optional_count(faults["withdraw_goal_after_call"], case_id),
         expected=_expected(data["expected"], case_id),
         dropped_handovers=_count(faults.get("dropped_handovers", 0), 0, case_id),
+        stopped_short_drives=_count(faults.get("stopped_short_drives", 0), 0, case_id),
     )
 
 

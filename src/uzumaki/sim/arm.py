@@ -101,6 +101,11 @@ class ArmRig:
     protocol: str = TASK_PROTOCOL
     #: Overview camera for videos: look-at x, y, z (m), distance (m), azimuth, elevation (deg).
     camera: tuple[float, float, float, float, float, float] = (0.0, -0.05, 0.09, 0.85, -90.0, -32.0)
+    #: Robot-specific edits to the scene's ``MjSpec`` just before it compiles (contact priorities,
+    #: force limits, a floor for legs to stand on).
+    customize: Callable[[Any], None] | None = None
+    #: ``module:Class`` of the ``SimWorld`` subclass for this robot (``None``: ``SimWorld``).
+    world: str | None = None
 
     @property
     def arm_joints(self) -> tuple[str, ...]:
@@ -112,7 +117,13 @@ class ArmRig:
 
 #: Rig name -> ``module:attribute`` of its ``ArmRig`` (imported on demand).
 RIGS: Mapping[str, str] = MappingProxyType(
-    {"so101": "uzumaki.sim.so101:RIG", "panda": "uzumaki.sim.panda:RIG"}
+    {
+        "so101": "uzumaki.sim.so101:RIG",
+        "panda": "uzumaki.sim.panda:RIG",
+        "spot": "uzumaki.sim.spot:RIG",
+        "g1": "uzumaki.sim.g1:RIG",
+        "go1": "uzumaki.sim.go1:RIG",
+    }
 )
 
 
@@ -172,8 +183,21 @@ class Kinematics:
         joints = [model.joint(name).id for name in rig.arm_joints]
         self.qpos = np.array([model.jnt_qposadr[j] for j in joints])
         self.dofs = np.array([model.jnt_dofadr[j] for j in joints])
-        self.low = np.array([model.jnt_range[j][0] for j in joints])
-        self.high = np.array([model.jnt_range[j][1] for j in joints])
+        # A joint without limits (a continuous joint, such as the Kinova Gen3's 1, 3, 5 and 7)
+        # turns freely; its solutions are kept within one turn either way.
+        limited = [bool(model.jnt_limited[j]) for j in joints]
+        self.low = np.array(
+            [
+                model.jnt_range[j][0] if lim else -math.pi
+                for j, lim in zip(joints, limited, strict=True)
+            ]
+        )
+        self.high = np.array(
+            [
+                model.jnt_range[j][1] if lim else math.pi
+                for j, lim in zip(joints, limited, strict=True)
+            ]
+        )
         self.gripper_qpos = model.jnt_qposadr[model.joint(rig.gripper_joint).id]
         self.finger_qpos = [
             model.jnt_qposadr[model.joint(name).id] for name in rig.robot.gripper.joints

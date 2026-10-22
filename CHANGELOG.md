@@ -4,6 +4,48 @@ Documentary changes to canonical contracts and protocols. Entries describe speci
 
 ## Unreleased
 
+### Added — The Go1 walks: a learned locomotion policy on the `fetch` pack
+
+- `uzumaki.sim.go1_walk` and the `go1_walk` embodiment (`QuadrupedWithJaw`, task pack `fetch`): the Go1 with its neck and jaw on MuJoCo Playground's Go1 model, its legs driven by Playground's Go1 joystick policy (ONNX, run with `onnxruntime`). Both are pinned from MuJoCo Playground at `12ad7f38` (Apache-2.0); the meshes come from the pinned Menagerie Go1. `go_to` walks to the work station. Case set `go1-walk-dev-v1` (28 cases, TidyBot's construction on seeds `go1-walk-1001` to `1028`).
+- `uzumaki.sim.assets.PinnedModel` gains `repository` and `commit`, so a pinned model can come from a repository other than Menagerie; `go1_walk` is the first. The simulator identity names the source.
+- `requirements-sim.txt` adds `onnxruntime` (with `flatbuffers` and `protobuf`).
+- No-op hooks for robots on soft legs: `SimWorld._replan_grasp` and `TidybotWorld._replan_place`. TidyBot's world reads its rig, reach and station from the instance, so the walking Go1 reuses it. `uzumaki.sim.go1.add_neck_and_jaw` builds the neck and jaw for either Go1.
+- `python -m uzumaki.sim --robot go1_walk`, `make sim-demo-go1-walk`, `tests/test_go1_walk.py`, [feature note](docs/features/go1-walk-fetch.md), GIFs in `docs/media/`.
+
+Not claimed: held-out results, walking while manipulating, navigation beyond a walk to a table, a policy trained for this neck and jaw, a physical Go1.
+
+### Added — Unitree Go1 with a jaw: a quadruped that grips with its head
+
+- `uzumaki.sim.go1` and the `go1` embodiment (`QuadrupedWithJaw`): the Unitree Go1 from MuJoCo Menagerie at `cda5236f` (BSD-3-Clause) standing on its legs with a free body, with a six-joint neck built on its trunk and the UMI gripper (MIT, also pinned) mounted on it as the jaw. It runs the frozen `pick-place-v1` geometry unchanged at a 0.2 m table (case set `go1-dev-v1`). 28/28 meet their expectations, conformance passes, and 200 extra geometries all complete.
+- `python -m uzumaki.sim --robot go1`, `make sim-demo-go1`, `tests/test_go1.py`, [feature note](docs/features/go1-simulation.md), GIFs in `docs/media/`.
+
+Not claimed: held-out results, walking, a real Go1 neck or jaw (both are modelled here), a physical robot.
+
+### Added — Unitree G1: a humanoid at the table
+
+- `uzumaki.sim.g1` and the `g1` embodiment (`Humanoid`): the Unitree G1 with Dex3 hands from MuJoCo Menagerie at `cda5236f` (SHA-256 pinned with its BSD-3-Clause license), its pelvis on a stand. The waist and left arm place the hand; the seven finger joints follow one grip value, the middle finger is coupled to the index finger, and flat pads on the fingertips and thumb grip the box. It runs the frozen `pick-place-v1` geometry unchanged (case set `g1-dev-v1`). 28/28 meet their expectations, conformance passes, and 187 of 200 extra geometries complete (the other 13 are refused as out of the left hand's reach, with no contact).
+- `python -m uzumaki.sim --robot g1`, `make sim-demo-g1`, `tests/test_g1.py`, [feature note](docs/features/g1-simulation.md), GIFs in `docs/media/`.
+
+Not claimed: held-out results, standing free or walking, the right hand, Unitree's hand controller, a physical G1.
+
+### Added — Spot with arm: a legged robot standing at the table
+
+- `uzumaki.sim.spot` and the `spot` embodiment (`QuadrupedWithArm`): Spot with its arm from MuJoCo Menagerie at `cda5236f` (SHA-256 pinned with its BSD-3-Clause license). It stands on its legs with a free body, and planning follows the stance the physics holds. It runs the frozen `pick-place-v1` geometry unchanged (case set `spot-dev-v1`). 28/28 meet their expectations, conformance passes, and 200 extra geometries all complete.
+- `uzumaki.sim.arm.ArmRig` gains `customize` (scene edits before compiling) and `world` (a `SimWorld` subclass per robot).
+- `python -m uzumaki.sim --robot spot`, `make sim-demo-spot`, `tests/test_spot.py`, [feature note](docs/features/spot-simulation.md), GIFs in `docs/media/`.
+
+Not claimed: held-out results, walking, Boston Dynamics' gripper force or controller, a physical Spot.
+
+### Added — TidyBot and the `fetch` task pack: a body that moves
+
+- `fetch-v1` and the `fetch` task pack (`uzumaki.tasks.FETCH`): needs `reach` and `grasp` and also `locomote`; tools `observe`, `go_to` (base or legs), `pick`, `place`, `abort`; observation fields `base_pose` and `within_reach`; case fault `stopped_short_drives`. Budgets, outcomes, evaluator contract and evidence are `pick-place-v1`'s, with `go_to` counted as actuation.
+- Skills `go-to`, `pick-box`, `place-box` (`tests/fixtures/skills_fetch_v1.json`), `fetch-selector-v1`, a planner task card, and a scripted offline world with two tables (`uzumaki.fetch_env`).
+- `uzumaki.sim.tidybot` and the `tidybot` embodiment (`MobileManipulator`): the Stanford TidyBot from MuJoCo Menagerie at `cda5236f` (SHA-256 pinned with its license and the Kinova Gen3 and Robotiq 2F-85 licenses) on the shared arm engine. Case set `tidybot-dev-v1`: eight fault cases including `stopped-short`, twenty nominal cases from a seed recipe. 28/28 meet their expectations, conformance passes, 197 of 200 extra geometries complete as expected.
+- `uzumaki.sim.arm`: unlimited joints get a ±π range for inverse kinematics.
+- `python -m uzumaki.sim --robot tidybot`, `make sim-demo-tidybot`, `tests/test_tidybot.py`, `tests/test_fetch.py`, [feature note](docs/features/tidybot-fetch.md), GIFs in `docs/media/`.
+
+Not claimed: held-out results, navigation beyond a straight drive to a table, part claims enforced at run time, the model planner or skill generation on `fetch`, a physical TidyBot.
+
 ### Added — ALOHA and the `handover` task pack: two arms on one task
 
 - `handover-v1` and the `handover` task pack (`uzumaki.tasks.HANDOVER`): roles `giver` and `taker` bound to two grasping effectors; tools `observe`, `pick`, `handover`, `place`, `abort` with declared part claims; observation field `holder`; case fault `dropped_handovers`. Budgets, outcomes, evaluator contract and evidence are `pick-place-v1`'s.

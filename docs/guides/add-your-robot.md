@@ -62,9 +62,19 @@ The adapter also enforces your robot's physical limits and safety envelope. Skil
 
 **Two arms reuse the same engine.** ALOHA is two `ArmRig`s in one model file (`uzumaki/sim/aloha.py`): the scene mounts both (`others=`), and a world class implements the task's tools on them. A new task pack needs its own world for its tools; the evaluator, evidence and driver stay the same. See [ALOHA handover](../features/aloha-handover.md).
 
+**A body that moves is an arm on a base.** TidyBot is one `ArmRig` whose root is the mobile base (`uzumaki/sim/tidybot.py`); its world adds `go_to`, which drives the base's planar joints, and judges reach from where the base stands. A quadruped or humanoid carrying the same task binds `go_to` to its legs instead. See [TidyBot fetch](../features/tidybot-fetch.md).
+
+**A robot on legs reuses it too.** Spot is one `ArmRig` whose root is its free-floating body (`uzumaki/sim/spot.py`). The rig's `customize` edits the scene before it compiles (gripper pads, force limits), and its `world` names a `SimWorld` subclass that holds the leg stance, allows the feet on the floor and moves the planning model to the stance the physics holds. See [Spot simulation](../features/spot-simulation.md).
+
+**A humanoid's hand is an arm too.** The G1 is one `ArmRig` whose arm is the waist plus the left arm (ten joints) and whose gripper is a seven-joint Dex3 hand (`uzumaki/sim/g1.py`). Its world drives all seven finger joints from one grip value (a synergy), and `customize` couples two fingers so they act as one jaw. See [G1 simulation](../features/g1-simulation.md).
+
+**A part the model lacks can be built and mounted.** The Go1 model has no neck or gripper. Its rig's `customize` builds a six-joint neck on the trunk and attaches a second pinned model, the UMI gripper, as its jaw (`MjSpec.attach`), so a `QuadrupedWithJaw` runs on the same engine (`uzumaki/sim/go1.py`). See [Go1 simulation](../features/go1-simulation.md).
+
+**Legs can walk on a learned policy.** The walking Go1 (`uzumaki/sim/go1_walk.py`) is the same rig on the model a walking policy was trained on, with TidyBot's world for `fetch`: `go_to` turns the distance to the station into the policy's velocity command, and the policy sets the leg targets every 20 ms. A policy in ONNX format runs with `onnxruntime`; pin it like a model (a `PinnedModel` can name its own repository and commit). See [Go1 walking fetch](../features/go1-walk-fetch.md).
+
 ## 3. Register it
 
-Add one entry to `EMBODIMENTS` in `uzumaki/embodiments.py`: the name, the robot, the backend, the task packs (`pick-place`, or `handover` for a body with two grippers), and `"module:Factory"` for the adapter. The adapter module is imported only when the embodiment is used, so its dependencies never reach the core.
+Add one entry to `EMBODIMENTS` in `uzumaki/embodiments.py`: the name, the robot, the backend, the task packs (`pick-place`, `handover` for a body with two grippers, or `fetch` for a body that can move), and `"module:Factory"` for the adapter. The adapter module is imported only when the embodiment is used, so its dependencies never reach the core.
 
 ## 4. Check conformance
 

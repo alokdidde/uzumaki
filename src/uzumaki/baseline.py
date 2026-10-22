@@ -30,7 +30,9 @@ is retried from the state actually reached. After a successful place the harness
 The same driver runs the two-effector ``handover-v1`` variant (``protocol=HANDOVER_PROTOCOL``):
 its eligible skills are those that declare that protocol, the selector also sees which role holds
 the object (``holder``), and ``handover-selector-v1`` picks with the giver, hands over, then places
-with the taker. ``hand_over`` is its one extra skill body.
+with the taker. ``hand_over`` is its one extra skill body. The mobile ``fetch-v1`` variant adds
+``go_to``: ``fetch-selector-v1`` moves the body until the object is within reach (observation
+field ``within_reach``), picks, moves until the target is within reach, then places.
 
 ``replay_case`` re-drives the same logic against a recorded bundle (recorded-decision replay: the
 recorded selector outputs and tool/monitor results) and compares semantic outcomes; it never runs
@@ -60,6 +62,7 @@ from uzumaki.evidence import (
 )
 from uzumaki.faults import WorkerFailure
 from uzumaki.fixture_env import (
+    FETCH_PROTOCOL,
     HANDOVER_PROTOCOL,
     MAX_OBSERVATION_AGE_MS,
     MONITOR_TOOL,
@@ -85,6 +88,7 @@ from uzumaki.supervisor import BoundedRun, ModelProvider, RunReport, RunStopped
 
 BASELINE_ID = "rule-selector-v1"
 HANDOVER_SELECTOR_ID = "handover-selector-v1"
+FETCH_SELECTOR_ID = "fetch-selector-v1"
 TRIAL_SELECTOR_ID = "trial-selector-v1"
 PLANNER_ROLE = "planner"
 #: Observes after a successful place while the evaluator checks the 0.5 s settling window. With
@@ -256,6 +260,28 @@ def hand_over(ctx: SkillContext, parameters: Mapping[str, Any]) -> SkillResult:
     return SkillResult({"handed_over": False}, "misgrasp")
 
 
+def go_to(ctx: SkillContext, parameters: Mapping[str, Any]) -> SkillResult:
+    """``go-to@1`` (``fetch-v1``): move the body until the observed object (``to: object``) or
+    target (``to: target``) is within reach. A move that ends anywhere else is a failed base
+    placement (``placement_failure``)."""
+    pose = ctx.observation[
+        "object_pose_estimate" if parameters["to"] == "object" else "target_pose"
+    ]
+    result = ctx.call(
+        "go_to",
+        {
+            "observation_id": ctx.observation["observation_id"],
+            "x_m": pose["x_m"],
+            "y_m": pose["y_m"],
+        },
+    )
+    if result.status == "ok":
+        return SkillResult({"arrived": True})
+    if result.status == "rejected":
+        return SkillResult({"arrived": False}, rejection_outcome(result.result.get("reason")))
+    return SkillResult({"arrived": False}, "placement_failure")
+
+
 def pick_and_place(ctx: SkillContext, parameters: Mapping[str, Any]) -> SkillResult:
     """``pick-and-place@1``: ``pick-box``, a fresh observe, then ``place-box``."""
     picked = pick_box(ctx, parameters)
@@ -273,6 +299,7 @@ BASELINE_SKILL_BODIES: Mapping[str, SkillBody] = MappingProxyType(
         "place-box@1": place_box,
         "pick-and-place@1": pick_and_place,
         "hand-over@1": hand_over,
+        "go-to@1": go_to,
     }
 )
 #: Observation fields the selector sees, per protocol (besides ``observation_id``).
@@ -280,6 +307,7 @@ DECISION_FIELDS: Mapping[str, tuple[str, ...]] = MappingProxyType(
     {
         TASK_PROTOCOL: ("gripper_state", "target_pose"),
         HANDOVER_PROTOCOL: ("gripper_state", "holder", "target_pose"),
+        FETCH_PROTOCOL: ("gripper_state", "within_reach", "target_pose"),
     }
 )
 
@@ -347,11 +375,43 @@ class HandoverSelector:
         return _select(entry, {"grasp_height_m": height})
 
 
+class FetchSelector:
+    """``fetch-selector-v1``: move to the object, pick, move to the target, place.
+
+    It reads ``within_reach`` and, like ``rule-selector-v1``, chooses only among the listed skills
+    and abstains otherwise."""
+
+    def decide(self, decision_id: str, role: str, request: dict[str, Any]) -> dict[str, Any]:
+        eligible = {entry["skill_id"]: entry for entry in request["eligible"]}
+        reach = request["observation"].get("within_reach")
+        if not isinstance(reach, dict):
+            return _abstain("no_reach_information")
+        holding = request["observation"]["gripper_state"] == "holding"
+        here = reach.get("target" if holding else "object") is True
+        if not here:
+            entry = eligible.get("go-to")
+            to = "target" if holding else "object"
+            return _abstain("no_eligible_skill") if entry is None else _select(entry, {"to": to})
+        if holding:
+            entry = eligible.get("place-box")
+            return (
+                _abstain("no_eligible_skill")
+                if entry is None
+                else _select(entry, {"approach": "vertical"})
+            )
+        entry = eligible.get("pick-box")
+        height = _grasp_height(request)
+        if entry is None or height is None:
+            return _abstain("no_eligible_skill")
+        return _select(entry, {"grasp_height_m": height})
+
+
 #: Protocol -> its rule selector and that selector's recorded ID.
 RULE_SELECTORS: Mapping[str, tuple[str, Callable[[], DecisionSource]]] = MappingProxyType(
     {
         TASK_PROTOCOL: (BASELINE_ID, lambda: RuleSelector()),
         HANDOVER_PROTOCOL: (HANDOVER_SELECTOR_ID, lambda: HandoverSelector()),
+        FETCH_PROTOCOL: (FETCH_SELECTOR_ID, lambda: FetchSelector()),
     }
 )
 
