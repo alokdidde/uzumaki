@@ -52,7 +52,7 @@ from uzumaki.codex import CODEX_DEFAULT_MODEL, CodexProvider
 from uzumaki.evidence import DecisionSource
 from uzumaki.fixture_env import FixtureCase, FixtureClock
 from uzumaki.gateway import DEFAULT_KEY_ENV, DEFAULT_MODEL, GatewayProvider, RecordingProvider
-from uzumaki.planner import ModelPlanner
+from uzumaki.planner import PROMPT_VERSION, ModelPlanner
 from uzumaki.providers import RecordedProvider
 from uzumaki.registry import RegistrySnapshot, load_skill_set, seal_skill
 from uzumaki.sim import SimUnavailable, assets
@@ -246,7 +246,9 @@ def main(argv: list[str]) -> int:
     for row in rows:
         row["bundle_sha256"] = digests[row["case_id"]]
     identity = simulator_identity()
-    identity["planner"] = "rule-selector-v1" if provider is None else f"{options.model}+planner-v1"
+    identity["planner"] = (
+        "rule-selector-v1" if provider is None else f"{options.model}+{PROMPT_VERSION}"
+    )
     summary = {"identity": identity, "cases": rows}
     (options.out / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
     passed = sum(1 for row in rows if not row["correctness_failures"])

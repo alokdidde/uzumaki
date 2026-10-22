@@ -4,6 +4,11 @@ Documentary changes to canonical contracts and protocols. Entries describe speci
 
 ## Unreleased
 
+### Added — Codex CLI provider (ChatGPT sign-in) and planner prompt v2
+
+- `uzumaki.codex`: `CodexProvider` runs each planner request as one read-only, ephemeral `codex exec` turn signed in with a ChatGPT account; same request/result contract and error classes as `GatewayProvider`, usage from `turn.completed`. `python -m uzumaki.sim --provider codex`, `make live-smoke-codex`. Tests: `tests/test_codex.py`.
+- `uzumaki.planner`: prompt `planner-v2` says listed skills already passed their applicability checks. Under `planner-v1` the first live run abstained because the context omits the box pose the model was asked to judge.
+
 ### Added — Claude planner through the Vercel AI Gateway (features [09](https://github.com/alokdidde/uzumaki/issues/9) and [10](https://github.com/alokdidde/uzumaki/issues/10), first cut)
 
 - `uzumaki.gateway`: `GatewayProvider` (OpenAI-compatible chat completions, default Vercel AI Gateway, key from `AI_GATEWAY_API_KEY`, fixed-code errors, transient/timeout/rejected classification, usage only when reported) and `RecordingProvider` (live exchanges as `RecordedProvider` files).
