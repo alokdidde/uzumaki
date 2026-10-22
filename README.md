@@ -78,15 +78,25 @@ The same harness core, evaluator, selector and evidence format run every robot b
 </tr>
 </table>
 
-### It notices when things go wrong
+### It notices when things go wrong, on every body
 
-Every case ends with an independent outcome check, not the robot's own claim of success. Faults are injected on purpose, and the harness has to see them and recover within its budget.
+Every case ends with an independent outcome check, not the robot's own claim of success. Each robot's 28 cases start with eight fault cases, and the harness has to see them and recover within its budget. Here is one recovery per robot.
 
 <table>
 <tr>
-<td align="center" width="33%"><img src="docs/media/aloha-dropped-handover.gif" width="260" alt="ALOHA dropping a bar during the handover and picking it up again"><br><sub>ALOHA drops the bar mid-handover, sees it, and picks it up again.</sub></td>
-<td align="center" width="33%"><img src="docs/media/tidybot-stopped-short.gif" width="260" alt="TidyBot stopping short of the table and driving again"><br><sub>TidyBot's drive stops short; nothing is in reach, so it drives again.</sub></td>
-<td align="center" width="33%"><img src="docs/media/so101-failed-grasp.gif" width="260" alt="SO-101 missing a grasp and retrying"><br><sub>The SO-101 misses a grasp; the evaluator catches it and the skill retries.</sub></td>
+<td align="center" valign="top" width="33%"><img src="docs/media/aloha-dropped-handover.gif" width="260" alt="ALOHA dropping a bar during the handover and picking it up again"><br><b>ALOHA · dropped handover</b><br><sub>The bar falls mid-handover. It sees the drop and picks it up again.</sub></td>
+<td align="center" valign="top" width="33%"><img src="docs/media/go1-walk-stopped-short.gif" width="260" alt="Go1 stopping partway through its walk and walking again"><br><b>Go1 walking · stopped short</b><br><sub>The walk stops partway; nothing is in reach, so it walks again.</sub></td>
+<td align="center" valign="top" width="33%"><img src="docs/media/tidybot-stopped-short.gif" width="260" alt="TidyBot stopping short of the table and driving again"><br><b>TidyBot · stopped short</b><br><sub>The drive stops short of the table, so it drives again.</sub></td>
+</tr>
+<tr>
+<td align="center" valign="top" width="33%"><img src="docs/media/so101-failed-grasp.gif" width="260" alt="SO-101 missing a grasp and retrying"><br><b>SO-101 · failed grasp</b><br><sub>The grasp closes on air; the evaluator catches it and the skill retries.</sub></td>
+<td align="center" valign="top" width="33%"><img src="docs/media/panda-failed-grasp.gif" width="260" alt="Franka Panda closing above the box, then picking it on the second attempt"><br><b>Panda · failed grasp</b><br><sub>The gripper reports it holds nothing; the second attempt succeeds.</sub></td>
+<td align="center" valign="top" width="33%"><img src="docs/media/spot-failed-grasp.gif" width="260" alt="Spot missing the box with its arm and picking it on the retry"><br><b>Spot · failed grasp</b><br><sub>Same fault, same skills, an arm on a quadruped.</sub></td>
+</tr>
+<tr>
+<td align="center" valign="top" width="33%"><img src="docs/media/g1-failed-grasp.gif" width="260" alt="G1 humanoid's left hand closing above the box, then picking it up"><br><b>G1 humanoid · failed grasp</b><br><sub>The Dex3 hand pinches nothing, notices, and pinches again.</sub></td>
+<td align="center" valign="top" width="33%"><img src="docs/media/go1-failed-grasp.gif" width="260" alt="Go1 jaw closing above the box, then gripping it"><br><b>Go1 jaw · failed grasp</b><br><sub>The jaw on its neck bites air, then grips the box.</sub></td>
+<td align="center" valign="middle" width="33%"><sub><b>8 fault cases × 8 bodies</b><br><br>nominal · unreachable goal · failed grasp · stale observation · stale after pick, dropped handover or stopped short · retry exhausted · cancellation · worker crash<br><br>An unreachable goal is refused, not faked.</sub></td>
 </tr>
 </table>
 
@@ -120,7 +130,26 @@ python -m uzumaki.sim.demo                 # scripted model, offline
 make demo-live PROVIDER=codex              # a live model (see below)
 ```
 
-**It has run live.** On 2026-10-22, through the Codex CLI signed in with ChatGPT, the planner abstained, Codex wrote `transfer-box` on its first attempt, it passed 16/16 development and 12/12 unseen cases, was promoted as `transfer-box@1`, and the planner then completed the task with 0 violations, all in 3 model calls ([live runs](docs/features/end-to-end-demo.md#live-runs)).
+### It has run live
+
+<table>
+<tr>
+<td width="50%"><img src="docs/media/codex-transfer-box-live.gif" width="100%" alt="SO-101 moving the box onto the blue target with the transfer-box skill that Codex wrote"></td>
+<td width="50%" valign="middle">
+
+On 2026-10-22, through the Codex CLI signed in with ChatGPT:
+
+1. The planner **abstained**: no skill in the library could move the box.
+2. Codex **wrote `transfer-box`** on its first attempt.
+3. It passed **16/16** development and **12/12** unseen cases.
+4. It was **promoted** as `transfer-box@1`.
+5. The planner **completed the task** with it, 0 violations.
+
+All in 3 model calls. The GIF is that model-written skill running ([live runs](docs/features/end-to-end-demo.md#live-runs)).
+
+</td>
+</tr>
+</table>
 
 ## Any model
 
