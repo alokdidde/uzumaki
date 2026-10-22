@@ -4,6 +4,16 @@ Documentary changes to canonical contracts and protocols. Entries describe speci
 
 ## Unreleased
 
+### Added — TidyBot and the `fetch` task pack: a body that moves
+
+- `fetch-v1` and the `fetch` task pack (`uzumaki.tasks.FETCH`): needs `reach` and `grasp` and also `locomote`; tools `observe`, `go_to` (base or legs), `pick`, `place`, `abort`; observation fields `base_pose` and `within_reach`; case fault `stopped_short_drives`. Budgets, outcomes, evaluator contract and evidence are `pick-place-v1`'s, with `go_to` counted as actuation.
+- Skills `go-to`, `pick-box`, `place-box` (`tests/fixtures/skills_fetch_v1.json`), `fetch-selector-v1`, a planner task card, and a scripted offline world with two tables (`uzumaki.fetch_env`).
+- `uzumaki.sim.tidybot` and the `tidybot` embodiment (`MobileManipulator`): the Stanford TidyBot from MuJoCo Menagerie at `cda5236f` (SHA-256 pinned with its license and the Kinova Gen3 and Robotiq 2F-85 licenses) on the shared arm engine. Case set `tidybot-dev-v1`: eight fault cases including `stopped-short`, twenty nominal cases from a seed recipe. 28/28 meet their expectations, conformance passes, 197 of 200 extra geometries complete as expected.
+- `uzumaki.sim.arm`: unlimited joints get a ±π range for inverse kinematics.
+- `python -m uzumaki.sim --robot tidybot`, `make sim-demo-tidybot`, `tests/test_tidybot.py`, `tests/test_fetch.py`, [feature note](docs/features/tidybot-fetch.md), GIFs in `docs/media/`.
+
+Not claimed: held-out results, navigation beyond a straight drive to a table, part claims enforced at run time, the model planner or skill generation on `fetch`, a physical TidyBot.
+
 ### Added — ALOHA and the `handover` task pack: two arms on one task
 
 - `handover-v1` and the `handover` task pack (`uzumaki.tasks.HANDOVER`): roles `giver` and `taker` bound to two grasping effectors; tools `observe`, `pick`, `handover`, `place`, `abort` with declared part claims; observation field `holder`; case fault `dropped_handovers`. Budgets, outcomes, evaluator contract and evidence are `pick-place-v1`'s.

@@ -33,9 +33,9 @@ jobs:
         run: |
           python -m pip install -r requirements-dev.txt -r requirements-sim.txt
           python -m pip install --no-deps -e .
-      - name: Fetch and verify the pinned SO-101, Panda and ALOHA assets
+      - name: Fetch and verify the pinned SO-101, Panda, ALOHA and TidyBot assets
         run: make sim-assets
       - name: Typecheck with the simulator stack installed
         run: python -m mypy src
-      - name: MuJoCo SO-101, Panda and ALOHA suites (fail if the simulator is unavailable)
+      - name: MuJoCo SO-101, Panda, ALOHA and TidyBot suites (fail if the simulator is unavailable)
         run: make sim

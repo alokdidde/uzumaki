@@ -62,9 +62,11 @@ The adapter also enforces your robot's physical limits and safety envelope. Skil
 
 **Two arms reuse the same engine.** ALOHA is two `ArmRig`s in one model file (`uzumaki/sim/aloha.py`): the scene mounts both (`others=`), and a world class implements the task's tools on them. A new task pack needs its own world for its tools; the evaluator, evidence and driver stay the same. See [ALOHA handover](../features/aloha-handover.md).
 
+**A body that moves is an arm on a base.** TidyBot is one `ArmRig` whose root is the mobile base (`uzumaki/sim/tidybot.py`); its world adds `go_to`, which drives the base's planar joints, and judges reach from where the base stands. A quadruped or humanoid carrying the same task binds `go_to` to its legs instead. See [TidyBot fetch](../features/tidybot-fetch.md).
+
 ## 3. Register it
 
-Add one entry to `EMBODIMENTS` in `uzumaki/embodiments.py`: the name, the robot, the backend, the task packs (`pick-place`, or `handover` for a body with two grippers), and `"module:Factory"` for the adapter. The adapter module is imported only when the embodiment is used, so its dependencies never reach the core.
+Add one entry to `EMBODIMENTS` in `uzumaki/embodiments.py`: the name, the robot, the backend, the task packs (`pick-place`, `handover` for a body with two grippers, or `fetch` for a body that can move), and `"module:Factory"` for the adapter. The adapter module is imported only when the embodiment is used, so its dependencies never reach the core.
 
 ## 4. Check conformance
 

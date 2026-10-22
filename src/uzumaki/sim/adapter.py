@@ -1,6 +1,7 @@
 """Environment adapters for the simulated robots in MuJoCo (``uzumaki.embodiments``): ``so101``
 and ``panda`` are one ``ArmAdapter`` over the arm's ``ArmRig``; ``aloha`` is ``AlohaAdapter``, two
-arms on the ``handover`` task pack."""
+arms on the ``handover`` task pack; ``tidybot`` is ``TidybotAdapter``, a mobile manipulator on
+the ``fetch`` task pack."""
 
 from __future__ import annotations
 
@@ -9,7 +10,7 @@ from typing import Any
 
 from uzumaki.fixture_env import FixtureCase, FixtureClock
 from uzumaki.sim.arm import rig_named
-from uzumaki.sim.assets import ALOHA_MODEL
+from uzumaki.sim.assets import ALOHA_MODEL, TIDYBOT_MODEL
 
 
 class ArmAdapter:
@@ -93,3 +94,37 @@ class AlohaAdapter:
     def _only_handover(task: str) -> None:
         if task != "handover":
             raise KeyError(f"the ALOHA adapter supports only the handover task, not {task!r}")
+
+
+class TidybotAdapter:
+    """Stanford TidyBot (``uzumaki.sim.tidybot``) for the ``fetch`` task pack."""
+
+    def __init__(self) -> None:
+        from uzumaki.sim import tidybot
+
+        self.tidybot = tidybot
+        self.asset_dir = TIDYBOT_MODEL.verify()
+
+    def cases(self, task: str) -> tuple[FixtureCase, ...]:
+        self._only_fetch(task)
+        return self.tidybot.load_tidybot_cases()
+
+    def environment(self, task: str) -> Callable[[FixtureCase], Any]:
+        self._only_fetch(task)
+        return self.tidybot.tidybot_environment(self.asset_dir)
+
+    def model_names(self) -> tuple[frozenset[str], frozenset[str]] | None:
+        model = self.tidybot.build_model(self.cases("fetch")[0], self.asset_dir)
+        joints = frozenset(model.joint(i).name for i in range(model.njnt))
+        sites = frozenset(model.site(i).name for i in range(model.nsite))
+        return joints, sites
+
+    def identity(self) -> dict[str, str]:
+        from uzumaki.sim.run import simulator_identity
+
+        return simulator_identity(self.tidybot.RIG)
+
+    @staticmethod
+    def _only_fetch(task: str) -> None:
+        if task != "fetch":
+            raise KeyError(f"the TidyBot adapter supports only the fetch task, not {task!r}")

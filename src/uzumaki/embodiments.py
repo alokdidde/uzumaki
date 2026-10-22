@@ -28,7 +28,7 @@ from types import MappingProxyType
 from typing import Any, Protocol
 
 from uzumaki.fixture_env import FixtureCase, load_cases
-from uzumaki.robots import Arm, Gripper, Robot, SingleArm, TwoArms
+from uzumaki.robots import Arm, Gripper, MobileManipulator, Robot, SingleArm, TwoArms, WheeledBase
 
 REPO = Path(__file__).resolve().parents[2]
 FIXTURE_CASES = REPO / "tests" / "fixtures" / "baseline_cases_v1.json"
@@ -85,6 +85,15 @@ ALOHA = TwoArms(
     right=Arm(tuple(f"right/{j}" for j in _VX300S)),
     left_gripper=Gripper(("left/left_finger", "left/right_finger"), site="left/tcp"),
     right_gripper=Gripper(("right/left_finger", "right/right_finger"), site="right/tcp"),
+)
+#: Stanford TidyBot as a ``MobileManipulator``: a holonomic base (two slides and a turn), a Kinova
+#: Gen3 arm and a Robotiq 2F-85 gripper; the ``tcp`` site is added by the MuJoCo scene.
+TIDYBOT = MobileManipulator(
+    "tidybot",
+    model="stanford_tidybot/tidybot.xml",
+    base=WheeledBase(("joint_x", "joint_y", "joint_th")),
+    arm=Arm(tuple(f"joint_{i}" for i in range(1, 8))),
+    gripper=Gripper(("right_driver_joint", "left_driver_joint"), site="tcp"),
 )
 #: The scripted fixture arm of the offline baseline: exact kinematics, no model file.
 FIXTURE_ARM = SingleArm("fixture_arm", arm=Arm(("arm",)), gripper=Gripper(("gripper",)))
@@ -151,6 +160,15 @@ EMBODIMENTS: Mapping[str, Embodiment] = MappingProxyType(
             "ALOHA, two ViperX 300 S arms, in MuJoCo (needs requirements-sim.txt and assets)",
             ("handover",),
             "uzumaki.sim.adapter:AlohaAdapter",
+        ),
+        "tidybot": Embodiment(
+            "tidybot",
+            TIDYBOT,
+            "mujoco",
+            "Stanford TidyBot, a mobile base with a Kinova Gen3 arm, in MuJoCo (needs"
+            " requirements-sim.txt and assets)",
+            ("fetch",),
+            "uzumaki.sim.adapter:TidybotAdapter",
         ),
     }
 )

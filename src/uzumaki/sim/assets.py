@@ -24,7 +24,7 @@ import sys
 import tempfile
 import urllib.request
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from types import MappingProxyType
 
@@ -231,6 +231,77 @@ ALOHA_FILES: Mapping[str, str] = MappingProxyType(
 )
 
 
+#: Stanford TidyBot (MIT): a holonomic base with a Kinova Gen3 arm and a Robotiq 2F-85 gripper.
+#: The arm and gripper come from Menagerie's ``kinova_gen3`` and ``robotiq_2f85`` (both
+#: BSD-3-Clause), whose license notices are pinned with it.
+TIDYBOT_FILES: Mapping[str, str] = MappingProxyType(
+    {
+        "LICENSE": "2beab4272f26da102a26b0e28f59525584278bca36631a4ce9363595839a6981",
+        "tidybot.xml": "cf50d7ad343629475b9cd420a1e98fd68417ebf843956960906bf7e179d6b95e",
+        "assets/base/arm_plate.stl": (
+            "373ce9aba1204fd58f1a5c1d0c48837e3294bb681e9bf7279830b1bb59c5c31c"
+        ),
+        "assets/base/body.stl": "5c14e25d607f2fdb25edb61da8caac79d12acaa9a0f06571eaa22de9b7f34b59",
+        "assets/base/bottom_plate.stl": (
+            "329c784ee2e87155c9d85026586ccc524b089b59608ec3240e2350a73835cef2"
+        ),
+        "assets/base/bumper.stl": (
+            "712604bd2164514772c83275001aecb98adb57698a09692ce8614ddc28a3d163"
+        ),
+        "assets/base/top_plate.stl": (
+            "57d77eba37836197375bb5d0c420f1ea3f128f45a1147f1923b5090833e83177"
+        ),
+        "assets/gen3/base_link.stl": (
+            "3e38517e653d58f4160cfdcee34c9dea983d8b3ecb8f2c147444f58235335260"
+        ),
+        "assets/gen3/shoulder_link.stl": (
+            "a98e232e5197f09e9cd520e7a450c21bcec74bc49e2a19ce7cf86c5dc25f2e18"
+        ),
+        "assets/gen3/half_arm_1_link.stl": (
+            "8df461a71780d8e2d09104a507584424279d85173adf14867e359f7e58b3bba7"
+        ),
+        "assets/gen3/half_arm_2_link.stl": (
+            "8a9f38de21648804b3ab7076ec73726031f2ade7c95eb2541d070553e025407b"
+        ),
+        "assets/gen3/forearm_link.stl": (
+            "a00d96d2c7ec37e9fe4c5fb6d3fa2b4386dfd48fea5ac25632f4cb83b3505105"
+        ),
+        "assets/gen3/spherical_wrist_1_link.stl": (
+            "0b97a5e3b2de535344f8e8d4176d77f0cdb3455b235f35430fa0413208856e66"
+        ),
+        "assets/gen3/spherical_wrist_2_link.stl": (
+            "12271fb7d0ee78fb5642424cf5078be20f0476061e74203db964b674031ce879"
+        ),
+        "assets/gen3/bracelet_with_vision_link.stl": (
+            "8bb05e420a88532b4eee3948a0047fb8e7f341c3e5cc971d54e97e2aaffcf878"
+        ),
+        "assets/2f85/base.stl": "1c7b9f2bd92d705fc4e897c94e905973a3c05f406845e942229433deb7041453",
+        "assets/2f85/coupler.stl": (
+            "d5ee95e62f8415bf5b6e503c831a958f5fc1990bf9b2865329ec38a28932727c"
+        ),
+        "assets/2f85/driver.stl": (
+            "bbd6e868b1778bead60d2516c7ede581d7ad4e431744b1828757d6ea5129c112"
+        ),
+        "assets/2f85/follower.stl": (
+            "633793332c081641ce200df27a40643cc293b29956e3cb5cb29cb811c33ef1c7"
+        ),
+        "assets/2f85/pad.stl": "4af1fa8d9bb285abecbf5dfc88e74cb30f059a7a074c2030dc35e9ee4316019d",
+        "assets/2f85/silicone_pad.stl": (
+            "ca20c0fa61e6d3ce7b04bed25360e048e31dfd88ace04187aa6d9e8f4ca3fd0f"
+        ),
+        "assets/2f85/spring_link.stl": (
+            "4fb74a8a0d76c0e471cf19fd48bc676fd5b19123798e7a39eb6aa56869354283"
+        ),
+    }
+)
+TIDYBOT_NOTICES: Mapping[str, str] = MappingProxyType(
+    {
+        "kinova_gen3/LICENSE": "50ee431dbfbfcc53d976d3a5a2918e2fff4236f7f3c492d405e98a3f72106736",
+        "robotiq_2f85/LICENSE": "3d5edd18d1e22a17666e9bb84270171ed5ac90b192d24e0177fd171708ea2316",
+    }
+)
+
+
 @dataclass(frozen=True)
 class PinnedModel:
     """One Menagerie model directory at ``MENAGERIE_COMMIT`` with its pinned files."""
@@ -239,6 +310,9 @@ class PinnedModel:
     directory: str
     files: Mapping[str, str]
     entry: str
+    #: License notices of parts this model includes from other Menagerie directories: path from
+    #: the Menagerie root -> SHA-256, kept in the cache under ``notices/<path>``.
+    notices: Mapping[str, str] = field(default_factory=lambda: MappingProxyType({}))
 
     @property
     def env_var(self) -> str:
@@ -252,8 +326,18 @@ class PinnedModel:
         )
 
     def manifest_sha256(self) -> str:
-        lines = [MENAGERIE_COMMIT, *(f"{n} {d}" for n, d in sorted(self.files.items()))]
+        lines = [MENAGERIE_COMMIT, *(f"{n} {d}" for n, d in sorted(self._pinned().items()))]
         return hashlib.sha256("\n".join(lines).encode("utf-8")).hexdigest()
+
+    def _pinned(self) -> dict[str, str]:
+        """Cache-relative path -> SHA-256 of every pinned file, notices included."""
+        return {**self.files, **{f"notices/{n}": d for n, d in self.notices.items()}}
+
+    def _url(self, name: str) -> str:
+        if name.startswith("notices/"):
+            root = self.source_url.removesuffix(f"{self.directory}/")
+            return root + name.removeprefix("notices/")
+        return self.source_url + name
 
     def asset_dir(self) -> Path:
         configured = os.environ.get(self.env_var)
@@ -265,7 +349,7 @@ class PinnedModel:
         """The asset directory if every pinned file is present and matches its hash; raises
         ``SimUnavailable`` naming the first missing or mismatched file otherwise."""
         root = self.asset_dir() if directory is None else directory
-        for name, digest in self.files.items():
+        for name, digest in self._pinned().items():
             path = root / name
             if not path.is_file():
                 raise SimUnavailable(
@@ -279,11 +363,11 @@ class PinnedModel:
     def fetch(self, directory: Path | None = None) -> Path:
         """Download every pinned file that is missing or wrong, verify it, then the set."""
         root = self.asset_dir() if directory is None else directory
-        for name, digest in self.files.items():
+        for name, digest in self._pinned().items():
             path = root / name
             if path.is_file() and _sha256(path) == digest:
                 continue
-            with urllib.request.urlopen(self.source_url + name, timeout=60) as response:  # noqa: S310
+            with urllib.request.urlopen(self._url(name), timeout=60) as response:  # noqa: S310
                 data = response.read(MAX_FILE_BYTES + 1)
             if len(data) > MAX_FILE_BYTES or hashlib.sha256(data).hexdigest() != digest:
                 raise SimUnavailable(
@@ -297,14 +381,18 @@ class PinnedModel:
 
     @property
     def label(self) -> str:
-        return {"so101": "SO-101", "panda": "Panda", "aloha": "ALOHA"}.get(self.name, self.name)
+        labels = {"so101": "SO-101", "panda": "Panda", "aloha": "ALOHA", "tidybot": "TidyBot"}
+        return labels.get(self.name, self.name)
 
 
 SO101_MODEL = PinnedModel("so101", MODEL_DIR, FILES, "so101.xml")
 PANDA_MODEL = PinnedModel("panda", "franka_emika_panda", PANDA_FILES, "panda.xml")
 ALOHA_MODEL = PinnedModel("aloha", "aloha", ALOHA_FILES, "aloha.xml")
+TIDYBOT_MODEL = PinnedModel(
+    "tidybot", "stanford_tidybot", TIDYBOT_FILES, "tidybot.xml", TIDYBOT_NOTICES
+)
 MODELS: Mapping[str, PinnedModel] = MappingProxyType(
-    {m.name: m for m in (SO101_MODEL, PANDA_MODEL, ALOHA_MODEL)}
+    {m.name: m for m in (SO101_MODEL, PANDA_MODEL, ALOHA_MODEL, TIDYBOT_MODEL)}
 )
 
 

@@ -172,8 +172,21 @@ class Kinematics:
         joints = [model.joint(name).id for name in rig.arm_joints]
         self.qpos = np.array([model.jnt_qposadr[j] for j in joints])
         self.dofs = np.array([model.jnt_dofadr[j] for j in joints])
-        self.low = np.array([model.jnt_range[j][0] for j in joints])
-        self.high = np.array([model.jnt_range[j][1] for j in joints])
+        # A joint without limits (a continuous joint, such as the Kinova Gen3's 1, 3, 5 and 7)
+        # turns freely; its solutions are kept within one turn either way.
+        limited = [bool(model.jnt_limited[j]) for j in joints]
+        self.low = np.array(
+            [
+                model.jnt_range[j][0] if lim else -math.pi
+                for j, lim in zip(joints, limited, strict=True)
+            ]
+        )
+        self.high = np.array(
+            [
+                model.jnt_range[j][1] if lim else math.pi
+                for j, lim in zip(joints, limited, strict=True)
+            ]
+        )
         self.gripper_qpos = model.jnt_qposadr[model.joint(rig.gripper_joint).id]
         self.finger_qpos = [
             model.jnt_qposadr[model.joint(name).id] for name in rig.robot.gripper.joints

@@ -1,13 +1,14 @@
-"""Run simulated cases (SO-101, Panda or ALOHA) through the unchanged harness: same driver,
-selector, skills and evidence. The single arms run ``pick-place-v1``; ALOHA runs the two-arm
-``handover-v1`` with its own skill set (``tests/fixtures/skills_handover_v1.json``).
+"""Run simulated cases (SO-101, Panda, ALOHA or TidyBot) through the unchanged harness: same
+driver, selector, skills and evidence. The single arms run ``pick-place-v1``; ALOHA runs the
+two-arm ``handover-v1`` with its own skill set (``tests/fixtures/skills_handover_v1.json``), and
+TidyBot the mobile ``fetch-v1`` (``tests/fixtures/skills_fetch_v1.json``).
 
 ``run_sim_case`` is ``uzumaki.baseline.run_case`` with a MuJoCo environment, so every bundle is a
 normal ``uzumaki.events/1.0`` bundle and replays with ``uzumaki.baseline.replay_case``.
 
 Command line (after ``pip install -r requirements-sim.txt`` and fetching assets)::
 
-    python -m uzumaki.sim [--robot so101|panda|aloha] [--case ID ...] [--out DIR] [--video]
+    python -m uzumaki.sim [--robot so101|panda|aloha|tidybot] [--case ID ...] [--out DIR] [--video]
         [--planner rule|model] [--provider NAME] [--model ID]
         [--record FILE | --replay FILE]
 
@@ -52,13 +53,20 @@ from uzumaki.broker import PICK_PLACE_V1_TOOL_VERSION
 from uzumaki.budgets import Budgets
 from uzumaki.evidence import DecisionSource
 from uzumaki.fixture_env import (
+    FETCH_PROTOCOL,
     HANDOVER_PROTOCOL,
     PROTOCOL_TOOLS,
     TASK_PROTOCOL,
     FixtureCase,
     FixtureClock,
 )
-from uzumaki.planner import HANDOVER_CARD, PICK_PLACE_CARD, PROMPT_VERSION, ModelPlanner
+from uzumaki.planner import (
+    FETCH_CARD,
+    HANDOVER_CARD,
+    PICK_PLACE_CARD,
+    PROMPT_VERSION,
+    ModelPlanner,
+)
 from uzumaki.registry import RegistrySnapshot, load_skill_set, seal_skill
 from uzumaki.sim import SimUnavailable, assets
 from uzumaki.sim.arm import RIGS, ArmRig, default_rig, rig_named
@@ -66,6 +74,7 @@ from uzumaki.sim.world import FrameHook, SimEvaluator, SimWorld, new_world
 
 DEFAULT_SKILLS = Path("tests/fixtures/skills_pick_place_v1.json")
 HANDOVER_SKILLS = Path("tests/fixtures/skills_handover_v1.json")
+FETCH_SKILLS = Path("tests/fixtures/skills_fetch_v1.json")
 
 
 def simulator_identity(rig: ArmRig | None = None) -> dict[str, str]:
@@ -109,9 +118,16 @@ def run_sim_case(
     protocol: str = TASK_PROTOCOL,
 ) -> tuple[CaseRun, SimWorld]:
     """Run one case in simulation; also returns the world for its true final state. For
-    ``handover-v1`` the world is ALOHA's (``uzumaki.sim.aloha``)."""
+    ``handover-v1`` the world is ALOHA's (``uzumaki.sim.aloha``), for ``fetch-v1`` TidyBot's
+    (``uzumaki.sim.tidybot``)."""
     worlds: list[SimWorld] = []
-    if protocol == HANDOVER_PROTOCOL:
+    if protocol == FETCH_PROTOCOL:
+        from uzumaki.sim.tidybot import RIG as TIDYBOT_RIG
+        from uzumaki.sim.tidybot import tidybot_environment
+
+        root = (rig or TIDYBOT_RIG).assets.verify(asset_dir)
+        factory = tidybot_environment(root, frame_hook)
+    elif protocol == HANDOVER_PROTOCOL:
         from uzumaki.sim.aloha import GIVER, aloha_environment
 
         root = (rig or GIVER).assets.verify(asset_dir)
@@ -158,7 +174,10 @@ def load_snapshot(path: Path, tools: Mapping[str, str] | None = None) -> Registr
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(prog="python -m uzumaki.sim", description=__doc__)
     parser.add_argument(
-        "--robot", choices=(*sorted(RIGS), "aloha"), default="so101", help="robot to simulate"
+        "--robot",
+        choices=(*sorted(RIGS), "aloha", "tidybot"),
+        default="so101",
+        help="robot to simulate",
     )
     parser.add_argument("--case", action="append", help="case ID to run (default: all)")
     parser.add_argument("--skills", type=Path, default=DEFAULT_SKILLS)
@@ -181,6 +200,12 @@ def main(argv: list[str]) -> int:
         rig, protocol, card = aloha.GIVER, HANDOVER_PROTOCOL, HANDOVER_CARD
         if options.skills == DEFAULT_SKILLS:
             options.skills = HANDOVER_SKILLS
+    elif options.robot == "tidybot":
+        from uzumaki.sim import tidybot
+
+        rig, protocol, card = tidybot.RIG, FETCH_PROTOCOL, FETCH_CARD
+        if options.skills == DEFAULT_SKILLS:
+            options.skills = FETCH_SKILLS
     else:
         rig = rig_named(options.robot)
     try:

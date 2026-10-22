@@ -24,9 +24,9 @@ from types import MappingProxyType
 
 from uzumaki.body import BodyError, BodyModel
 from uzumaki.broker import PICK_PLACE_V1_TOOL_VERSION
-from uzumaki.fixture_env import HANDOVER_PROTOCOL, TASK_PROTOCOL
+from uzumaki.fixture_env import FETCH_PROTOCOL, HANDOVER_PROTOCOL, TASK_PROTOCOL
 from uzumaki.generator import TRANSFER_BOX, CapabilitySpec
-from uzumaki.planner import HANDOVER_CARD, PICK_PLACE_CARD, TaskCard
+from uzumaki.planner import FETCH_CARD, HANDOVER_CARD, PICK_PLACE_CARD, TaskCard
 
 
 class TaskMismatch(BodyError):
@@ -171,8 +171,30 @@ HANDOVER = TaskPack(
     ),
 )
 
+#: Mobile pick-and-place across two tables (protocol ``fetch-v1``): ``go_to`` moves the body
+#: (any part that locomotes) until a point is within reach, then one effector picks and places.
+FETCH = TaskPack(
+    name="fetch",
+    protocol=FETCH_PROTOCOL,
+    about="fetch a box from one table and place it at a target pose on another",
+    requires=frozenset({"reach", "grasp"}),
+    tools=MappingProxyType(
+        {
+            "observe": None,
+            "go_to": "locomote",
+            "pick": "grasp",
+            "place": "grasp",
+            "abort": "stop",
+        }
+    ),
+    tool_version=PICK_PLACE_V1_TOOL_VERSION,
+    card=FETCH_CARD,
+    also_requires=frozenset({"locomote"}),
+    skill_set="tests/fixtures/skills_fetch_v1.json",
+)
+
 TASKS: Mapping[str, TaskPack] = MappingProxyType(
-    {PICK_PLACE.name: PICK_PLACE, HANDOVER.name: HANDOVER}
+    {PICK_PLACE.name: PICK_PLACE, HANDOVER.name: HANDOVER, FETCH.name: FETCH}
 )
 
 
