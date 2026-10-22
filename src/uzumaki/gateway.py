@@ -14,10 +14,12 @@ and results are::
      "usage": {"input_tokens": 950, "output_tokens": 61}}
 
 ``usage`` is omitted when the gateway does not report both token counts, so unknown usage stays
-unknown. Classification: HTTP 429, 5xx and connection failures raise ``TransientProviderError``;
-a socket timeout raises ``ProviderTimeout``; authentication and other client errors raise
-``ProviderRejected`` (not retried, fails the run); a response that does not have the expected
-shape returns ``{"error": "schema"}``, which the caller's validator treats as invalid output.
+unknown. Classification (all three transient kinds are retried within budget): HTTP 429 raises
+``RateLimited``; a connection dropped mid-reply raises ``ProviderDisconnected``; 5xx and other
+connection failures raise ``TransientProviderError``; a socket timeout raises ``ProviderTimeout``;
+authentication and other client errors raise ``ProviderRejected`` (not retried, fails the run); a
+response that does not have the expected shape returns ``{"error": "schema"}``, which the caller's
+validator treats as invalid output.
 Requests ask for ``temperature`` 0 and ``max_tokens``; with ``reasoning=True`` (OpenAI's own API,
 whose reasoning models reject both) they send ``max_completion_tokens`` instead, at least
 ``MIN_REASONING_TOKENS`` because reasoning counts toward it.
@@ -31,6 +33,7 @@ errors carry only fixed codes. Nothing here runs in the default offline checks: 
 
 from __future__ import annotations
 
+import http.client
 import json
 import os
 import time
@@ -40,7 +43,12 @@ import urllib.request
 from collections.abc import Callable
 from typing import Any
 
-from uzumaki.faults import ProviderTimeout, TransientProviderError
+from uzumaki.faults import (
+    ProviderDisconnected,
+    ProviderTimeout,
+    RateLimited,
+    TransientProviderError,
+)
 
 DEFAULT_BASE_URL = "https://ai-gateway.vercel.sh/v1"
 DEFAULT_KEY_ENV = "AI_GATEWAY_API_KEY"
@@ -50,6 +58,13 @@ DEFAULT_MODEL = "anthropic/claude-sonnet-5.5"
 MIN_REASONING_TOKENS = 4096
 MAX_RESPONSE_BYTES = 1 << 20
 MAX_TIMEOUT_S = 60.0
+#: Failures that mean the connection closed before a complete reply.
+DISCONNECTS = (
+    ConnectionResetError,
+    ConnectionAbortedError,
+    BrokenPipeError,
+    http.client.IncompleteRead,
+)
 REQUEST_KEYS = frozenset({"role", "model", "prompt_version", "system", "messages", "max_tokens"})
 
 #: ``transport(url, headers, body, timeout_s) -> (http_status, response_bytes)``.
@@ -183,10 +198,14 @@ class GatewayProvider:
             status, data = self._transport(self.url, headers, body, timeout_s)
         except TimeoutError:
             raise ProviderTimeout("provider_timeout") from None
+        except DISCONNECTS:
+            raise ProviderDisconnected("provider_disconnected") from None
         except (urllib.error.URLError, ConnectionError, OSError):
             raise TransientProviderError("provider_unreachable") from None
         latency_ms = round((self._clock() - started) * 1000)
-        if status == 429 or status >= 500:
+        if status == 429:
+            raise RateLimited("rate_limited")
+        if status >= 500:
             raise TransientProviderError("provider_unavailable")
         if status in (401, 403):
             raise ProviderRejected("authentication_failed")

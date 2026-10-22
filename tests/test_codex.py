@@ -7,7 +7,7 @@ from typing import Any
 import pytest
 
 from uzumaki.codex import CODEX_DEFAULT_MODEL, CodexProvider
-from uzumaki.faults import ProviderTimeout, TransientProviderError
+from uzumaki.faults import ProviderTimeout, RateLimited, TransientProviderError
 from uzumaki.gateway import ProviderRejected
 
 REQUEST = {
@@ -89,7 +89,7 @@ def test_unreported_usage_stays_unknown() -> None:
         (TimeoutError(), ProviderTimeout, "provider_timeout"),
         (FileNotFoundError(), ProviderRejected, "missing_codex_cli"),
         ((1, b"", b"Error: not logged in, run codex login"), ProviderRejected, None),
-        ((1, jsonl({"type": "turn.failed", "error": {"message": "429"}}), b""), None, None),
+        ((1, jsonl({"type": "turn.failed", "error": {"message": "429"}}), b""), RateLimited, None),
         ((0, jsonl({"type": "error", "message": "stream disconnected"}), b""), None, None),
     ],
 )

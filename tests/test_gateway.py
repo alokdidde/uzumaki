@@ -1,11 +1,17 @@
 """Live gateway adapter (``uzumaki.gateway``) against an injected transport; no network."""
 
+import http.client
 import json
 from typing import Any
 
 import pytest
 
-from uzumaki.faults import ProviderTimeout, TransientProviderError
+from uzumaki.faults import (
+    ProviderDisconnected,
+    ProviderTimeout,
+    RateLimited,
+    TransientProviderError,
+)
 from uzumaki.gateway import (
     DEFAULT_KEY_ENV,
     GatewayProvider,
@@ -90,9 +96,11 @@ def test_unknown_usage_fields_are_ignored() -> None:
 @pytest.mark.parametrize(
     ("response", "error"),
     [
-        ((429, b"slow down"), TransientProviderError),
+        ((429, b"slow down"), RateLimited),
         ((503, b""), TransientProviderError),
-        (ConnectionResetError(), TransientProviderError),
+        (ConnectionRefusedError(), TransientProviderError),
+        (ConnectionResetError(), ProviderDisconnected),
+        (http.client.IncompleteRead(b"par"), ProviderDisconnected),
         (TimeoutError(), ProviderTimeout),
     ],
 )
@@ -100,6 +108,9 @@ def test_transient_failures_are_retryable(response: Any, error: type[Exception])
     with pytest.raises(error) as raised:
         GatewayProvider(transport=Transport(response)).request(REQUEST)
     assert KEY not in str(raised.value)
+    assert isinstance(raised.value, TransientProviderError)
+    if error is TransientProviderError:
+        assert not isinstance(raised.value, RateLimited | ProviderDisconnected)
 
 
 @pytest.mark.parametrize(

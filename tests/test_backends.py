@@ -10,8 +10,10 @@ import pytest
 from uzumaki import backends
 from uzumaki.anthropic_api import AnthropicProvider
 from uzumaki.backends import BACKENDS, BackendError, build_provider, resolve
+from uzumaki.claude_acp import ACP_DEFAULT_MODEL, ClaudeAcpProvider
 from uzumaki.codex import CodexProvider
 from uzumaki.gateway import GatewayProvider, RecordingProvider
+from uzumaki.provenance import ProvenanceLog
 from uzumaki.providers import RecordedProvider
 
 KEYS = ("AI_GATEWAY_API_KEY", "ANTHROPIC_API_KEY", "OPENAI_API_KEY", "OPENROUTER_API_KEY")
@@ -58,6 +60,8 @@ def test_default_models() -> None:
     assert resolve("vercel").default_model == "anthropic/claude-sonnet-5.5"
     assert resolve("anthropic").default_model == "claude-opus-5-5"
     assert isinstance(build_provider("codex")[0], CodexProvider)
+    provider, model = build_provider("claude")
+    assert isinstance(provider, ClaudeAcpProvider) and model == ACP_DEFAULT_MODEL
 
 
 def test_missing_model_key_or_url_is_a_clear_error(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -104,9 +108,12 @@ def test_command_line_and_environment_defaults(monkeypatch: pytest.MonkeyPatch) 
     options = parse()
     assert (options.provider, options.model) == ("ollama", "qwen3")
     provider = backends.model_provider(options)
-    assert isinstance(provider, GatewayProvider) and options.model == "qwen3"
+    assert isinstance(provider, ProvenanceLog) and options.model == "qwen3"
+    assert isinstance(provider.inner, GatewayProvider)
+    assert (provider.provider, provider.replay_mode) == ("ollama", "live")
     options = parse("--provider", "ollama", "--model", "m", "--record", "x.json")
-    assert isinstance(backends.model_provider(options), RecordingProvider)
+    provider = backends.model_provider(options)
+    assert isinstance(provider, ProvenanceLog) and isinstance(provider.inner, RecordingProvider)
 
 
 def test_unavailable_backend_prints_why(capsys: pytest.CaptureFixture[str]) -> None:
@@ -118,7 +125,9 @@ def test_replay_needs_no_backend(tmp_path: Path, capsys: pytest.CaptureFixture[s
     path = tmp_path / "exchanges.json"
     path.write_text(json.dumps(RecordingProvider(_Echo()).document()), encoding="utf-8")
     options = parse("--replay", str(path))
-    assert isinstance(backends.model_provider(options), RecordedProvider)
+    provider = backends.model_provider(options)
+    assert isinstance(provider, ProvenanceLog) and provider.replay_mode == "recorded"
+    assert isinstance(provider.inner, RecordedProvider)
     assert options.model == "anthropic/claude-sonnet-5.5"
     options = parse("--provider", "openai", "--replay", str(path))
     assert backends.model_provider(options) is None
