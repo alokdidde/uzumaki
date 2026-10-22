@@ -1,6 +1,6 @@
 # One-command demo: missing skill to promoted skill on the SO-101 (features 17 and 18, slim)
 
-Status: implemented and tested offline with a scripted model for both roles (`uzumaki.promotion`, `uzumaki.sim.demo`). No live model has run the whole demo yet. `make demo-live-codex` (ChatGPT sign-in through the Codex CLI) or `make demo-live` (Vercel AI Gateway) is that run.
+Status: implemented and tested offline with a scripted model for both roles (`uzumaki.promotion`, `uzumaki.sim.demo`). No live model has run the whole demo yet. `make demo-live PROVIDER=...` is that run, with any [model backend](model-backends.md).
 
 ## The loop
 
@@ -35,8 +35,10 @@ The whole run takes about 45 s on this host. Recorded exchanges replay the same 
 ## Running it
 
 ```
-make demo-live-codex   # live, ChatGPT sign-in through the Codex CLI (runs GPT, not Claude)
-make demo-live         # live, Vercel AI Gateway (AI_GATEWAY_API_KEY)
+make demo-live                       # live, Vercel AI Gateway (AI_GATEWAY_API_KEY)
+make demo-live PROVIDER=anthropic    # live, Claude direct (ANTHROPIC_API_KEY)
+make demo-live PROVIDER=codex        # live, Codex CLI signed in with ChatGPT
+make demo-live PROVIDER=ollama MODEL=qwen3   # live, a local model
 python -m uzumaki.sim.demo --replay build/demo-exchanges.json --out build/demo-replay   # offline
 ```
 

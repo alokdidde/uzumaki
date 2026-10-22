@@ -4,6 +4,16 @@ Documentary changes to canonical contracts and protocols. Entries describe speci
 
 ## Unreleased
 
+### Added — model backends: any model for the planner and the generator
+
+- `uzumaki.backends`: a registry of backends selected with `--provider`/`--model`/`--base-url`/`--api-key-env` (or `UZUMAKI_PROVIDER`, `UZUMAKI_MODEL`, `UZUMAKI_BASE_URL`, `UZUMAKI_API_KEY_ENV`): `vercel` (alias `gateway`), `anthropic`, `openai`, `openrouter`, `ollama`, `openai-compatible` and `codex`. All three model CLIs use it.
+- `uzumaki.anthropic_api.AnthropicProvider`: the Anthropic Messages API, raw HTTP, with the same request, result and error contract.
+- `uzumaki.gateway.GatewayProvider`: any OpenAI-compatible base URL, keyless local servers (plain http only to localhost), and a reasoning dialect (`max_completion_tokens`, no temperature) for OpenAI's API.
+- Make targets take `PROVIDER`, `MODEL`, `BASE_URL` and `API_KEY_ENV`; the `*-codex` targets are shorthands for `PROVIDER=codex`.
+- Tests: `tests/test_backends.py`, `tests/test_anthropic_api.py`, new cases in `tests/test_gateway.py`; the demo test now runs through the `anthropic` backend. [Feature note](docs/features/model-backends.md).
+
+Not claimed: a live run on any of these backends.
+
 ### Added — promotion with provenance and the one-command demo (features [17](https://github.com/alokdidde/uzumaki/issues/17) and [18](https://github.com/alokdidde/uzumaki/issues/18), slim)
 
 - `uzumaki.promotion`: `promote` (validates an accepted generated skill only with passing, non-overlapping confirmation evidence for that exact version; the record keeps digests, prompt, model, lineage and every bundle's SHA-256), `save_library`, `load_library` (checks each program against its skill's and record's digest) and `rollback` (deprecates, with an appended record).

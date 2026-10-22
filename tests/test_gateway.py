@@ -144,9 +144,24 @@ def test_malformed_requests_are_refused_locally(change: dict[str, Any]) -> None:
     assert transport.calls == []
 
 
-def test_only_https_gateways() -> None:
-    with pytest.raises(ValueError):
-        GatewayProvider(base_url="http://ai-gateway.vercel.sh/v1")
+def test_only_https_gateways_or_plain_http_to_localhost() -> None:
+    for url in ("http://ai-gateway.vercel.sh/v1", "ftp://localhost/v1", "https://"):
+        with pytest.raises(ValueError):
+            GatewayProvider(base_url=url)
+    GatewayProvider(base_url="http://localhost:11434/v1")
+    GatewayProvider(base_url="http://127.0.0.1:8000/v1")
+
+
+def test_local_servers_need_no_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv(DEFAULT_KEY_ENV)
+    transport = Transport((200, completion("hi")))
+    provider = GatewayProvider(
+        base_url="http://localhost:11434/v1", key_env=None, transport=transport
+    )
+    assert provider.request(REQUEST)["text"] == "hi"
+    url, headers, _body, _timeout = transport.calls[0]
+    assert url == "http://localhost:11434/v1/chat/completions"
+    assert "Authorization" not in headers
 
 
 def test_recorded_exchanges_replay_offline(tmp_path: Any) -> None:
@@ -157,3 +172,11 @@ def test_recorded_exchanges_replay_offline(tmp_path: Any) -> None:
     path.write_text(json.dumps(recording.document()))
     assert KEY not in path.read_text()
     assert RecordedProvider.from_path(path).request(REQUEST) == live
+
+
+def test_reasoning_dialect_drops_temperature_and_uses_completion_tokens() -> None:
+    transport = Transport((200, completion("hi")))
+    GatewayProvider(transport=transport, reasoning=True).request(REQUEST)
+    body = transport.calls[0][2]
+    assert "temperature" not in body and "max_tokens" not in body
+    assert body["max_completion_tokens"] == 4096

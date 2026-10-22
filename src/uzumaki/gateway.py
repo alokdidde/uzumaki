@@ -1,4 +1,5 @@
-"""Live model provider through an OpenAI-compatible chat-completions gateway (Vercel AI Gateway).
+"""Live model provider for any OpenAI-compatible chat-completions endpoint (Vercel AI Gateway by
+default; also OpenAI, OpenRouter, a local Ollama or vLLM server; see ``uzumaki.backends``).
 
 ``GatewayProvider`` implements the ``uzumaki.supervisor`` provider interface, so every live call
 runs inside a ``BoundedRun``: the run counts model calls, enforces token budgets from reported
@@ -17,10 +18,15 @@ unknown. Classification: HTTP 429, 5xx and connection failures raise ``Transient
 a socket timeout raises ``ProviderTimeout``; authentication and other client errors raise
 ``ProviderRejected`` (not retried, fails the run); a response that does not have the expected
 shape returns ``{"error": "schema"}``, which the caller's validator treats as invalid output.
+Requests ask for ``temperature`` 0 and ``max_tokens``; with ``reasoning=True`` (OpenAI's own API,
+whose reasoning models reject both) they send ``max_completion_tokens`` instead, at least
+``MIN_REASONING_TOKENS`` because reasoning counts toward it.
 
 The API key is read from the environment variable named by ``key_env`` (``AI_GATEWAY_API_KEY``)
-when a request is sent. It is never stored in results, errors or evidence, and errors carry only
-fixed codes. Nothing here runs in the default offline checks: tests inject ``transport``.
+when a request is sent; ``key_env=None`` sends no key (local servers). Base URLs must use https,
+except plain http to the local host. The key is never stored in results, errors or evidence, and
+errors carry only fixed codes. Nothing here runs in the default offline checks: tests inject
+``transport``.
 """
 
 from __future__ import annotations
@@ -29,6 +35,7 @@ import json
 import os
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from collections.abc import Callable
 from typing import Any
@@ -40,6 +47,7 @@ DEFAULT_KEY_ENV = "AI_GATEWAY_API_KEY"
 #: Gateway model ID for the protocol's candidate model (``claude-sonnet-5-5``); unverified until a
 #: live smoke run confirms the gateway serves it under this name.
 DEFAULT_MODEL = "anthropic/claude-sonnet-5.5"
+MIN_REASONING_TOKENS = 4096
 MAX_RESPONSE_BYTES = 1 << 20
 MAX_TIMEOUT_S = 60.0
 REQUEST_KEYS = frozenset({"role", "model", "prompt_version", "system", "messages", "max_tokens"})
@@ -66,6 +74,13 @@ def urllib_transport(
             return int(response.status), response.read(MAX_RESPONSE_BYTES + 1)
     except urllib.error.HTTPError as error:
         return int(error.code), error.read(MAX_RESPONSE_BYTES + 1)
+
+
+def _secure_or_local(url: str) -> bool:
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme == "https" and parsed.hostname:
+        return True
+    return parsed.scheme == "http" and parsed.hostname in ("localhost", "127.0.0.1", "::1")
 
 
 def _check_request(request: dict[str, Any]) -> None:
@@ -126,14 +141,16 @@ class GatewayProvider:
         self,
         *,
         base_url: str = DEFAULT_BASE_URL,
-        key_env: str = DEFAULT_KEY_ENV,
+        key_env: str | None = DEFAULT_KEY_ENV,
+        reasoning: bool = False,
         transport: Transport | None = None,
         clock: Callable[[], float] = time.monotonic,
     ) -> None:
-        if not base_url.startswith("https://"):
-            raise ValueError("gateway base URL must use https")
+        if not _secure_or_local(base_url):
+            raise ValueError("gateway base URL must use https (plain http only to localhost)")
         self.url = base_url.rstrip("/") + "/chat/completions"
         self.key_env = key_env
+        self.reasoning = reasoning
         self._transport = transport or urllib_transport
         self._clock = clock
 
@@ -142,19 +159,24 @@ class GatewayProvider:
 
     def request_within(self, request: dict[str, Any], timeout_ms: int) -> dict[str, Any]:
         _check_request(request)
-        key = os.environ.get(self.key_env)
-        if not key:
+        key = os.environ.get(self.key_env) if self.key_env is not None else None
+        if self.key_env is not None and not key:
             raise ProviderRejected("missing_api_key")
-        body = json.dumps(
-            {
-                "model": request["model"],
-                "max_tokens": request["max_tokens"],
-                "temperature": 0,
-                "messages": [{"role": "system", "content": request["system"]}]
-                + request["messages"],
-            }
-        ).encode("utf-8")
-        headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+        payload: dict[str, Any] = {
+            "model": request["model"],
+            "messages": [{"role": "system", "content": request["system"]}] + request["messages"],
+        }
+        if self.reasoning:
+            # Reasoning models reject temperature and max_tokens, and reasoning counts toward
+            # max_completion_tokens, so ask for at least MIN_REASONING_TOKENS.
+            payload["max_completion_tokens"] = max(request["max_tokens"], MIN_REASONING_TOKENS)
+        else:
+            payload["max_tokens"] = request["max_tokens"]
+            payload["temperature"] = 0
+        body = json.dumps(payload).encode("utf-8")
+        headers = {"Content-Type": "application/json"}
+        if key:
+            headers["Authorization"] = f"Bearer {key}"
         timeout_s = max(1.0, min(MAX_TIMEOUT_S, timeout_ms / 1000))
         started = self._clock()
         try:

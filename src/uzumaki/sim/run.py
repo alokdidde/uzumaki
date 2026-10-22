@@ -6,19 +6,17 @@ normal ``uzumaki.events/1.0`` bundle and replays with ``uzumaki.baseline.replay_
 Command line (after ``pip install -r requirements-sim.txt`` and fetching assets)::
 
     python -m uzumaki.sim [--case ID ...] [--out DIR] [--video]
-        [--planner rule|model] [--provider gateway|codex] [--model ID]
+        [--planner rule|model] [--provider NAME] [--model ID]
         [--record FILE | --replay FILE]
 
 writes ``<case>.json`` bundles, optional ``<case>.mp4`` videos and ``summary.json`` with the
 outcome, correctness failures and true final pose error of each case and the simulator identity.
 
-``--planner model`` replaces the rule selector with ``uzumaki.planner.ModelPlanner``. By default
-it calls the model live through ``uzumaki.gateway.GatewayProvider`` (needs network access to the
-gateway and ``AI_GATEWAY_API_KEY``); ``--record FILE`` also keeps every exchange as a
+``--planner model`` replaces the rule selector with ``uzumaki.planner.ModelPlanner``. It calls
+the model live through the backend chosen with ``--provider`` and ``--model`` (see
+``uzumaki.backends``: Vercel AI Gateway, Anthropic, OpenAI, OpenRouter, Ollama, any
+OpenAI-compatible URL, or the Codex CLI); ``--record FILE`` also keeps every exchange as a
 ``RecordedProvider`` file, and ``--replay FILE`` answers from such a file with no network.
-``--provider codex`` calls the model through ``uzumaki.codex.CodexProvider`` instead: OpenAI's
-Codex CLI, signed in with a ChatGPT account (``codex login``); ``--model`` then defaults to the
-CLI's own model.
 """
 
 from __future__ import annotations
@@ -26,7 +24,6 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import os
 import sys
 import tempfile
 import time
@@ -36,6 +33,7 @@ from typing import Any
 
 import mujoco
 
+from uzumaki.backends import add_model_options, model_provider, save_exchanges
 from uzumaki.baseline import (
     BASELINE_BUDGETS,
     BASELINE_SKILL_BODIES,
@@ -48,12 +46,9 @@ from uzumaki.baseline import (
     run_case,
 )
 from uzumaki.budgets import Budgets
-from uzumaki.codex import CODEX_DEFAULT_MODEL, CodexProvider
 from uzumaki.evidence import DecisionSource
 from uzumaki.fixture_env import FixtureCase, FixtureClock
-from uzumaki.gateway import DEFAULT_KEY_ENV, DEFAULT_MODEL, GatewayProvider, RecordingProvider
 from uzumaki.planner import PROMPT_VERSION, ModelPlanner
-from uzumaki.providers import RecordedProvider
 from uzumaki.registry import RegistrySnapshot, load_skill_set, seal_skill
 from uzumaki.sim import SimUnavailable, assets
 from uzumaki.sim.cases import CASE_SET, CASES_FILE, load_so101_cases
@@ -144,30 +139,13 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--out", type=Path, default=Path("build/sim"))
     parser.add_argument("--video", action="store_true", help="also write <case>.mp4")
     parser.add_argument("--planner", choices=("rule", "model"), default="rule")
-    parser.add_argument("--provider", choices=("gateway", "codex"), default="gateway")
-    parser.add_argument("--model", help=f"model ID (gateway default: {DEFAULT_MODEL})")
-    exchanges = parser.add_mutually_exclusive_group()
-    exchanges.add_argument("--record", type=Path, help="keep model exchanges in this file")
-    exchanges.add_argument("--replay", type=Path, help="answer from recorded model exchanges")
+    add_model_options(parser)
     options = parser.parse_args(argv)
-    if options.model is None:
-        options.model = CODEX_DEFAULT_MODEL if options.provider == "codex" else DEFAULT_MODEL
     provider: Any = None
     if options.planner == "model":
-        if options.replay is not None:
-            provider = RecordedProvider.from_path(options.replay)
-        elif options.provider == "codex":
-            provider = CodexProvider()
-        else:
-            if not os.environ.get(DEFAULT_KEY_ENV):
-                print(
-                    f"live model planner needs {DEFAULT_KEY_ENV} in the environment",
-                    file=sys.stderr,
-                )
-                return 1
-            provider = GatewayProvider()
-        if options.record is not None:
-            provider = RecordingProvider(provider)
+        provider = model_provider(options)
+        if provider is None:
+            return 1
     elif options.record or options.replay:
         parser.error("--record and --replay need --planner model")
     try:
@@ -214,8 +192,7 @@ def main(argv: list[str]) -> int:
                 provider=provider,
             )
         finally:
-            if isinstance(provider, RecordingProvider) and options.record is not None:
-                options.record.write_text(json.dumps(provider.document(), indent=1) + "\n")
+            save_exchanges(options, provider)
         runs.append(run)
         failures = correctness_failures(case, run, model_calls=None if planner else 0)
         verdict = run.verdict or {}

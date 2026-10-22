@@ -280,6 +280,7 @@ def test_generated_skill_is_repaired_and_confirmed_on_the_so101(
     """The generator CLI end to end with a scripted model in place of the gateway: three rounds on
     the 16 development cases, then the frozen program on the 12 confirmation cases."""
     from generated_programs import NO_RESUME, STALE_PLACE, TRANSFER, ScriptedGenerator
+    from uzumaki import backends
     from uzumaki.sandbox import ContainmentUnavailable, admit, probe_platform
     from uzumaki.sim import generate
 
@@ -290,7 +291,7 @@ def test_generated_skill_is_repaired_and_confirmed_on_the_so101(
             raise
         pytest.skip(f"unverified platform for the restricted worker: {error}")
     model = ScriptedGenerator([STALE_PLACE, NO_RESUME, TRANSFER])
-    monkeypatch.setattr(generate, "GatewayProvider", lambda: model)
+    monkeypatch.setattr(backends, "GatewayProvider", lambda **_: model)
     monkeypatch.setenv("AI_GATEWAY_API_KEY", "not-a-key")
     out, record = tmp_path / "out", tmp_path / "exchanges.json"
     assert generate.main(["--out", str(out), "--record", str(record)]) == 0
@@ -319,9 +320,10 @@ def test_one_command_demo_closes_the_loop_on_the_so101(
     for lack of a skill, the generator writes and repairs one, it is confirmed and promoted, and
     the planner then completes the same task with it from the saved library."""
     from generated_programs import NO_RESUME, STALE_PLACE, TRANSFER, DemoModel
+    from uzumaki import backends
     from uzumaki.promotion import load_library
     from uzumaki.sandbox import ContainmentUnavailable, admit, probe_platform
-    from uzumaki.sim import demo, generate
+    from uzumaki.sim import demo
 
     try:
         admit(probe_platform())
@@ -330,10 +332,10 @@ def test_one_command_demo_closes_the_loop_on_the_so101(
             raise
         pytest.skip(f"unverified platform for the restricted worker: {error}")
     model = DemoModel([STALE_PLACE, NO_RESUME, TRANSFER])
-    monkeypatch.setattr(generate, "GatewayProvider", lambda: model)
-    monkeypatch.setenv("AI_GATEWAY_API_KEY", "not-a-key")
+    monkeypatch.setattr(backends, "AnthropicProvider", lambda **_: model)
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "not-a-key")
     out = tmp_path / "demo"
-    assert demo.main(["--out", str(out)]) == 0
+    assert demo.main(["--out", str(out), "--provider", "anthropic"]) == 0
     summary = json.loads((out / "summary.json").read_text(encoding="utf-8"))
     assert summary["task"] == demo.DEFAULT_CASE
     assert summary["before"]["primary"] == "abstained"

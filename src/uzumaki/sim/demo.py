@@ -1,6 +1,6 @@
 """The MVP loop end to end on the SO-101, from one command (features 17 and 18, slim).
 
-    python -m uzumaki.sim.demo [--out DIR] [--case ID] [--provider gateway|codex] [--model ID]
+    python -m uzumaki.sim.demo [--out DIR] [--case ID] [--provider NAME] [--model ID]
         [--rounds N] [--video] [--record FILE | --replay FILE]
 
 1. **Before.** The model planner gets the task with a skill library that has no skill able to
@@ -17,9 +17,9 @@
 
 Writes ``before/``, ``round-<n>.py`` and ``round-<n>/``, ``confirmation/``, ``after/`` bundles,
 the ``library/`` directory, ``summary.json`` and, with ``--video``, ``after.mp4``. Exits 0 only if
-the after-run completed. The model is called live (gateway or Codex CLI) unless ``--replay``
-answers from recorded exchanges. Withheld cases are development cases kept from repair, not a
-held-out set, so the result is a development demonstration, not acceptance.
+the after-run completed. The model is called live through any backend in ``uzumaki.backends``
+unless ``--replay`` answers from recorded exchanges. Withheld cases are development cases kept
+from repair, not a held-out set, so the result is a development demonstration, not acceptance.
 """
 
 from __future__ import annotations
@@ -30,6 +30,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from uzumaki.backends import add_model_options, model_provider, save_exchanges
 from uzumaki.baseline import MODEL_BUDGETS, CaseRun, SkillBody, export_evidence
 from uzumaki.generator import (
     MAX_ROUNDS,
@@ -43,15 +44,7 @@ from uzumaki.promotion import PromotionRefused, load_library, promote, save_libr
 from uzumaki.registry import SkillRegistry
 from uzumaki.sim import SimUnavailable, assets
 from uzumaki.sim.cases import load_so101_cases
-from uzumaki.sim.generate import (
-    DEVELOPMENT_CASES,
-    add_model_options,
-    case_rows,
-    load_registry,
-    model_provider,
-    save_exchanges,
-    write_generation,
-)
+from uzumaki.sim.generate import DEVELOPMENT_CASES, case_rows, load_registry, write_generation
 from uzumaki.sim.run import DEFAULT_SKILLS, run_sim_case, sim_environment, simulator_identity
 
 DEFAULT_CASE = "so101-dev-020"

@@ -1,6 +1,6 @@
 # Generated skills with trace-guided repair in the SO-101 simulation (features 12, 13 and 16, first cut)
 
-Status: implemented and tested offline with a scripted model in place of Claude (`uzumaki.generator`, `uzumaki.sim.generate`). No live model has generated a program yet; `make generate-live` is that run once the gateway is reachable. The representation is chosen in [decision 0003](../decisions/0003-skill-program-representation.md).
+Status: implemented and tested offline with a scripted model in place of Claude (`uzumaki.generator`, `uzumaki.sim.generate`). No live model has generated a program yet; `make generate-live PROVIDER=...` is that run, with any [model backend](model-backends.md). The representation is chosen in [decision 0003](../decisions/0003-skill-program-representation.md).
 
 ## What it does
 
@@ -32,8 +32,8 @@ Then the frozen round-3 program passes 12/12 confirmation cases. The whole run t
 ## Running it
 
 ```
-make generate-live         # live: Claude through the gateway, video of the accepted program
-make generate-live-codex   # live: the Codex CLI signed in with ChatGPT (GPT, not Claude)
+make generate-live                     # live: Vercel AI Gateway, video of the accepted program
+make generate-live PROVIDER=anthropic  # or any other backend (docs/features/model-backends.md)
 python -m uzumaki.sim.generate --replay build/generate-exchanges.json --out build/generate-replay   # offline
 ```
 

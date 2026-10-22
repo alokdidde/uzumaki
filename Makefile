@@ -34,40 +34,39 @@ sim-demo:
 	rm -rf build/sim
 	python -m uzumaki.sim --video --out build/sim
 
-# Explicit live smoke run (never in CI): the Claude planner through the Vercel AI Gateway on one
-# SO-101 case. Needs network access to ai-gateway.vercel.sh and AI_GATEWAY_API_KEY; keeps the
-# exchanges so the run replays offline (`python -m uzumaki.sim --planner model --replay ...`).
+# Live model runs (never in CI). Pick the backend with PROVIDER and MODEL, for example
+#   make demo-live PROVIDER=anthropic                    (ANTHROPIC_API_KEY)
+#   make demo-live PROVIDER=openai MODEL=gpt-5           (OPENAI_API_KEY)
+#   make demo-live PROVIDER=openrouter MODEL=qwen/qwen3-coder   (OPENROUTER_API_KEY)
+#   make demo-live PROVIDER=ollama MODEL=qwen3           (local server, no key)
+#   make demo-live PROVIDER=openai-compatible BASE_URL=https://host/v1 MODEL=m API_KEY_ENV=MY_KEY
+#   make demo-live PROVIDER=codex                        (Codex CLI signed in with ChatGPT)
+# Default: the Vercel AI Gateway (AI_GATEWAY_API_KEY). `python -m uzumaki.sim --help` lists the
+# backends. Each run keeps its exchanges, so it replays offline with `--replay FILE`.
+PROVIDER ?= vercel
+MODEL ?=
+BASE_URL ?=
+API_KEY_ENV ?=
+MODEL_OPTIONS = --provider $(PROVIDER) $(if $(MODEL),--model $(MODEL)) $(if $(BASE_URL),--base-url $(BASE_URL)) $(if $(API_KEY_ENV),--api-key-env $(API_KEY_ENV))
+
+# The model planner on one SO-101 case.
 live-smoke:
 	rm -rf build/live
-	python -m uzumaki.sim --planner model --case nominal --out build/live --record build/live-exchanges.json
+	python -m uzumaki.sim --planner model $(MODEL_OPTIONS) --case nominal --out build/live --record build/live-exchanges.json
 
-# Same smoke run through the Codex CLI signed in with ChatGPT (`codex login --device-auth`).
-live-smoke-codex:
-	rm -rf build/live
-	python -m uzumaki.sim --planner model --provider codex --case nominal --out build/live --record build/live-exchanges.json
-
-# Explicit live generation run (never in CI): Claude writes the transfer-box skill through the
-# gateway, repairs it on the 16 SO-101 development cases and the accepted program is confirmed on
-# the 12 withheld cases. Needs an admitted restricted-worker host, gateway access and
-# AI_GATEWAY_API_KEY; replays offline with `python -m uzumaki.sim.generate --replay ...`.
+# The model writes the transfer-box skill, repairs it on the 16 SO-101 development cases, and the
+# accepted program is confirmed on the 12 withheld cases. Needs an admitted restricted-worker host.
 generate-live:
 	rm -rf build/generate
-	MUJOCO_GL=osmesa python -m uzumaki.sim.generate --video --out build/generate --record build/generate-exchanges.json
+	MUJOCO_GL=osmesa python -m uzumaki.sim.generate $(MODEL_OPTIONS) --video --out build/generate --record build/generate-exchanges.json
 
-# Same generation run through the Codex CLI signed in with ChatGPT (`codex login --device-auth`).
-generate-live-codex:
-	rm -rf build/generate
-	MUJOCO_GL=osmesa python -m uzumaki.sim.generate --provider codex --video --out build/generate --record build/generate-exchanges.json
-
-# The whole loop from one command (never in CI): the planner abstains for lack of a skill, the
-# generator writes and repairs transfer-box, it is confirmed on withheld cases and promoted, and
-# the planner then completes the task with it. Bundles, library, summary and video in build/demo;
-# replays offline with `python -m uzumaki.sim.demo --replay build/demo-exchanges.json ...`.
+# The whole loop from one command: the planner abstains for lack of a skill, the generator writes
+# and repairs transfer-box, it is confirmed on withheld cases and promoted, and the planner then
+# completes the task with it. Bundles, library, summary and video in build/demo.
 demo-live:
 	rm -rf build/demo
-	MUJOCO_GL=osmesa python -m uzumaki.sim.demo --video --out build/demo --record build/demo-exchanges.json
+	MUJOCO_GL=osmesa python -m uzumaki.sim.demo $(MODEL_OPTIONS) --video --out build/demo --record build/demo-exchanges.json
 
-# Same demo through the Codex CLI signed in with ChatGPT (`codex login --device-auth`).
-demo-live-codex:
-	rm -rf build/demo
-	MUJOCO_GL=osmesa python -m uzumaki.sim.demo --provider codex --video --out build/demo --record build/demo-exchanges.json
+# Shorthands kept for the Codex CLI.
+live-smoke-codex generate-live-codex demo-live-codex:
+	$(MAKE) $(@:-codex=) PROVIDER=codex

@@ -2,7 +2,7 @@
 
 Command line (after ``pip install -r requirements-sim.txt`` and fetching assets)::
 
-    python -m uzumaki.sim.generate [--out DIR] [--provider gateway|codex] [--model ID]
+    python -m uzumaki.sim.generate [--out DIR] [--provider NAME] [--model ID]
         [--rounds N] [--video] [--record FILE | --replay FILE]
 
 The generator (``uzumaki.generator``, capability ``transfer-box``) writes a program; each checked
@@ -13,24 +13,22 @@ generator never sees. These are development cases withheld from repair, not a he
 
 Writes ``round-<n>.py`` (each program), ``round-<n>/<case>.json`` bundles, ``confirmation/``
 bundles, ``summary.json`` and, with ``--video``, ``accepted-<case>.mp4`` of the accepted program
-on the first confirmation case. Calls the model live through the Vercel AI Gateway
-(``AI_GATEWAY_API_KEY``), or with ``--provider codex`` through the Codex CLI signed in with a
-ChatGPT account, unless ``--replay`` answers from a recorded exchanges file.
+on the first confirmation case. Calls the model live through any backend in
+``uzumaki.backends`` (``--provider``, ``--model``, ``--base-url``), unless ``--replay`` answers
+from a recorded exchanges file.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import os
 import sys
 import tempfile
 from pathlib import Path
 from typing import Any
 
+from uzumaki.backends import add_model_options, model_provider, save_exchanges
 from uzumaki.baseline import export_evidence
-from uzumaki.codex import CODEX_DEFAULT_MODEL, CodexProvider
-from uzumaki.gateway import DEFAULT_KEY_ENV, DEFAULT_MODEL, GatewayProvider, RecordingProvider
 from uzumaki.generator import (
     MAX_ROUNDS,
     TRANSFER_BOX,
@@ -39,7 +37,6 @@ from uzumaki.generator import (
     evaluate_program,
     generate_skill,
 )
-from uzumaki.providers import RecordedProvider
 from uzumaki.registry import SkillRegistry, load_skill_set, seal_skill
 from uzumaki.sim import SimUnavailable, assets
 from uzumaki.sim.cases import load_so101_cases
@@ -59,40 +56,6 @@ def load_registry(path: Path) -> SkillRegistry:
         sealed = Path(directory) / "skills.json"
         sealed.write_text(json.dumps(document), encoding="utf-8")
         return load_skill_set(sealed)
-
-
-def add_model_options(parser: argparse.ArgumentParser) -> None:
-    """``--provider``, ``--model`` and ``--record``/``--replay``, shared by the model CLIs."""
-    parser.add_argument("--provider", choices=("gateway", "codex"), default="gateway")
-    parser.add_argument("--model", help=f"model ID (gateway default: {DEFAULT_MODEL})")
-    exchanges = parser.add_mutually_exclusive_group()
-    exchanges.add_argument("--record", type=Path, help="keep model exchanges in this file")
-    exchanges.add_argument("--replay", type=Path, help="answer from recorded model exchanges")
-
-
-def model_provider(options: argparse.Namespace) -> Any:
-    """The provider the options ask for (``None`` after printing why it is unavailable). Fills in
-    the default ``options.model``."""
-    if options.model is None:
-        options.model = CODEX_DEFAULT_MODEL if options.provider == "codex" else DEFAULT_MODEL
-    provider: Any
-    if options.replay is not None:
-        return RecordedProvider.from_path(options.replay)
-    if options.provider == "codex":
-        provider = CodexProvider()
-    elif not os.environ.get(DEFAULT_KEY_ENV):
-        print(f"live model calls need {DEFAULT_KEY_ENV} in the environment", file=sys.stderr)
-        return None
-    else:
-        provider = GatewayProvider()
-    if options.record is not None:
-        provider = RecordingProvider(provider)
-    return provider
-
-
-def save_exchanges(options: argparse.Namespace, provider: Any) -> None:
-    if isinstance(provider, RecordingProvider) and options.record is not None:
-        options.record.write_text(json.dumps(provider.document(), indent=1) + "\n")
 
 
 def case_rows(results: list[CaseResult]) -> list[dict[str, Any]]:
