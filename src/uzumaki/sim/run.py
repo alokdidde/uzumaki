@@ -6,7 +6,8 @@ normal ``uzumaki.events/1.0`` bundle and replays with ``uzumaki.baseline.replay_
 Command line (after ``pip install -r requirements-sim.txt`` and fetching assets)::
 
     python -m uzumaki.sim [--case ID ...] [--out DIR] [--video]
-        [--planner rule|model] [--model ID] [--record FILE | --replay FILE]
+        [--planner rule|model] [--provider gateway|codex] [--model ID]
+        [--record FILE | --replay FILE]
 
 writes ``<case>.json`` bundles, optional ``<case>.mp4`` videos and ``summary.json`` with the
 outcome, correctness failures and true final pose error of each case and the simulator identity.
@@ -15,6 +16,9 @@ outcome, correctness failures and true final pose error of each case and the sim
 it calls the model live through ``uzumaki.gateway.GatewayProvider`` (needs network access to the
 gateway and ``AI_GATEWAY_API_KEY``); ``--record FILE`` also keeps every exchange as a
 ``RecordedProvider`` file, and ``--replay FILE`` answers from such a file with no network.
+``--provider codex`` calls the model through ``uzumaki.codex.CodexProvider`` instead: OpenAI's
+Codex CLI, signed in with a ChatGPT account (``codex login``); ``--model`` then defaults to the
+CLI's own model.
 """
 
 from __future__ import annotations
@@ -44,6 +48,7 @@ from uzumaki.baseline import (
     run_case,
 )
 from uzumaki.budgets import Budgets
+from uzumaki.codex import CODEX_DEFAULT_MODEL, CodexProvider
 from uzumaki.evidence import DecisionSource
 from uzumaki.fixture_env import FixtureCase, FixtureClock
 from uzumaki.gateway import DEFAULT_KEY_ENV, DEFAULT_MODEL, GatewayProvider, RecordingProvider
@@ -139,15 +144,20 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--out", type=Path, default=Path("build/sim"))
     parser.add_argument("--video", action="store_true", help="also write <case>.mp4")
     parser.add_argument("--planner", choices=("rule", "model"), default="rule")
-    parser.add_argument("--model", default=DEFAULT_MODEL, help="gateway model ID")
+    parser.add_argument("--provider", choices=("gateway", "codex"), default="gateway")
+    parser.add_argument("--model", help=f"model ID (gateway default: {DEFAULT_MODEL})")
     exchanges = parser.add_mutually_exclusive_group()
     exchanges.add_argument("--record", type=Path, help="keep model exchanges in this file")
     exchanges.add_argument("--replay", type=Path, help="answer from recorded model exchanges")
     options = parser.parse_args(argv)
+    if options.model is None:
+        options.model = CODEX_DEFAULT_MODEL if options.provider == "codex" else DEFAULT_MODEL
     provider: Any = None
     if options.planner == "model":
         if options.replay is not None:
             provider = RecordedProvider.from_path(options.replay)
+        elif options.provider == "codex":
+            provider = CodexProvider()
         else:
             if not os.environ.get(DEFAULT_KEY_ENV):
                 print(
@@ -156,8 +166,8 @@ def main(argv: list[str]) -> int:
                 )
                 return 1
             provider = GatewayProvider()
-            if options.record is not None:
-                provider = RecordingProvider(provider)
+        if options.record is not None:
+            provider = RecordingProvider(provider)
     elif options.record or options.replay:
         parser.error("--record and --replay need --planner model")
     try:

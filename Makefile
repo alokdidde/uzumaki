@@ -1,4 +1,4 @@
-.PHONY: check containment baseline-evidence sim-assets sim sim-demo live-smoke
+.PHONY: check containment baseline-evidence sim-assets sim sim-demo live-smoke live-smoke-codex
 # Offline check: no installs, network or live providers. Run after
 # `python -m pip install -r requirements-dev.txt` and `python -m pip install --no-deps -e .`.
 check:
@@ -39,3 +39,8 @@ sim-demo:
 live-smoke:
 	rm -rf build/live
 	python -m uzumaki.sim --planner model --case nominal --out build/live --record build/live-exchanges.json
+
+# Same smoke run through the Codex CLI signed in with ChatGPT (`codex login --device-auth`).
+live-smoke-codex:
+	rm -rf build/live
+	python -m uzumaki.sim --planner model --provider codex --case nominal --out build/live --record build/live-exchanges.json
