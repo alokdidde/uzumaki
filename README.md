@@ -1,12 +1,102 @@
-# Uzumaki
+<!-- Banner slot: replace this comment with
+<p align="center"><img src="docs/media/uzumaki-banner.png" alt="Uzumaki" width="100%"></p>
+once the banner is in docs/media. -->
 
-A robotics harness that uses execution feedback to develop and reuse robot skills.
+<h1 align="center">Uzumaki</h1>
 
-**Status: early implementation.** This repository contains the architecture, roadmap and testing strategy, an offline harness baseline, and an optional MuJoCo simulation of the SO-101 arm running that baseline. It does not yet contain a live model in the loop, a trained model, or hardware support. A model planner and a skill generator with trace-guided repair are implemented and tested offline.
+<p align="center">
+<b>An agentic harness that grows robot skills from execution feedback, for any body and any model.</b><br>
+<sub>渦巻き (uzumaki): a spiral. Plan, try, observe, repair, promote, reuse.</sub>
+</p>
 
-## What we are building
+<p align="center">
+<a href="https://github.com/alokdidde/uzumaki/actions/workflows/ci.yml"><img src="https://github.com/alokdidde/uzumaki/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+<img src="https://img.shields.io/badge/simulator-MuJoCo-1f6feb" alt="MuJoCo">
+<img src="https://img.shields.io/badge/robots-8%20bodies-e8473a" alt="8 robot bodies">
+<img src="https://img.shields.io/badge/python-3.12-3776ab" alt="Python 3.12">
+</p>
 
-Uzumaki coordinates one powerful model in two roles: a planner selects existing skills or identifies missing capabilities; a generator creates or repairs candidate robot programs or graphs. The harness owns context, tool access, budgets, evaluation, evidence, and skill promotion. Validated skills handle routine decisions and retries within their declared scope.
+<p align="center">
+<a href="#one-harness-eight-bodies">Robots</a> ·
+<a href="#how-it-works">How it works</a> ·
+<a href="#any-model">Any model</a> ·
+<a href="#quick-start">Quick start</a> ·
+<a href="docs/guides/add-your-robot.md">Add your robot</a> ·
+<a href="docs/roadmap.md">Roadmap</a>
+</p>
+
+## One harness, eight bodies
+
+The same harness core, evaluator, selector and evidence format run every robot below in MuJoCo. A robot joins as a description and an adapter. Each result is its frozen development set (28 cases, including injected faults such as failed grasps, stale observations, worker crashes and cancellation), plus a robustness probe of extra random geometries that is not part of acceptance. Click a robot for its feature note.
+
+<table>
+<tr>
+<td align="center" valign="top" width="33%">
+<a href="docs/features/so101-simulation.md"><img src="docs/media/so101-nominal.gif" width="260" alt="SO-101 arm picking a box and placing it on a target"></a><br>
+<b>SO-101 · single arm</b><br>
+<sub>pick-place · <b>28/28</b> dev cases<br>probe 199/200</sub>
+</td>
+<td align="center" valign="top" width="33%">
+<a href="docs/features/panda-simulation.md"><img src="docs/media/panda-nominal.gif" width="260" alt="Franka Panda picking and placing a box"></a><br>
+<b>Franka Panda · single arm</b><br>
+<sub>pick-place · <b>28/28</b><br>probe 200/200 · same skills, unchanged</sub>
+</td>
+<td align="center" valign="top" width="33%">
+<a href="docs/features/aloha-handover.md"><img src="docs/media/aloha-nominal.gif" width="260" alt="ALOHA handing a bar from the left arm to the right"></a><br>
+<b>ALOHA · two arms</b><br>
+<sub>handover · <b>28/28</b><br>probe 100/100 · recovers a dropped handover</sub>
+</td>
+</tr>
+<tr>
+<td align="center" valign="top" width="33%">
+<a href="docs/features/tidybot-fetch.md"><img src="docs/media/tidybot-nominal.gif" width="260" alt="TidyBot driving a box from one table to another"></a><br>
+<b>TidyBot · mobile manipulator</b><br>
+<sub>fetch · <b>28/28</b><br>probe 197/200 · recovers a drive that stops short</sub>
+</td>
+<td align="center" valign="top" width="33%">
+<a href="docs/features/spot-simulation.md"><img src="docs/media/spot-nominal.gif" width="260" alt="Spot standing and picking a box with the arm on its back"></a><br>
+<b>Spot · quadruped with arm</b><br>
+<sub>pick-place · <b>28/28</b><br>probe 200/200</sub>
+</td>
+<td align="center" valign="top" width="33%">
+<a href="docs/features/g1-simulation.md"><img src="docs/media/g1-nominal.gif" width="260" alt="Unitree G1 humanoid picking a box with its left hand"></a><br>
+<b>Unitree G1 · humanoid</b><br>
+<sub>pick-place · <b>28/28</b> with its left Dex3 hand<br>probe 187/200, the rest safely refused</sub>
+</td>
+</tr>
+<tr>
+<td align="center" valign="top" width="33%">
+<a href="docs/features/go1-simulation.md"><img src="docs/media/go1-nominal.gif" width="260" alt="Unitree Go1 picking a box with a jaw on its neck"></a><br>
+<b>Unitree Go1 · quadruped with jaw</b><br>
+<sub>pick-place · <b>28/28</b>, gripping with its head<br>probe 200/200</sub>
+</td>
+<td align="center" valign="top" width="33%">
+<a href="docs/features/go1-walk-fetch.md"><img src="docs/media/go1-walk-nominal.gif" width="260" alt="Unitree Go1 walking a box between two tables"></a><br>
+<b>Go1, walking</b><br>
+<sub>fetch · <b>28/28</b> on a learned walking policy<br>probe 200/200</sub>
+</td>
+<td align="center" valign="middle" width="33%">
+<a href="docs/guides/add-your-robot.md"><b>➕ Your robot</b></a><br><br>
+<sub>Describe the body as parts, effectors and capabilities, write an adapter, and run <code>python -m uzumaki.conformance</code>. The core never changes.</sub>
+</td>
+</tr>
+</table>
+
+### It notices when things go wrong
+
+Every case ends with an independent outcome check, not the robot's own claim of success. Faults are injected on purpose, and the harness has to see them and recover within its budget.
+
+<table>
+<tr>
+<td align="center" width="33%"><img src="docs/media/aloha-dropped-handover.gif" width="260" alt="ALOHA dropping a bar during the handover and picking it up again"><br><sub>ALOHA drops the bar mid-handover, sees it, and picks it up again.</sub></td>
+<td align="center" width="33%"><img src="docs/media/tidybot-stopped-short.gif" width="260" alt="TidyBot stopping short of the table and driving again"><br><sub>TidyBot's drive stops short; nothing is in reach, so it drives again.</sub></td>
+<td align="center" width="33%"><img src="docs/media/so101-failed-grasp.gif" width="260" alt="SO-101 missing a grasp and retrying"><br><sub>The SO-101 misses a grasp; the evaluator catches it and the skill retries.</sub></td>
+</tr>
+</table>
+
+## How it works
+
+One model plays two roles. The **planner** picks a validated skill for the goal, or says that none fits. The **generator** then writes the missing skill as a small sandboxed program, runs it in the simulator, and repairs it from execution traces until it passes. It is confirmed on cases it never saw and promoted into the skill library as an immutable version, and the planner uses it from then on.
 
 ```mermaid
 flowchart TD
@@ -25,49 +115,68 @@ flowchart TD
     Outcome --> Harness
 ```
 
-Planning and generation initially use the same underlying model with separate prompts and contexts. A specialized decision model, an owned generator, predictive world models, parallel search, and physical robots are later experiments, not MVP prerequisites. The bounded executor may be a program or graph; it need not be another language model.
+The harness owns context, tool access, budgets, evaluation, evidence and promotion. Generated code runs only in a [restricted worker](docs/features/restricted-worker.md) (Landlock and seccomp, no network, no exec) whose protection does not depend on the program returning. Every run leaves a checksum-chained [evidence bundle](docs/features/event-evidence.md) that can be replayed.
 
-## Start here
+The whole loop runs from one command. The planner abstains because no skill can move the box, the generator writes and repairs one, it is confirmed and promoted, and the planner completes the task with it ([end-to-end demo](docs/features/end-to-end-demo.md)):
 
-- [Implementation roadmap](docs/roadmap.md): ordered features, dependencies, acceptance criteria, and issue links.
-- [Architecture](docs/architecture.md): responsibilities, context flow, failure behavior, and model boundaries.
-- [Task and evaluation protocol (candidate_for_review)](docs/protocol/README.md): the `pick-place-v1` candidate profile ([task-v1.json](docs/protocol/task-v1.json)) and [decision record 0001](docs/decisions/0001-task-and-evaluation.md). Pending PR acceptance (review revision 5, documentary only; zero trials, not a performance result; numerical targets and heldout commitments unchanged); simulator and model are unverified candidates.
-- [Harness and model contracts 1.0](docs/contracts/README.md) (issue 02, documentary): versioned record schemas ([v1.json](docs/contracts/v1.json)), fixtures ([fixtures.json](docs/contracts/fixtures.json)), authority, admission and lifecycle rules; see the [feature note](docs/features/harness-contracts.md) and [CHANGELOG](CHANGELOG.md). Offline-checkable specifications only; no runtime enforces them yet.
-- [Testing strategy](docs/testing.md): offline fixtures, containment, simulator tests, held-out evaluation, and evidence.
-- [Contributing](CONTRIBUTING.md): how to take a feature from planned to verified.
-- [Private GitHub Project](https://github.com/users/alokdidde/projects/4): all roadmap issues in Sequence order. Readiness distinguishes Ready, Blocked, and Deferred work.
+```
+python -m uzumaki.sim.demo                 # scripted model, offline
+make demo-live PROVIDER=codex              # a live model (see below)
+```
 
-## First delivery
+## Any model
 
-Start with [issue 01 — freeze the first task and evaluation protocol](https://github.com/alokdidde/uzumaki/issues/1). It is the only feature initially marked Ready.
+The model is configuration, not code. Pick a backend with `--provider` and `--model`, or `UZUMAKI_PROVIDER` and `UZUMAKI_MODEL` ([model backends](docs/features/model-backends.md)):
 
-The proposed first task is one rigid-object pick-and-place family. Issue 01 proposes a candidate profile (`pick-place-v1`, not yet accepted) that freezes its task envelope, simulator, observations, budgets, evaluator, and thresholds before implementation. The first runnable slice will use deterministic fixtures, hand-authored skills, and a rule-based selector with no paid inference. Model generation and physics simulation follow in order.
+| Backend | Example |
+| --- | --- |
+| Anthropic | `make demo-live PROVIDER=anthropic` |
+| OpenAI | `make demo-live PROVIDER=openai MODEL=gpt-5` |
+| OpenRouter | `make demo-live PROVIDER=openrouter MODEL=anthropic/claude-sonnet-5.5` |
+| Vercel AI Gateway (default) | `make demo-live` |
+| Ollama (local) | `make demo-live PROVIDER=ollama MODEL=qwen3` |
+| Any OpenAI-compatible server | `make demo-live PROVIDER=openai-compatible BASE_URL=https://host/v1 MODEL=m API_KEY_ENV=MY_KEY` |
+| Codex CLI (ChatGPT sign-in) | `make demo-live PROVIDER=codex` |
 
-The MVP ends at feature 18: one reproducible simulator-backed loop that selects existing skills, generates and repairs a missing skill, evaluates it, and promotes an accepted version with preserved evidence. It does not claim general robotics competence or authorize powered robot experiments.
+## Any body
 
-## Simulation demo
+Bodies are described in three layers: ready-made configurations, components you can mount anywhere, and the parts, effectors and capabilities underneath. Skills target a configuration or a capability, so a limb may walk and a head may grip.
 
-![SO-101 in MuJoCo picking a box and placing it on the blue target](docs/media/so101-nominal.gif)
+| Configuration | Robots here |
+| --- | --- |
+| `SingleArm` | SO-101, Franka Panda |
+| `TwoArms` | ALOHA |
+| `MobileManipulator` | TidyBot |
+| `Humanoid` | Unitree G1 |
+| `QuadrupedWithArm` | Spot |
+| `QuadrupedWithJaw` | Unitree Go1 (standing and walking) |
+| `Quadruped` | ready for your robot |
 
-The harness now runs in MuJoCo on a Robot Studio SO-101 arm: the same rule selector, hand-authored skills, budgets, independent evaluator and evidence bundles as the offline baseline, with physics underneath. All 28 SO-101 cases meet their frozen expectations. See [MuJoCo SO-101 simulation](docs/features/so101-simulation.md) and [decision 0002](docs/decisions/0002-so101-simulation.md). A Franka Panda runs the same harness and skills unchanged, on the original frozen `pick-place-v1` geometry: 28 of 28 cases ([Panda simulation](docs/features/panda-simulation.md), [GIF](docs/media/panda-nominal.gif)). ALOHA, with two arms, runs a second task pack, `handover`: the left arm picks a bar up and hands it to the right arm, which places it, 28 of 28 cases including a dropped handover it recovers from ([ALOHA handover](docs/features/aloha-handover.md), [GIF](docs/media/aloha-nominal.gif)). Spot stands on its four legs and runs the same frozen pick-and-place with the arm on its back, 28 of 28 cases ([Spot simulation](docs/features/spot-simulation.md), [GIF](docs/media/spot-nominal.gif)). A Unitree G1 humanoid, its pelvis on a stand, runs it with its left Dex3 hand, 28 of 28 cases ([G1 simulation](docs/features/g1-simulation.md), [GIF](docs/media/g1-nominal.gif)). A Unitree Go1 dog stands at a low table and runs it with a jaw on its neck (the UMI gripper), 28 of 28 cases ([Go1 simulation](docs/features/go1-simulation.md), [GIF](docs/media/go1-nominal.gif)). TidyBot, a mobile manipulator, runs a third pack, `fetch`: it drives to a box on one table, picks it up, drives to a second table and places it, 28 of 28 cases including a drive that stops short ([TidyBot fetch](docs/features/tidybot-fetch.md), [GIF](docs/media/tidybot-nominal.gif)). The Go1 also walks: on a learned locomotion policy from MuJoCo Playground, it runs the same `fetch` pack, walking to the box, picking it up with its jaw and walking it to the other table, 28 of 28 cases ([Go1 walking fetch](docs/features/go1-walk-fetch.md), [GIF](docs/media/go1-walk-nominal.gif)). A Claude planner through the Vercel AI Gateway can replace the rule selector (`--planner model`, [feature note](docs/features/model-planner.md)); it is tested offline and has not yet made a live call. The generator role can also write a missing skill as a sandboxed program and repair it from execution traces in the simulator, then confirm it on cases it never saw (`python -m uzumaki.sim.generate`, [feature note](docs/features/skill-generation.md), [decision 0003](docs/decisions/0003-skill-program-representation.md)); this too is tested offline with a scripted model only.
+Three task packs run on them today: `pick-place`, `handover` and `fetch`. [Add your robot](docs/guides/add-your-robot.md) walks through the exact steps the SO-101 took.
 
-The whole loop also runs from one command: the planner abstains because no skill can move the box, the generator writes and repairs one, it is confirmed on withheld cases and promoted into a saved skill library, and the planner then completes the task with it (`python -m uzumaki.sim.demo`; `make demo-live PROVIDER=...` for a live run on any supported model; [feature note](docs/features/end-to-end-demo.md)). The model is configuration, not code: Anthropic, OpenAI, OpenRouter, the Vercel AI Gateway, a local Ollama or any OpenAI-compatible server, or the Codex CLI ([model backends](docs/features/model-backends.md)). The robot is configuration too: bodies are described as parts, effectors and capabilities, with ready-made configurations from a single arm to a humanoid or a quadruped with a jaw, and `python -m uzumaki.conformance` checks a new robot ([Add your robot](docs/guides/add-your-robot.md)).
+## Quick start
 
 ```
 python -m pip install -r requirements-dev.txt -r requirements-sim.txt && python -m pip install --no-deps -e .
-make sim-assets   # fetch the pinned SO-101, Panda, ALOHA, TidyBot, Spot, G1, Go1, UMI gripper and Go1 walking-policy files (SHA-256 verified)
+make check        # offline tests, no API keys
+make sim-assets   # fetch the pinned robot models and the Go1 walking policy (SHA-256 verified)
 make sim          # simulator suite
-MUJOCO_GL=osmesa make sim-demo   # bundles, summary and MP4 videos in build/sim
-MUJOCO_GL=osmesa make sim-demo-panda   # the same on the Franka Panda
-MUJOCO_GL=osmesa make sim-demo-aloha   # ALOHA handing a bar between two arms
-MUJOCO_GL=osmesa make sim-demo-tidybot # TidyBot fetching a box between two tables
-MUJOCO_GL=osmesa make sim-demo-spot    # Spot standing, picking and placing with its arm
-MUJOCO_GL=osmesa make sim-demo-g1      # the G1 humanoid on a stand, with its left hand
-MUJOCO_GL=osmesa make sim-demo-go1     # the Go1 dog, gripping with a jaw on its neck
-MUJOCO_GL=osmesa make sim-demo-go1-walk # the Go1 walking on a learned policy to fetch a box
+MUJOCO_GL=osmesa make sim-demo          # SO-101: bundles, summary and MP4 videos in build/sim
+MUJOCO_GL=osmesa make sim-demo-panda    # Franka Panda
+MUJOCO_GL=osmesa make sim-demo-aloha    # ALOHA handing a bar between two arms
+MUJOCO_GL=osmesa make sim-demo-tidybot  # TidyBot fetching a box between two tables
+MUJOCO_GL=osmesa make sim-demo-spot     # Spot picking with the arm on its back
+MUJOCO_GL=osmesa make sim-demo-g1       # the G1 humanoid on a stand, left hand
+MUJOCO_GL=osmesa make sim-demo-go1      # the Go1 gripping with a jaw on its neck
+MUJOCO_GL=osmesa make sim-demo-go1-walk # the Go1 walking on a learned policy
 ```
 
-## Testing today
+## Status
+
+Early implementation. The harness, eight simulated bodies, the model planner and the skill generator with trace-guided repair are implemented. The planner and generator are tested offline with a scripted model, and `make demo-live` runs them on a live one. There are no held-out evaluation sets yet, no trained model of our own, and no hardware support; the GIFs above are simulation only. The MVP ends at feature 18 of the [roadmap](docs/roadmap.md): one reproducible simulator-backed loop that selects, generates, repairs, evaluates and promotes skills with preserved evidence. It does not claim general robotics competence or authorize powered robot experiments.
+
+<details>
+<summary>Feature history and what each test suite covers</summary>
 
 Feature 03 adds a minimal Python package with a recorded/fake provider. After a one-time `python -m pip install -r requirements-dev.txt && python -m pip install --no-deps -e .`, run `make check` offline (see [package bootstrap](docs/features/package-bootstrap.md)). It needs no API keys; there is still no harness runtime.
 
@@ -84,6 +193,19 @@ Feature 08 adds the first offline execution baseline. It runs eight frozen `pick
 The package above has executable offline checks. Separate protocol and contract validation remains documentary (see the [protocol README](docs/protocol/README.md#documentary-commands-offline-no-network-no-install)) and checks the documentation, roadmap ordering/dependencies, and GitHub setup. The issue-02 contracts add an offline schema/fixture check run by an external trusted checker ([contracts README](docs/contracts/README.md#offline-check-reproduction)); it executes no application code. Feature 03 provides the locked package and executable checks above; the harness, simulator and live-model integration remain future work. Do not treat other planned commands or unchecked issue criteria as passing tests.
 
 All default implementation tests will use recorded/fake providers with live network access disabled. Simulator and paid-model tests will be explicit separate suites. Generated code must run only in a restricted worker whose protection does not depend on the generated code returning.
+
+</details>
+
+## Docs
+
+- [Implementation roadmap](docs/roadmap.md): ordered features, dependencies, acceptance criteria and issue links.
+- [Architecture](docs/architecture.md): responsibilities, context flow, failure behavior and model boundaries.
+- [Task and evaluation protocol](docs/protocol/README.md): the `pick-place-v1` profile ([task-v1.json](docs/protocol/task-v1.json)) and [decision 0001](docs/decisions/0001-task-and-evaluation.md).
+- [Harness and model contracts 1.0](docs/contracts/README.md): versioned record schemas, fixtures, authority, admission and lifecycle rules ([feature note](docs/features/harness-contracts.md), [CHANGELOG](CHANGELOG.md)).
+- [Testing strategy](docs/testing.md): offline fixtures, containment, simulator tests, held-out evaluation and evidence.
+- [Feature notes](docs/features/): one per delivered feature, with frozen plans and results.
+- [Contributing](CONTRIBUTING.md): how to take a feature from planned to verified.
+- [Private GitHub Project](https://github.com/users/alokdidde/projects/4): all roadmap issues in sequence order.
 
 ## Research foundations
 
