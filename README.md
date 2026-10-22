@@ -1,11 +1,7 @@
-<!-- Banner slot: replace this comment with
-<p align="center"><img src="docs/media/uzumaki-banner.png" alt="Uzumaki" width="100%"></p>
-once the banner is in docs/media. -->
-
-<h1 align="center">Uzumaki</h1>
+<p align="center"><img src="docs/media/uzumaki-banner.png" alt="Uzumaki: an agentic harness for any robot body" width="100%"></p>
 
 <p align="center">
-<b>An agentic harness that grows robot skills from execution feedback, for any body and any model.</b><br>
+<b>Grows robot skills from execution feedback, for any body and any model.</b><br>
 <sub>渦巻き (uzumaki): a spiral. Plan, try, observe, repair, promote, reuse.</sub>
 </p>
 
@@ -76,7 +72,7 @@ The same harness core, evaluator, selector and evidence format run every robot b
 <sub>fetch · <b>28/28</b> on a learned walking policy<br>probe 200/200</sub>
 </td>
 <td align="center" valign="middle" width="33%">
-<a href="docs/guides/add-your-robot.md"><b>➕ Your robot</b></a><br><br>
+<a href="docs/guides/add-your-robot.md"><img src="docs/media/uzumaki-logo.png" width="96" alt="Uzumaki logo"><br><b>➕ Your robot</b></a><br><br>
 <sub>Describe the body as parts, effectors and capabilities, write an adapter, and run <code>python -m uzumaki.conformance</code>. The core never changes.</sub>
 </td>
 </tr>
