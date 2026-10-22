@@ -4,6 +4,16 @@ Documentary changes to canonical contracts and protocols. Entries describe speci
 
 ## Unreleased
 
+### Added — The Go1 walks: a learned locomotion policy on the `fetch` pack
+
+- `uzumaki.sim.go1_walk` and the `go1_walk` embodiment (`QuadrupedWithJaw`, task pack `fetch`): the Go1 with its neck and jaw on MuJoCo Playground's Go1 model, its legs driven by Playground's Go1 joystick policy (ONNX, run with `onnxruntime`). Both are pinned from MuJoCo Playground at `12ad7f38` (Apache-2.0); the meshes come from the pinned Menagerie Go1. `go_to` walks to the work station. Case set `go1-walk-dev-v1` (28 cases, TidyBot's construction on seeds `go1-walk-1001` to `1028`).
+- `uzumaki.sim.assets.PinnedModel` gains `repository` and `commit`, so a pinned model can come from a repository other than Menagerie; `go1_walk` is the first. The simulator identity names the source.
+- `requirements-sim.txt` adds `onnxruntime` (with `flatbuffers` and `protobuf`).
+- No-op hooks for robots on soft legs: `SimWorld._replan_grasp` and `TidybotWorld._replan_place`. TidyBot's world reads its rig, reach and station from the instance, so the walking Go1 reuses it. `uzumaki.sim.go1.add_neck_and_jaw` builds the neck and jaw for either Go1.
+- `python -m uzumaki.sim --robot go1_walk`, `make sim-demo-go1-walk`, `tests/test_go1_walk.py`, [feature note](docs/features/go1-walk-fetch.md), GIFs in `docs/media/`.
+
+Not claimed: held-out results, walking while manipulating, navigation beyond a walk to a table, a policy trained for this neck and jaw, a physical Go1.
+
 ### Added — Unitree Go1 with a jaw: a quadruped that grips with its head
 
 - `uzumaki.sim.go1` and the `go1` embodiment (`QuadrupedWithJaw`): the Unitree Go1 from MuJoCo Menagerie at `cda5236f` (BSD-3-Clause) standing on its legs with a free body, with a six-joint neck built on its trunk and the UMI gripper (MIT, also pinned) mounted on it as the jaw. It runs the frozen `pick-place-v1` geometry unchanged at a 0.2 m table (case set `go1-dev-v1`). 28/28 meet their expectations, conformance passes, and 200 extra geometries all complete.

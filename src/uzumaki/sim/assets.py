@@ -8,7 +8,11 @@ its scene loads and of its LICENSE:
 - ``aloha``: ``aloha`` (BSD-3-Clause; the notice ships in its LICENSE file);
 - ``tidybot``: ``stanford_tidybot`` (MIT; with the Kinova Gen3 and Robotiq 2F-85 notices);
 - ``spot``: ``boston_dynamics_spot`` with its arm (BSD-3-Clause);
-- ``g1``: ``unitree_g1`` with Dex3 hands (BSD-3-Clause).
+- ``g1``: ``unitree_g1`` with Dex3 hands (BSD-3-Clause);
+- ``go1``: ``unitree_go1`` (BSD-3-Clause), and ``umi``: ``umi_gripper`` (MIT), its jaw;
+- ``go1_walk``: not Menagerie, but MuJoCo Playground at ``PLAYGROUND_COMMIT`` (Apache-2.0): the
+  Go1 model a joystick walking policy was trained on, and that policy in ONNX format. The model
+  loads its meshes from ``go1``.
 
 Files are never committed to this repository: ``fetch`` downloads them into a cache directory and
 every load verifies each file first, so a changed or partial download is refused instead of
@@ -41,6 +45,9 @@ SOURCE_URL = (
 )
 ENV_VAR = "UZUMAKI_SO101_ASSETS"
 MAX_FILE_BYTES = 16 << 20
+MENAGERIE = "google-deepmind/mujoco_menagerie"
+PLAYGROUND = "google-deepmind/mujoco_playground"
+PLAYGROUND_COMMIT = "12ad7f3842791ced39f27e5ac96d066bbe361653"
 
 #: Relative path -> SHA-256 of every file the scene loads, plus the model's license.
 FILES: Mapping[str, str] = MappingProxyType(
@@ -655,10 +662,23 @@ UMI_FILES: Mapping[str, str] = MappingProxyType(
     }
 )
 
+#: MuJoCo Playground (Apache-2.0, Google DeepMind): the Go1 model its Go1 joystick policy was
+#: trained on (collisions on the feet only) and that policy; ``uzumaki.sim.go1_walk`` walks with it.
+GO1_WALK_XML = "mujoco_playground/_src/locomotion/go1/xmls/go1_mjx_feetonly.xml"
+GO1_WALK_POLICY = "mujoco_playground/experimental/sim2sim/onnx/go1_policy.onnx"
+GO1_WALK_FILES: Mapping[str, str] = MappingProxyType(
+    {
+        "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        GO1_WALK_XML: "c33da7ff33b33d305163b6b05fadde9430b8777ccf1db88fda2e58d9cfabf82a",
+        GO1_WALK_POLICY: "386cde6a1eac679e2f2a313ade2b395d9f26905b151ee3b019c2c4163d49b6f2",
+    }
+)
+
 
 @dataclass(frozen=True)
 class PinnedModel:
-    """One Menagerie model directory at ``MENAGERIE_COMMIT`` with its pinned files."""
+    """One model directory of a GitHub repository (Menagerie unless set) at a fixed commit,
+    with its pinned files."""
 
     name: str
     directory: str
@@ -667,6 +687,8 @@ class PinnedModel:
     #: License notices of parts this model includes from other Menagerie directories: path from
     #: the Menagerie root -> SHA-256, kept in the cache under ``notices/<path>``.
     notices: Mapping[str, str] = field(default_factory=lambda: MappingProxyType({}))
+    repository: str = MENAGERIE
+    commit: str = MENAGERIE_COMMIT
 
     @property
     def env_var(self) -> str:
@@ -674,13 +696,11 @@ class PinnedModel:
 
     @property
     def source_url(self) -> str:
-        return (
-            "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/"
-            f"{MENAGERIE_COMMIT}/{self.directory}/"
-        )
+        root = f"https://raw.githubusercontent.com/{self.repository}/{self.commit}/"
+        return root + (f"{self.directory}/" if self.directory else "")
 
     def manifest_sha256(self) -> str:
-        lines = [MENAGERIE_COMMIT, *(f"{n} {d}" for n, d in sorted(self._pinned().items()))]
+        lines = [self.commit, *(f"{n} {d}" for n, d in sorted(self._pinned().items()))]
         return hashlib.sha256("\n".join(lines).encode("utf-8")).hexdigest()
 
     def _pinned(self) -> dict[str, str]:
@@ -689,7 +709,7 @@ class PinnedModel:
 
     def _url(self, name: str) -> str:
         if name.startswith("notices/"):
-            root = self.source_url.removesuffix(f"{self.directory}/")
+            root = f"https://raw.githubusercontent.com/{self.repository}/{self.commit}/"
             return root + name.removeprefix("notices/")
         return self.source_url + name
 
@@ -697,7 +717,7 @@ class PinnedModel:
         configured = os.environ.get(self.env_var)
         if configured:
             return Path(configured)
-        return Path.home() / ".cache" / "uzumaki" / f"{self.name}-{MENAGERIE_COMMIT[:12]}"
+        return Path.home() / ".cache" / "uzumaki" / f"{self.name}-{self.commit[:12]}"
 
     def verify(self, directory: Path | None = None) -> Path:
         """The asset directory if every pinned file is present and matches its hash; raises
@@ -744,6 +764,7 @@ class PinnedModel:
             "g1": "G1",
             "go1": "Go1",
             "umi": "UMI gripper",
+            "go1_walk": "Go1 walking policy",
         }
         return labels.get(self.name, self.name)
 
@@ -758,6 +779,14 @@ SPOT_MODEL = PinnedModel("spot", "boston_dynamics_spot", SPOT_FILES, "spot_arm.x
 G1_MODEL = PinnedModel("g1", "unitree_g1", G1_FILES, "g1_with_hands.xml")
 GO1_MODEL = PinnedModel("go1", "unitree_go1", GO1_FILES, "go1.xml")
 UMI_MODEL = PinnedModel("umi", "umi_gripper", UMI_FILES, "umi_gripper.xml")
+GO1_WALK_MODEL = PinnedModel(
+    "go1_walk",
+    "",
+    GO1_WALK_FILES,
+    GO1_WALK_XML,
+    repository=PLAYGROUND,
+    commit=PLAYGROUND_COMMIT,
+)
 MODELS: Mapping[str, PinnedModel] = MappingProxyType(
     {
         m.name: m
@@ -770,6 +799,7 @@ MODELS: Mapping[str, PinnedModel] = MappingProxyType(
             G1_MODEL,
             GO1_MODEL,
             UMI_MODEL,
+            GO1_WALK_MODEL,
         )
     }
 )
@@ -811,7 +841,8 @@ def main(argv: list[str]) -> int:
         except SimUnavailable as error:
             print(error, file=sys.stderr)
             return 1
-        print(f"{model.label} assets verified in {root} (menagerie {MENAGERIE_COMMIT[:12]})")
+        source = model.repository.rsplit("_", 1)[-1]
+        print(f"{model.label} assets verified in {root} ({source} {model.commit[:12]})")
     return 0
 
 

@@ -70,6 +70,8 @@ The adapter also enforces your robot's physical limits and safety envelope. Skil
 
 **A part the model lacks can be built and mounted.** The Go1 model has no neck or gripper. Its rig's `customize` builds a six-joint neck on the trunk and attaches a second pinned model, the UMI gripper, as its jaw (`MjSpec.attach`), so a `QuadrupedWithJaw` runs on the same engine (`uzumaki/sim/go1.py`). See [Go1 simulation](../features/go1-simulation.md).
 
+**Legs can walk on a learned policy.** The walking Go1 (`uzumaki/sim/go1_walk.py`) is the same rig on the model a walking policy was trained on, with TidyBot's world for `fetch`: `go_to` turns the distance to the station into the policy's velocity command, and the policy sets the leg targets every 20 ms. A policy in ONNX format runs with `onnxruntime`; pin it like a model (a `PinnedModel` can name its own repository and commit). See [Go1 walking fetch](../features/go1-walk-fetch.md).
+
 ## 3. Register it
 
 Add one entry to `EMBODIMENTS` in `uzumaki/embodiments.py`: the name, the robot, the backend, the task packs (`pick-place`, `handover` for a body with two grippers, or `fetch` for a body that can move), and `"module:Factory"` for the adapter. The adapter module is imported only when the embodiment is used, so its dependencies never reach the core.

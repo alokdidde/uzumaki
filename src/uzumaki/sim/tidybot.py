@@ -235,6 +235,10 @@ class TidybotWorld(SimWorld):
     TOOLS = FETCH_TOOLS
     ACTUATING = ACTUATING_TOOLS | {"go_to"}
     AUDITED = ("pick", "go_to", "place", "abort")
+    #: Reach from the base (see ``REACH_M``), and seconds to carry the box over the target.
+    REACH = REACH_M
+    REACH_BEARING = REACH_BEARING_DEG
+    PLACE_CARRY = PLACE_CARRY_S
 
     def __init__(
         self,
@@ -277,15 +281,24 @@ class TidybotWorld(SimWorld):
         """The base pose the physics holds: x, y (m) and heading (rad)."""
         return self.data.qpos[self._base_qpos].copy()
 
+    def _station(self, x: float, y: float) -> tuple[float, float, float] | None:
+        """Base pose (x, y, heading degrees) to work at (x, y), or ``None`` off every table."""
+        return station(x, y)
+
+    def _put_base(self, data: Any, pose: Any) -> None:
+        """Set the base pose (x, y, heading) in ``data``."""
+        data.qpos[self._base_qpos] = pose
+
     def _sync_kinematics(self) -> None:
         """Move the planning model's base to where the base is."""
         pose = self.base()
-        self.kin.data.qpos[self._base_qpos] = pose
+        self._put_base(self.kin.data, pose)
         self.kin.base_xy = (float(pose[0]), float(pose[1]))
         self.kin.base_yaw = float(pose[2])
 
     def _gripper_holding(self, arm: Any = None) -> bool:
-        closed = float(self.data.ctrl[self._grip]) > (RIG.grip_open + RIG.grip_closed) / 2
+        rig = self.rig
+        closed = float(self.data.ctrl[self._grip]) > (rig.grip_open + rig.grip_closed) / 2
         return closed and float(self.data.qpos[self._gripper_qpos]) < HOLDING_BELOW_RAD
 
     def _goal(self) -> tuple[float, float, float, float] | None:
@@ -297,7 +310,7 @@ class TidybotWorld(SimWorld):
         bx, by, heading = (float(v) for v in self.base())
         distance = math.hypot(x - bx, y - by)
         bearing = math.degrees(arm.wrap(math.atan2(y - by, x - bx) - heading))
-        return REACH_M[0] <= distance <= REACH_M[1] and abs(bearing) <= REACH_BEARING_DEG
+        return self.REACH[0] <= distance <= self.REACH[1] and abs(bearing) <= self.REACH_BEARING
 
     def _observation_extra(self) -> dict[str, Any]:
         bx, by = self.box_xy()
@@ -319,7 +332,7 @@ class TidybotWorld(SimWorld):
         count = max(2, math.ceil(float(np.linalg.norm(goal[:2] - start[:2])) * PATH_SAMPLES_PER_M))
         clear = True
         for k in range(count + 1):
-            data.qpos[self._base_qpos] = start + (goal - start) * k / count
+            self._put_base(data, start + (goal - start) * k / count)
             mujoco.mj_kinematics(self.model, data)
             mujoco.mj_collision(self.model, data)
             for i in range(data.ncon):
@@ -355,7 +368,7 @@ class TidybotWorld(SimWorld):
         """The arm pose to drive with: the box ``TRAVEL_LIFT_M`` above where it was picked up
         when holding, otherwise ready."""
         if not self.held or self.grasp is None:
-            return np.array(RIG.ready)
+            return np.array(self.rig.ready)
         raised = self._raised(self.grasp.carry, TRAVEL_LIFT_M)
         return self.grasp.carry if raised is None else raised
 
@@ -367,7 +380,7 @@ class TidybotWorld(SimWorld):
         pose is seeded from the one before, so the arm stays in one configuration and the box it
         carries is not swept through the tabletop."""
         assert self.grasp is not None
-        kin, rig = self.kin, RIG
+        kin, rig = self.kin, self.rig
         jaw_yaw = arm.wrap(self.grasp.jaw_yaw + math.radians(yaw_deg) - self.grasp.box_yaw)
         height = max(z, rig.min_site_z_m) + arm.PLACE_CLEARANCE_M
         site = arm.site_position(rig, (x, y, height), jaw_yaw, self.grasp.box_size)
@@ -381,10 +394,14 @@ class TidybotWorld(SimWorld):
             return None, None
         return arm.Placement(approach, release), over
 
+    def _replan_place(self, placement: arm.Placement, args: dict[str, Any]) -> arm.Placement:
+        """The descent and release to use once the arm is over the target (as planned here)."""
+        return placement
+
     # ------------------------------------------------------------------------------ tools
     def go_to(self, args: dict[str, Any]) -> dict[str, Any]:
         reason, context = self._admission(args, ("x_m", "y_m"))
-        planned = None if reason is not None else station(args["x_m"], args["y_m"])
+        planned = None if reason is not None else self._station(args["x_m"], args["y_m"])
         goal: Any = None
         if reason is None and planned is not None:
             x, y, yaw = planned
@@ -435,10 +452,11 @@ class TidybotWorld(SimWorld):
         if reason is not None or placement is None:
             return self._reply("rejected", reason=reason)
         before = self.box_pose()
-        self._move(over, PLACE_CARRY_S)
+        self._move(over, self.PLACE_CARRY)
+        placement = self._replan_place(placement, args)
         self._move(placement.approach, DESCEND_S)
         self._move(placement.release, DESCEND_S)
-        self._move(placement.release, RELEASE_S, grip=RIG.grip_open)
+        self._move(placement.release, RELEASE_S, grip=self.rig.grip_open)
         self.held = False
         self.grasp = None
         self.released_ms = self.clock()

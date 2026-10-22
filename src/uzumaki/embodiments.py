@@ -149,6 +149,15 @@ GO1 = QuadrupedWithJaw(
     neck=Neck(("neck_yaw", "neck_pitch", "neck_elbow", "head_pitch", "head_turn", "head_roll")),
     jaw=Gripper(("jaw/left_finger_joint", "jaw/right_finger_joint"), site="tcp"),
 )
+#: The walking Go1 (``uzumaki.sim.go1_walk``): the same legs, neck and jaw on MuJoCo Playground's
+#: Go1 model, whose legs a learned walking policy drives.
+GO1_WALK = QuadrupedWithJaw(
+    "go1_walk",
+    model="mujoco_playground/_src/locomotion/go1/xmls/go1_mjx_feetonly.xml",
+    legs=GO1.legs,
+    neck=GO1.neck,
+    jaw=GO1.jaw,
+)
 #: The scripted fixture arm of the offline baseline: exact kinematics, no model file.
 FIXTURE_ARM = SingleArm("fixture_arm", arm=Arm(("arm",)), gripper=Gripper(("gripper",)))
 
@@ -250,6 +259,15 @@ EMBODIMENTS: Mapping[str, Embodiment] = MappingProxyType(
             " (needs requirements-sim.txt and assets)",
             ("pick-place",),
             "uzumaki.sim.adapter:Go1Adapter",
+        ),
+        "go1_walk": Embodiment(
+            "go1_walk",
+            GO1_WALK,
+            "mujoco",
+            "Unitree Go1 walking on a learned policy (MuJoCo Playground), gripping with a jaw on"
+            " its neck, in MuJoCo (needs requirements-sim.txt and assets)",
+            ("fetch",),
+            "uzumaki.sim.adapter:Go1WalkAdapter",
         ),
     }
 )

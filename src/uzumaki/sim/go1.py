@@ -101,6 +101,25 @@ def _joint(body: Any, name: str, axis: tuple[float, float, float], limit: float)
 
 def customize(spec: Any) -> None:
     """Build the neck, mount the UMI gripper on it as the jaw, and lower the floor."""
+    add_neck_and_jaw(spec)
+    floor = spec.geom("floor")
+    floor.pos = [0.0, 0.0, FLOOR_Z_M]
+    floor.size = [1.5, 1.5, 0.05]
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            leg = spec.worldbody.add_geom()
+            leg.type = mujoco.mjtGeom.mjGEOM_BOX
+            leg.size = [0.02, 0.02, (TABLE_HEIGHT_M - 0.02) / 2]
+            leg.pos = [sx * 0.22, sy * 0.22, (FLOOR_Z_M - 0.02) / 2]
+            leg.rgba = [0.45, 0.37, 0.3, 1.0]
+            leg.contype = leg.conaffinity = 0
+    spec.visual.headlight.ambient = [0.35, 0.35, 0.35]
+    spec.visual.headlight.diffuse = [0.55, 0.55, 0.55]
+
+
+def add_neck_and_jaw(spec: Any) -> None:
+    """Build the neck on the Go1's trunk and mount the UMI gripper on it as the jaw, with the
+    ``tcp`` site between its fingers (``uzumaki.sim.go1_walk`` uses this too)."""
     yaw_name, pitch_name, elbow_name, head_name, turn_name, roll_name = NECK_JOINTS
     trunk = spec.body("trunk")
     neck = trunk.add_body()
@@ -165,6 +184,7 @@ def customize(spec: Any) -> None:
     umi.option.integrator = spec.option.integrator
     umi.option.impratio = spec.option.impratio
     umi.option.noslip_iterations = spec.option.noslip_iterations
+    umi.option.cone = spec.option.cone
     # The jaw's approach axis (UMI z) along the head, its fingers closing across it (UMI x).
     frame = jaw.add_frame(xyaxes=[0.0, 1.0, 0.0, 0.0, 0.0, 1.0])
     spec.attach(umi, prefix=JAW_PREFIX, frame=frame)
@@ -175,19 +195,6 @@ def customize(spec: Any) -> None:
     site.pos = [0.0, 0.0, GRIP_DEPTH_M]
     # x along the approach (UMI z), z across the jaw (UMI x).
     site.quat = [0.0, math.sqrt(0.5), 0.0, math.sqrt(0.5)]
-    floor = spec.geom("floor")
-    floor.pos = [0.0, 0.0, FLOOR_Z_M]
-    floor.size = [1.5, 1.5, 0.05]
-    for sx in (-1, 1):
-        for sy in (-1, 1):
-            leg = spec.worldbody.add_geom()
-            leg.type = mujoco.mjtGeom.mjGEOM_BOX
-            leg.size = [0.02, 0.02, (TABLE_HEIGHT_M - 0.02) / 2]
-            leg.pos = [sx * 0.22, sy * 0.22, (FLOOR_Z_M - 0.02) / 2]
-            leg.rgba = [0.45, 0.37, 0.3, 1.0]
-            leg.contype = leg.conaffinity = 0
-    spec.visual.headlight.ambient = [0.35, 0.35, 0.35]
-    spec.visual.headlight.diffuse = [0.55, 0.55, 0.55]
 
 
 RIG = ArmRig(

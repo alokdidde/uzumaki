@@ -1,7 +1,8 @@
-"""Run simulated cases (SO-101, Panda, Spot, G1, Go1, ALOHA or TidyBot) through the unchanged
-harness: same driver, selector, skills and evidence. The single arms, Spot's arm, the G1's left
-hand and the Go1's jaw run ``pick-place-v1``; ALOHA runs the two-arm ``handover-v1`` with its own
-skill set (``tests/fixtures/skills_handover_v1.json``), and TidyBot the mobile ``fetch-v1``
+"""Run simulated cases (SO-101, Panda, Spot, G1, Go1, ALOHA, TidyBot or the walking Go1) through
+the unchanged harness: same driver, selector, skills and evidence. The single arms, Spot's arm,
+the G1's left hand and the Go1's jaw run ``pick-place-v1``; ALOHA runs the two-arm
+``handover-v1`` with its own skill set (``tests/fixtures/skills_handover_v1.json``), and TidyBot
+and the walking Go1 (``go1_walk``) the mobile ``fetch-v1``
 (``tests/fixtures/skills_fetch_v1.json``).
 
 ``run_sim_case`` is ``uzumaki.baseline.run_case`` with a MuJoCo environment, so every bundle is a
@@ -9,7 +10,7 @@ normal ``uzumaki.events/1.0`` bundle and replays with ``uzumaki.baseline.replay_
 
 Command line (after ``pip install -r requirements-sim.txt`` and fetching assets)::
 
-    python -m uzumaki.sim [--robot so101|panda|spot|g1|go1|aloha|tidybot] [--case ID ...]
+    python -m uzumaki.sim [--robot so101|panda|spot|g1|go1|aloha|tidybot|go1_walk] [--case ID]
         [--out DIR] [--video] [--planner rule|model] [--provider NAME] [--model ID]
         [--record FILE | --replay FILE]
 
@@ -81,9 +82,10 @@ FETCH_SKILLS = Path("tests/fixtures/skills_fetch_v1.json")
 def simulator_identity(rig: ArmRig | None = None) -> dict[str, str]:
     """Versions and hashes that pin a simulated run (recorded in ``summary.json``)."""
     rig = rig or default_rig()
+    source = rig.assets.repository.rsplit("_", 1)[-1]
     return {
         "simulator": f"mujoco-{mujoco.__version__}",
-        "robot": f"menagerie/{rig.assets.directory}@{assets.MENAGERIE_COMMIT}",
+        "robot": f"{source}/{rig.assets.directory or rig.assets.entry}@{rig.assets.commit}",
         "assets_manifest_sha256": rig.assets.manifest_sha256(),
         "case_set": rig.case_set,
         "cases_sha256": hashlib.sha256(rig.cases_file.read_bytes()).hexdigest(),
@@ -120,9 +122,13 @@ def run_sim_case(
 ) -> tuple[CaseRun, SimWorld]:
     """Run one case in simulation; also returns the world for its true final state. For
     ``handover-v1`` the world is ALOHA's (``uzumaki.sim.aloha``), for ``fetch-v1`` TidyBot's
-    (``uzumaki.sim.tidybot``)."""
+    (``uzumaki.sim.tidybot``) or, with its rig, the walking Go1's (``uzumaki.sim.go1_walk``)."""
     worlds: list[SimWorld] = []
-    if protocol == FETCH_PROTOCOL:
+    if protocol == FETCH_PROTOCOL and rig is not None and rig.name == "go1_walk":
+        from uzumaki.sim.go1_walk import go1_walk_environment
+
+        factory = go1_walk_environment(rig.assets.verify(asset_dir), frame_hook)
+    elif protocol == FETCH_PROTOCOL:
         from uzumaki.sim.tidybot import RIG as TIDYBOT_RIG
         from uzumaki.sim.tidybot import tidybot_environment
 
@@ -176,7 +182,7 @@ def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(prog="python -m uzumaki.sim", description=__doc__)
     parser.add_argument(
         "--robot",
-        choices=(*sorted(RIGS), "aloha", "tidybot"),
+        choices=(*sorted(RIGS), "aloha", "tidybot", "go1_walk"),
         default="so101",
         help="robot to simulate",
     )
@@ -201,10 +207,11 @@ def main(argv: list[str]) -> int:
         rig, protocol, card = aloha.GIVER, HANDOVER_PROTOCOL, HANDOVER_CARD
         if options.skills == DEFAULT_SKILLS:
             options.skills = HANDOVER_SKILLS
-    elif options.robot == "tidybot":
-        from uzumaki.sim import tidybot
+    elif options.robot in ("tidybot", "go1_walk"):
+        from uzumaki.sim import go1_walk, tidybot
 
-        rig, protocol, card = tidybot.RIG, FETCH_PROTOCOL, FETCH_CARD
+        rig = tidybot.RIG if options.robot == "tidybot" else go1_walk.RIG
+        protocol, card = FETCH_PROTOCOL, FETCH_CARD
         if options.skills == DEFAULT_SKILLS:
             options.skills = FETCH_SKILLS
     else:

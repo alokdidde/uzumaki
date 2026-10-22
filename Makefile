@@ -1,4 +1,4 @@
-.PHONY: check containment baseline-evidence sim-assets sim sim-demo sim-demo-panda sim-demo-aloha sim-demo-tidybot sim-demo-spot sim-demo-g1 sim-demo-go1 live-smoke live-smoke-codex generate-live generate-live-codex demo-live demo-live-codex
+.PHONY: check containment baseline-evidence sim-assets sim sim-demo sim-demo-panda sim-demo-aloha sim-demo-tidybot sim-demo-spot sim-demo-g1 sim-demo-go1 sim-demo-go1-walk live-smoke live-smoke-codex generate-live generate-live-codex demo-live demo-live-codex
 # Offline check: no installs, network or live providers. Run after
 # `python -m pip install -r requirements-dev.txt` and `python -m pip install --no-deps -e .`.
 check:
@@ -23,12 +23,13 @@ baseline-evidence:
 # Optional MuJoCo SO-101 simulation (docs/features/so101-simulation.md). Needs
 # `python -m pip install -r requirements-sim.txt` once; sim-assets downloads the pinned SO-101 model.
 sim-assets:
-	python -m uzumaki.sim.assets fetch so101 panda aloha tidybot spot g1 go1 umi
+	python -m uzumaki.sim.assets fetch so101 panda aloha tidybot spot g1 go1 umi go1_walk
 
 # Simulator suite with the missing-simulator skip turned into a failure.
 sim:
 	UZUMAKI_REQUIRE_SIM=1 python -m pytest tests/test_sim.py tests/test_panda.py tests/test_aloha.py \
-		tests/test_tidybot.py tests/test_spot.py tests/test_g1.py tests/test_go1.py
+		tests/test_tidybot.py tests/test_spot.py tests/test_g1.py tests/test_go1.py \
+		tests/test_go1_walk.py
 
 # Every SO-101 case with bundles, summary and MP4 videos in build/sim (headless: MUJOCO_GL=osmesa).
 sim-demo:
@@ -64,6 +65,12 @@ sim-demo-g1:
 sim-demo-go1:
 	rm -rf build/sim-go1
 	python -m uzumaki.sim --robot go1 --video --out build/sim-go1
+
+# The Go1 walking between two tables on a learned policy to fetch a box (fetch-v1), in
+# build/sim-go1-walk.
+sim-demo-go1-walk:
+	rm -rf build/sim-go1-walk
+	python -m uzumaki.sim --robot go1_walk --video --out build/sim-go1-walk
 
 # Live model runs (never in CI). Pick the backend with PROVIDER and MODEL, for example
 #   make demo-live PROVIDER=anthropic                    (ANTHROPIC_API_KEY)

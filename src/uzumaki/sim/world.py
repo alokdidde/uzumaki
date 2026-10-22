@@ -369,6 +369,7 @@ class SimWorld(FixtureWorld):
         fumble = self.picks <= self.case.misgrasp_picks
         self._move(self.kin.ready_toward(grasp.hover), APPROACH_S, grip=self.rig.grip_open)
         self._move(grasp.hover, APPROACH_S)
+        grasp = self._replan_grasp(grasp)
         closing = grasp.hover if fumble else grasp.grasp
         if not fumble:
             self._move(grasp.grasp, DESCEND_S)
@@ -383,6 +384,11 @@ class SimWorld(FixtureWorld):
             return self._reply("ok", held=True)
         self._last_result = "misgrasp"
         return self._reply("error", held=False, reason="misgrasp")
+
+    def _replan_grasp(self, grasp: arm.Grasp) -> arm.Grasp:
+        """The descent, grasp and lift to use once the gripper hovers over the box (as planned
+        here; a robot on soft legs plans them again from where it now stands)."""
+        return grasp
 
     def place(self, args: dict[str, Any]) -> dict[str, Any]:
         reason, context = self._admission(args, ("x_m", "y_m", "z_m", "yaw_deg"))

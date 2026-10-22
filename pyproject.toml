@@ -24,10 +24,10 @@ addopts = "-ra"
 strict = true
 files = ["src"]
 
-# The optional simulator stack (requirements-sim.txt) ships without type information for MuJoCo,
-# and NumPy is absent from the default offline environment.
+# The optional simulator stack (requirements-sim.txt) ships without type information for MuJoCo
+# and onnxruntime, and NumPy is absent from the default offline environment.
 [[tool.mypy.overrides]]
-module = ["mujoco", "mujoco.*", "numpy", "numpy.*"]
+module = ["mujoco", "mujoco.*", "numpy", "numpy.*", "onnxruntime", "onnxruntime.*"]
 ignore_missing_imports = true
 
 [tool.ruff]
