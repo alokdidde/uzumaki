@@ -6,7 +6,12 @@ from typing import Any
 import pytest
 
 from uzumaki.anthropic_api import MIN_MAX_TOKENS, AnthropicProvider
-from uzumaki.faults import ProviderTimeout, TransientProviderError
+from uzumaki.faults import (
+    ProviderDisconnected,
+    ProviderTimeout,
+    RateLimited,
+    TransientProviderError,
+)
 from uzumaki.gateway import ProviderRejected
 
 KEY = "test-key-not-real-0123456789"
@@ -95,8 +100,9 @@ def test_unusable_answers_are_invalid_output(data: bytes, error: str) -> None:
 
 @pytest.mark.parametrize("status", [429, 500, 529])
 def test_overload_and_server_errors_are_transient(status: int) -> None:
-    with pytest.raises(TransientProviderError):
+    with pytest.raises(TransientProviderError) as raised:
         AnthropicProvider(transport=Transport((status, b"{}"))).request(REQUEST)
+    assert isinstance(raised.value, RateLimited) == (status != 500)
 
 
 @pytest.mark.parametrize(
@@ -110,7 +116,7 @@ def test_client_errors_are_rejected(status: int, code: str) -> None:
 def test_timeouts_connection_failures_and_missing_key(monkeypatch: pytest.MonkeyPatch) -> None:
     with pytest.raises(ProviderTimeout):
         AnthropicProvider(transport=Transport(TimeoutError())).request(REQUEST)
-    with pytest.raises(TransientProviderError):
+    with pytest.raises(ProviderDisconnected):
         AnthropicProvider(transport=Transport(ConnectionResetError())).request(REQUEST)
     monkeypatch.delenv("ANTHROPIC_API_KEY")
     transport = Transport()

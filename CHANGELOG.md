@@ -4,6 +4,17 @@ Documentary changes to canonical contracts and protocols. Entries describe speci
 
 ## Unreleased
 
+### Added — a Claude-subscription backend, a record of every model call, finer provider errors
+
+Ported from the issue-09 draft (#35) onto the current backend layer.
+
+- `uzumaki.claude_acp.ClaudeAcpProvider` and the `claude` backend (`--provider claude`): Claude Code with its Claude sign-in over the Agent Client Protocol (`claude-code-acp`, or `UZUMAKI_ACP_COMMAND`). One fresh agent process and session per request; an environment allowlist that never passes API-billing settings; permission, file and terminal requests refused; killed at the deadline.
+- `uzumaki.provenance.ProvenanceLog`: every model command records one contract v1.0 `model_provenance` record per call, failed and retried calls included, with a fixed error code, in `<out>/model-provenance.json`. Digests, IDs, numbers and codes only.
+- `uzumaki.faults.RateLimited` and `ProviderDisconnected` (both `TransientProviderError`, so retried as before). The OpenAI-compatible, Anthropic and Codex adapters raise them for 429/529 or usage limits and for connections closed mid-reply.
+- Tests: `tests/test_claude_acp.py` against a scripted local agent (`tests/fake_acp_agent.py`), `tests/test_provenance.py` (records validated against the contract schema), new cases in the adapter tests.
+
+Not claimed: a live run of the `claude` backend.
+
 ### Added — The Go1 walks: a learned locomotion policy on the `fetch` pack
 
 - `uzumaki.sim.go1_walk` and the `go1_walk` embodiment (`QuadrupedWithJaw`, task pack `fetch`): the Go1 with its neck and jaw on MuJoCo Playground's Go1 model, its legs driven by Playground's Go1 joystick policy (ONNX, run with `onnxruntime`). Both are pinned from MuJoCo Playground at `12ad7f38` (Apache-2.0); the meshes come from the pinned Menagerie Go1. `go_to` walks to the work station. Case set `go1-walk-dev-v1` (28 cases, TidyBot's construction on seeds `go1-walk-1001` to `1028`).

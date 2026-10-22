@@ -13,8 +13,10 @@ The runtime is stdlib-only, so this is raw HTTP rather than the ``anthropic`` SD
 - Result: the text blocks joined, ``stop_reason`` as ``finish_reason``, usage from
   ``input_tokens``/``output_tokens``. A refusal or an answer without text returns
   ``{"error": ...}``, which the caller's validator treats as invalid output.
-- Errors: 429, 529 and other 5xx, and connection failures are transient; a socket timeout is
-  ``ProviderTimeout``; 401/403 and other client errors raise ``ProviderRejected`` with fixed codes.
+- Errors, all retried within budget: 429 and 529 (overloaded) raise ``RateLimited``; a connection
+  dropped mid-reply raises ``ProviderDisconnected``; other 5xx and connection failures raise
+  ``TransientProviderError``; a socket timeout is ``ProviderTimeout``. Not retried: 401/403 and
+  other client errors raise ``ProviderRejected`` with fixed codes.
 """
 
 from __future__ import annotations
@@ -26,8 +28,14 @@ import urllib.error
 from collections.abc import Callable
 from typing import Any
 
-from uzumaki.faults import ProviderTimeout, TransientProviderError
+from uzumaki.faults import (
+    ProviderDisconnected,
+    ProviderTimeout,
+    RateLimited,
+    TransientProviderError,
+)
 from uzumaki.gateway import (
+    DISCONNECTS,
     MAX_RESPONSE_BYTES,
     MAX_TIMEOUT_S,
     ProviderRejected,
@@ -129,10 +137,14 @@ class AnthropicProvider:
             status, data = self._transport(self.url, headers, body, timeout_s)
         except TimeoutError:
             raise ProviderTimeout("provider_timeout") from None
+        except DISCONNECTS:
+            raise ProviderDisconnected("provider_disconnected") from None
         except (urllib.error.URLError, ConnectionError, OSError):
             raise TransientProviderError("provider_unreachable") from None
         latency_ms = round((self._clock() - started) * 1000)
-        if status == 429 or status >= 500:  # includes 529 overloaded
+        if status in (429, 529):  # 529: overloaded
+            raise RateLimited("rate_limited")
+        if status >= 500:
             raise TransientProviderError("provider_unavailable")
         if status in (401, 403):
             raise ProviderRejected("authentication_failed")

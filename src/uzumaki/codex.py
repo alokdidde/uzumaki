@@ -11,9 +11,10 @@ prompt, and the reply is the turn's last agent message. Results are::
 Authentication stays with the Codex CLI (``codex login`` or ``codex login --device-auth``): this
 module never reads, copies or logs its tokens. ``CODEX_DEFAULT_MODEL`` lets the CLI choose its own
 model; any other ``model`` is passed as ``--model``. Classification: a missing CLI or a sign-in
-failure raises ``ProviderRejected``; a timeout raises ``ProviderTimeout``; rate limits and other
-failed turns raise ``TransientProviderError``; output without a final message returns
-``{"error": "schema"}``. Nothing here runs in the default offline checks: tests inject ``runner``.
+failure raises ``ProviderRejected``; a timeout raises ``ProviderTimeout``; a rate or usage limit
+raises ``RateLimited``; other failed turns raise ``TransientProviderError``; output without a final
+message returns ``{"error": "schema"}``. Nothing here runs in the default offline checks: tests
+inject ``runner``.
 """
 
 from __future__ import annotations
@@ -26,7 +27,7 @@ import time
 from collections.abc import Callable, Sequence
 from typing import Any
 
-from uzumaki.faults import ProviderTimeout, TransientProviderError
+from uzumaki.faults import ProviderTimeout, RateLimited, TransientProviderError
 from uzumaki.gateway import MAX_RESPONSE_BYTES, MAX_TIMEOUT_S, ProviderRejected, _check_request
 
 CODEX_DEFAULT_MODEL = "codex-default"
@@ -50,7 +51,7 @@ def subprocess_runner(
     return done.returncode, done.stdout, done.stderr
 
 
-def _prompt(request: dict[str, Any]) -> str:
+def flatten_prompt(request: dict[str, Any]) -> str:
     """Flatten the system prompt and conversation into one plain-text prompt."""
     parts = [
         "You are answering as a model endpoint, not as a coding agent. Do not run commands or "
@@ -65,7 +66,7 @@ def _prompt(request: dict[str, Any]) -> str:
 def _classify_failure(text: str) -> Exception:
     lowered = text.lower()
     if any(marker in lowered for marker in RATE_MARKERS):
-        return TransientProviderError("provider_unavailable")
+        return RateLimited("rate_limited")
     if any(marker in lowered for marker in AUTH_MARKERS):
         return ProviderRejected("authentication_failed")
     return TransientProviderError("provider_unavailable")
@@ -135,7 +136,7 @@ class CodexProvider:
         with tempfile.TemporaryDirectory(prefix="uzumaki-codex-") as workspace:
             try:
                 code, stdout, stderr = self._runner(
-                    argv, _prompt(request).encode("utf-8"), workspace, timeout_s
+                    argv, flatten_prompt(request).encode("utf-8"), workspace, timeout_s
                 )
             except TimeoutError:
                 raise ProviderTimeout("provider_timeout") from None

@@ -10,11 +10,14 @@ is configuration:
   point a backend at another endpoint, for example any OpenAI-compatible server with
   ``--provider openai-compatible``.
 
-Backend kinds: ``openai`` (OpenAI-compatible chat completions: ``GatewayProvider``),
-``anthropic`` (the Messages API: ``AnthropicProvider``) and ``codex`` (the Codex CLI with its own
-sign-in: ``CodexProvider``). Adding a backend is one ``BACKENDS`` entry, or a new kind with an
-adapter that implements the same interface. ``--record`` keeps exchanges and ``--replay``
-answers from them with no model at all. Keys are read from the environment only, never from flags.
+Backend kinds: ``openai`` (OpenAI-compatible chat completions: ``GatewayProvider``), ``anthropic``
+(the Messages API: ``AnthropicProvider``), ``codex`` (the Codex CLI with its own sign-in:
+``CodexProvider``) and ``acp`` (Claude Code with its Claude sign-in, over the Agent Client Protocol:
+``ClaudeAcpProvider``). Adding a backend is one ``BACKENDS`` entry, or a new kind with an adapter
+that implements the same interface. ``--record`` keeps exchanges and ``--replay`` answers from them
+with no model at all. Every model call, live or replayed, is also logged as a ``model_provenance``
+record (``uzumaki.provenance``) in ``<out>/model-provenance.json``. Keys are read from the
+environment only, never from flags.
 """
 
 from __future__ import annotations
@@ -28,6 +31,7 @@ from pathlib import Path
 from typing import Any
 
 from uzumaki.anthropic_api import ANTHROPIC_DEFAULT_MODEL, AnthropicProvider
+from uzumaki.claude_acp import ACP_DEFAULT_MODEL, ClaudeAcpProvider
 from uzumaki.codex import CODEX_DEFAULT_MODEL, CodexProvider
 from uzumaki.gateway import (
     DEFAULT_BASE_URL,
@@ -36,9 +40,10 @@ from uzumaki.gateway import (
     GatewayProvider,
     RecordingProvider,
 )
+from uzumaki.provenance import ProvenanceLog
 from uzumaki.providers import RecordedProvider
 
-KINDS = ("openai", "anthropic", "codex")
+KINDS = ("openai", "anthropic", "codex", "acp")
 
 
 @dataclass(frozen=True)
@@ -115,6 +120,14 @@ BACKENDS: dict[str, Backend] = {
             CODEX_DEFAULT_MODEL,
             "the Codex CLI with its ChatGPT sign-in (codex login)",
         ),
+        Backend(
+            "claude",
+            "acp",
+            None,
+            None,
+            ACP_DEFAULT_MODEL,
+            "Claude Code with its Claude sign-in (claude login), via claude-code-acp",
+        ),
     )
 }
 #: Older names kept working.
@@ -151,6 +164,8 @@ def build_provider(
         raise BackendError(f"provider {backend.name!r} needs {key_env} in the environment")
     if backend.kind == "codex":
         return CodexProvider(), chosen
+    if backend.kind == "acp":
+        return ClaudeAcpProvider(), chosen
     if url is None:
         raise BackendError(f"provider {backend.name!r} needs --base-url (or UZUMAKI_BASE_URL)")
     if backend.kind == "anthropic":
@@ -193,7 +208,9 @@ def model_provider(options: argparse.Namespace) -> Any:
         if options.model is None:
             print("--replay needs the --model the exchanges were recorded with", file=sys.stderr)
             return None
-        return RecordedProvider.from_path(options.replay)
+        return ProvenanceLog(
+            RecordedProvider.from_path(options.replay), options.provider, replay_mode="recorded"
+        )
     try:
         provider, options.model = build_provider(
             options.provider,
@@ -206,9 +223,15 @@ def model_provider(options: argparse.Namespace) -> Any:
         return None
     if options.record is not None:
         provider = RecordingProvider(provider)
-    return provider
+    return ProvenanceLog(provider, options.provider)
 
 
 def save_exchanges(options: argparse.Namespace, provider: Any) -> None:
-    if isinstance(provider, RecordingProvider) and options.record is not None:
-        options.record.write_text(json.dumps(provider.document(), indent=1) + "\n")
+    """Write ``--record`` exchanges and ``<out>/model-provenance.json`` (when ``--out`` exists)."""
+    log = provider if isinstance(provider, ProvenanceLog) else None
+    inner = log.inner if log is not None else provider
+    if isinstance(inner, RecordingProvider) and options.record is not None:
+        options.record.write_text(json.dumps(inner.document(), indent=1) + "\n")
+    out = getattr(options, "out", None)
+    if log is not None and isinstance(out, Path) and out.is_dir():
+        (out / "model-provenance.json").write_text(json.dumps(log.document(), indent=1) + "\n")
