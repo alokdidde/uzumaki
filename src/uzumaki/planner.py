@@ -34,7 +34,7 @@ from typing import Any
 from uzumaki.registry import RegistrySnapshot
 from uzumaki.supervisor import BoundedRun
 
-PROMPT_VERSION = "planner-v1"
+PROMPT_VERSION = "planner-v2"
 ROLE = "planner"
 MAX_TOKENS = 600
 MAX_REASON_CHARS = 300
@@ -45,6 +45,9 @@ eligible. Choose exactly one eligible skill with parameters that satisfy its inp
 abstain when no eligible skill fits or the situation is unclear.
 
 Rules:
+- The harness lists a skill under "eligible_skills" only after checking its applies_when
+  conditions (fresh poses, tabletop frame, whether the box is held) against the latest
+  observations; do not re-check them. Skills read the box pose themselves, so it is not shown.
 - Only choose a skill_id and skill_version listed under "eligible_skills".
 - Parameters must match that skill's input schema exactly: no extra keys, numbers within range.
 - You cannot run code or call tools. The harness executes the skill you choose and an

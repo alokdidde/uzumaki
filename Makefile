@@ -1,4 +1,4 @@
-.PHONY: check containment baseline-evidence sim-assets sim sim-demo live-smoke generate-live
+.PHONY: check containment baseline-evidence sim-assets sim sim-demo live-smoke live-smoke-codex generate-live generate-live-codex
 # Offline check: no installs, network or live providers. Run after
 # `python -m pip install -r requirements-dev.txt` and `python -m pip install --no-deps -e .`.
 check:
@@ -41,6 +41,11 @@ live-smoke:
 	rm -rf build/live
 	python -m uzumaki.sim --planner model --case nominal --out build/live --record build/live-exchanges.json
 
+# Same smoke run through the Codex CLI signed in with ChatGPT (`codex login --device-auth`).
+live-smoke-codex:
+	rm -rf build/live
+	python -m uzumaki.sim --planner model --provider codex --case nominal --out build/live --record build/live-exchanges.json
+
 # Explicit live generation run (never in CI): Claude writes the transfer-box skill through the
 # gateway, repairs it on the 16 SO-101 development cases and the accepted program is confirmed on
 # the 12 withheld cases. Needs an admitted restricted-worker host, gateway access and
@@ -48,3 +53,8 @@ live-smoke:
 generate-live:
 	rm -rf build/generate
 	MUJOCO_GL=osmesa python -m uzumaki.sim.generate --video --out build/generate --record build/generate-exchanges.json
+
+# Same generation run through the Codex CLI signed in with ChatGPT (`codex login --device-auth`).
+generate-live-codex:
+	rm -rf build/generate
+	MUJOCO_GL=osmesa python -m uzumaki.sim.generate --provider codex --video --out build/generate --record build/generate-exchanges.json

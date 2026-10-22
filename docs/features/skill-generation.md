@@ -32,7 +32,8 @@ Then the frozen round-3 program passes 12/12 confirmation cases. The whole run t
 ## Running it
 
 ```
-make generate-live   # live: Claude through the gateway, video of the accepted program
+make generate-live         # live: Claude through the gateway, video of the accepted program
+make generate-live-codex   # live: the Codex CLI signed in with ChatGPT (GPT, not Claude)
 python -m uzumaki.sim.generate --replay build/generate-exchanges.json --out build/generate-replay   # offline
 ```
 

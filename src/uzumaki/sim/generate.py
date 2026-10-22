@@ -2,8 +2,8 @@
 
 Command line (after ``pip install -r requirements-sim.txt`` and fetching assets)::
 
-    python -m uzumaki.sim.generate [--out DIR] [--model ID] [--rounds N] [--video]
-        [--record FILE | --replay FILE]
+    python -m uzumaki.sim.generate [--out DIR] [--provider gateway|codex] [--model ID]
+        [--rounds N] [--video] [--record FILE | --replay FILE]
 
 The generator (``uzumaki.generator``, capability ``transfer-box``) writes a program; each checked
 program runs sandboxed on the 16 development cases (the eight fault mirrors and so101-dev-009 to
@@ -14,7 +14,8 @@ generator never sees. These are development cases withheld from repair, not a he
 Writes ``round-<n>.py`` (each program), ``round-<n>/<case>.json`` bundles, ``confirmation/``
 bundles, ``summary.json`` and, with ``--video``, ``accepted-<case>.mp4`` of the accepted program
 on the first confirmation case. Calls the model live through the Vercel AI Gateway
-(``AI_GATEWAY_API_KEY``) unless ``--replay`` answers from a recorded exchanges file.
+(``AI_GATEWAY_API_KEY``), or with ``--provider codex`` through the Codex CLI signed in with a
+ChatGPT account, unless ``--replay`` answers from a recorded exchanges file.
 """
 
 from __future__ import annotations
@@ -28,6 +29,7 @@ from pathlib import Path
 from typing import Any
 
 from uzumaki.baseline import export_evidence
+from uzumaki.codex import CODEX_DEFAULT_MODEL, CodexProvider
 from uzumaki.gateway import DEFAULT_KEY_ENV, DEFAULT_MODEL, GatewayProvider, RecordingProvider
 from uzumaki.generator import (
     MAX_ROUNDS,
@@ -85,21 +87,27 @@ def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(prog="python -m uzumaki.sim.generate", description=__doc__)
     parser.add_argument("--out", type=Path, default=Path("build/generate"))
     parser.add_argument("--skills", type=Path, default=DEFAULT_SKILLS)
-    parser.add_argument("--model", default=DEFAULT_MODEL, help="gateway model ID")
+    parser.add_argument("--provider", choices=("gateway", "codex"), default="gateway")
+    parser.add_argument("--model", help=f"model ID (gateway default: {DEFAULT_MODEL})")
     parser.add_argument("--rounds", type=int, default=MAX_ROUNDS)
     parser.add_argument("--video", action="store_true", help="video of the accepted program")
     exchanges = parser.add_mutually_exclusive_group()
     exchanges.add_argument("--record", type=Path, help="keep model exchanges in this file")
     exchanges.add_argument("--replay", type=Path, help="answer from recorded model exchanges")
     options = parser.parse_args(argv)
+    if options.model is None:
+        options.model = CODEX_DEFAULT_MODEL if options.provider == "codex" else DEFAULT_MODEL
     provider: Any
     if options.replay is not None:
         provider = RecordedProvider.from_path(options.replay)
     else:
-        if not os.environ.get(DEFAULT_KEY_ENV):
+        if options.provider == "codex":
+            provider = CodexProvider()
+        elif not os.environ.get(DEFAULT_KEY_ENV):
             print(f"the live generator needs {DEFAULT_KEY_ENV} in the environment", file=sys.stderr)
             return 1
-        provider = GatewayProvider()
+        else:
+            provider = GatewayProvider()
         if options.record is not None:
             provider = RecordingProvider(provider)
     try:
