@@ -49,7 +49,7 @@ The MVP ends at feature 18: one reproducible simulator-backed loop that selects 
 
 ![SO-101 in MuJoCo picking a box and placing it on the blue target](docs/media/so101-nominal.gif)
 
-The harness now runs in MuJoCo on a Robot Studio SO-101 arm: the same rule selector, hand-authored skills, budgets, independent evaluator and evidence bundles as the offline baseline, with physics underneath. All 28 SO-101 cases meet their frozen expectations. See [MuJoCo SO-101 simulation](docs/features/so101-simulation.md) and [decision 0002](docs/decisions/0002-so101-simulation.md). No model is in the loop yet.
+The harness now runs in MuJoCo on a Robot Studio SO-101 arm: the same rule selector, hand-authored skills, budgets, independent evaluator and evidence bundles as the offline baseline, with physics underneath. All 28 SO-101 cases meet their frozen expectations. See [MuJoCo SO-101 simulation](docs/features/so101-simulation.md) and [decision 0002](docs/decisions/0002-so101-simulation.md). A Claude planner through the Vercel AI Gateway can replace the rule selector (`--planner model`, [feature note](docs/features/model-planner.md)); it is tested offline and has not yet made a live call.
 
 ```
 python -m pip install -r requirements-dev.txt -r requirements-sim.txt && python -m pip install --no-deps -e .

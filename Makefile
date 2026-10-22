@@ -1,4 +1,4 @@
-.PHONY: check containment baseline-evidence sim-assets sim sim-demo
+.PHONY: check containment baseline-evidence sim-assets sim sim-demo live-smoke
 # Offline check: no installs, network or live providers. Run after
 # `python -m pip install -r requirements-dev.txt` and `python -m pip install --no-deps -e .`.
 check:
@@ -32,3 +32,10 @@ sim:
 sim-demo:
 	rm -rf build/sim
 	python -m uzumaki.sim --video --out build/sim
+
+# Explicit live smoke run (never in CI): the Claude planner through the Vercel AI Gateway on one
+# SO-101 case. Needs network access to ai-gateway.vercel.sh and AI_GATEWAY_API_KEY; keeps the
+# exchanges so the run replays offline (`python -m uzumaki.sim --planner model --replay ...`).
+live-smoke:
+	rm -rf build/live
+	python -m uzumaki.sim --planner model --case nominal --out build/live --record build/live-exchanges.json

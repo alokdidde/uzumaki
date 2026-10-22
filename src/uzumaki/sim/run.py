@@ -6,9 +6,15 @@ normal ``uzumaki.events/1.0`` bundle and replays with ``uzumaki.baseline.replay_
 Command line (after ``pip install -r requirements-sim.txt`` and fetching assets)::
 
     python -m uzumaki.sim [--case ID ...] [--out DIR] [--video]
+        [--planner rule|model] [--model ID] [--record FILE | --replay FILE]
 
 writes ``<case>.json`` bundles, optional ``<case>.mp4`` videos and ``summary.json`` with the
 outcome, correctness failures and true final pose error of each case and the simulator identity.
+
+``--planner model`` replaces the rule selector with ``uzumaki.planner.ModelPlanner``. By default
+it calls the model live through ``uzumaki.gateway.GatewayProvider`` (needs network access to the
+gateway and ``AI_GATEWAY_API_KEY``); ``--record FILE`` also keeps every exchange as a
+``RecordedProvider`` file, and ``--replay FILE`` answers from such a file with no network.
 """
 
 from __future__ import annotations
@@ -16,6 +22,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import sys
 import tempfile
 import time
@@ -26,6 +33,9 @@ from typing import Any
 import mujoco
 
 from uzumaki.baseline import (
+    BASELINE_BUDGETS,
+    BASELINE_SKILL_BODIES,
+    MODEL_BUDGETS,
     CaseEnvironment,
     CaseRun,
     SkillBody,
@@ -33,8 +43,12 @@ from uzumaki.baseline import (
     export_evidence,
     run_case,
 )
+from uzumaki.budgets import Budgets
 from uzumaki.evidence import DecisionSource
 from uzumaki.fixture_env import FixtureCase, FixtureClock
+from uzumaki.gateway import DEFAULT_KEY_ENV, DEFAULT_MODEL, GatewayProvider, RecordingProvider
+from uzumaki.planner import ModelPlanner
+from uzumaki.providers import RecordedProvider
 from uzumaki.registry import RegistrySnapshot, load_skill_set, seal_skill
 from uzumaki.sim import SimUnavailable, assets
 from uzumaki.sim.cases import CASE_SET, CASES_FILE, load_so101_cases
@@ -76,6 +90,9 @@ def run_sim_case(
     candidate: tuple[str, int] | None = None,
     bodies: Mapping[str, SkillBody] | None = None,
     selector: DecisionSource | None = None,
+    planner_id: str | None = None,
+    budgets: Budgets = BASELINE_BUDGETS,
+    provider: Any = None,
 ) -> tuple[CaseRun, SimWorld]:
     """Run one case in simulation; also returns the world for its true final state."""
     root = assets.verify_assets(asset_dir)
@@ -88,7 +105,17 @@ def run_sim_case(
         worlds.append(env.world)
         return env
 
-    run = run_case(case, snapshot, build, candidate=candidate, bodies=bodies, selector=selector)
+    run = run_case(
+        case,
+        snapshot,
+        build,
+        candidate=candidate,
+        bodies=bodies,
+        selector=selector,
+        planner_id=planner_id,
+        budgets=budgets,
+        provider=provider,
+    )
     return run, worlds[0]
 
 
@@ -111,7 +138,28 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--skills", type=Path, default=DEFAULT_SKILLS)
     parser.add_argument("--out", type=Path, default=Path("build/sim"))
     parser.add_argument("--video", action="store_true", help="also write <case>.mp4")
+    parser.add_argument("--planner", choices=("rule", "model"), default="rule")
+    parser.add_argument("--model", default=DEFAULT_MODEL, help="gateway model ID")
+    exchanges = parser.add_mutually_exclusive_group()
+    exchanges.add_argument("--record", type=Path, help="keep model exchanges in this file")
+    exchanges.add_argument("--replay", type=Path, help="answer from recorded model exchanges")
     options = parser.parse_args(argv)
+    provider: Any = None
+    if options.planner == "model":
+        if options.replay is not None:
+            provider = RecordedProvider.from_path(options.replay)
+        else:
+            if not os.environ.get(DEFAULT_KEY_ENV):
+                print(
+                    f"live model planner needs {DEFAULT_KEY_ENV} in the environment",
+                    file=sys.stderr,
+                )
+                return 1
+            provider = GatewayProvider()
+            if options.record is not None:
+                provider = RecordingProvider(provider)
+    elif options.record or options.replay:
+        parser.error("--record and --replay need --planner model")
     try:
         asset_dir = assets.verify_assets()
     except SimUnavailable as error:
@@ -141,9 +189,25 @@ def main(argv: list[str]) -> int:
 
             recorder = VideoRecorder()
         started = time.monotonic()
-        run, world = run_sim_case(case, snapshot, asset_dir=asset_dir, frame_hook=recorder)
+        planner: ModelPlanner | None = None
+        if provider is not None:
+            planner = ModelPlanner(snapshot, options.model, frozenset(BASELINE_SKILL_BODIES))
+        try:
+            run, world = run_sim_case(
+                case,
+                snapshot,
+                asset_dir=asset_dir,
+                frame_hook=recorder,
+                selector=planner,
+                planner_id=None if planner is None else planner.model_version,
+                budgets=BASELINE_BUDGETS if planner is None else MODEL_BUDGETS,
+                provider=provider,
+            )
+        finally:
+            if isinstance(provider, RecordingProvider) and options.record is not None:
+                options.record.write_text(json.dumps(provider.document(), indent=1) + "\n")
         runs.append(run)
-        failures = correctness_failures(case, run)
+        failures = correctness_failures(case, run, model_calls=None if planner else 0)
         verdict = run.verdict or {}
         row = {
             "case_id": case.case_id,
@@ -151,6 +215,8 @@ def main(argv: list[str]) -> int:
             "progress": verdict.get("progress"),
             "status": run.report.status,
             "attempts": run.report.usage["attempts"]["used"],
+            "model_calls": run.report.usage["model_calls"]["used"],
+            "detail": run.report.detail,
             "violations": verdict.get("violations"),
             "contacts": run.audit.get("contacts", []),
             "correctness_failures": failures,
@@ -169,7 +235,9 @@ def main(argv: list[str]) -> int:
     digests = export_evidence(runs, options.out)
     for row in rows:
         row["bundle_sha256"] = digests[row["case_id"]]
-    summary = {"identity": simulator_identity(), "cases": rows}
+    identity = simulator_identity()
+    identity["planner"] = "rule-selector-v1" if provider is None else f"{options.model}+planner-v1"
+    summary = {"identity": identity, "cases": rows}
     (options.out / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
     passed = sum(1 for row in rows if not row["correctness_failures"])
     print(f"{passed}/{len(rows)} cases met their frozen expectations; evidence in {options.out}")

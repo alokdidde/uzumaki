@@ -4,6 +4,15 @@ Documentary changes to canonical contracts and protocols. Entries describe speci
 
 ## Unreleased
 
+### Added — Claude planner through the Vercel AI Gateway (features [09](https://github.com/alokdidde/uzumaki/issues/9) and [10](https://github.com/alokdidde/uzumaki/issues/10), first cut)
+
+- `uzumaki.gateway`: `GatewayProvider` (OpenAI-compatible chat completions, default Vercel AI Gateway, key from `AI_GATEWAY_API_KEY`, fixed-code errors, transient/timeout/rejected classification, usage only when reported) and `RecordingProvider` (live exchanges as `RecordedProvider` files).
+- `uzumaki.planner`: `ModelPlanner` (prompt `planner-v1`, bounded data-only context from the pinned snapshot, strict JSON select/abstain answers validated before the driver validates again).
+- `uzumaki.baseline`: `MODEL_BUDGETS`; `run_case`, `plan_case` and `replay_case` take a planner ID, budgets and a provider; `correctness_failures(..., model_calls=None)`. `uzumaki.supervisor`: model and tool calls are numbered separately, so tool call IDs replay without model calls.
+- `python -m uzumaki.sim --planner model [--record|--replay]`, `make live-smoke`. Tests: `tests/test_gateway.py`, `tests/test_planner.py`, model-planner cases in `tests/test_sim.py`. [Feature note](docs/features/model-planner.md).
+
+Not claimed: any live model behaviour. The gateway host is blocked in the cloud environment used here, so nothing has called the live gateway yet.
+
 ### Added — MuJoCo SO-101 simulation (early slice of [feature 15](https://github.com/alokdidde/uzumaki/issues/15))
 
 - `uzumaki.sim` (optional, `requirements-sim.txt`): the pinned Menagerie SO-101 model, fetched and SHA-256 verified (`uzumaki.sim.assets`); the `so101-dev-v1` case set (`uzumaki.sim.cases`, `src/uzumaki/sim/data/so101_cases_v1.json`); the scene; top-down inverse kinematics and collision-checked grasp and place planning (`uzumaki.sim.so101`); `SimWorld` and `SimEvaluator`, which add physics, forbidden-contact detection and a reset check to the fixture contracts; and a runner and CLI (`python -m uzumaki.sim`) with optional MP4 video.

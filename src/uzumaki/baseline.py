@@ -75,7 +75,7 @@ from uzumaki.registry import (
     SkillError,
 )
 from uzumaki.replay import ReplayDivergence, ReplayMode, ReplayReport, replay, semantic_outcome
-from uzumaki.supervisor import BoundedRun, RunReport, RunStopped
+from uzumaki.supervisor import BoundedRun, ModelProvider, RunReport, RunStopped
 
 BASELINE_ID = "rule-selector-v1"
 TRIAL_SELECTOR_ID = "trial-selector-v1"
@@ -94,6 +94,17 @@ BASELINE_BUDGETS = Budgets(
     retries=0,
     max_output_bytes=4096,
     max_total_output_bytes=65536,
+    attempts=3,
+)
+#: Budgets for a model planner (``uzumaki.planner``): the protocol's 20 model calls per case,
+#: retries of invalid or transient model answers within that count, and room for model outputs.
+MODEL_BUDGETS = Budgets(
+    wall_ms=120_000,
+    model_calls=20,
+    steps=40,
+    retries=2,
+    max_output_bytes=8192,
+    max_total_output_bytes=262_144,
     attempts=3,
 )
 #: Fixed names of the frozen per-case correctness checks (``correctness_failures``).
@@ -310,9 +321,12 @@ class CasePlan:
     pins: Mapping[str, PinnedSkill]
     trial: Skill | None
     bodies: Mapping[str, SkillBody]
+    planner_id: str | None = None
 
     @property
     def selector_id(self) -> str:
+        if self.planner_id is not None:
+            return self.planner_id
         return BASELINE_ID if self.trial is None else TRIAL_SELECTOR_ID
 
     @property
@@ -340,12 +354,14 @@ def plan_case(
     *,
     candidate: tuple[str, int] | None = None,
     bodies: Mapping[str, SkillBody] | None = None,
+    planner_id: str | None = None,
 ) -> CasePlan:
     """Pin every eligible validated skill for one run and check the optional trial candidate.
 
     A trial candidate must be registered as ``candidate`` or ``validated``, apply to
     ``pick-place-v1``, verify, and have a resolvable validated dependency closure and a body.
-    Trials never change registry state.
+    Trials never change registry state. ``planner_id`` names a non-rule decision source (a model
+    planner's recorded model version); it must be the same for a run and its replay.
     """
     if not isinstance(case_id, str) or not ID_PATTERN.match(case_id):
         raise ValueError("case_id is not a valid identifier")
@@ -375,6 +391,7 @@ def plan_case(
         pins=MappingProxyType(pins),
         trial=trial,
         bodies=MappingProxyType(implementations),
+        planner_id=planner_id,
     )
 
 
@@ -470,8 +487,12 @@ class _Driver:
         decisions: DecisionSource,
         tools: ToolExecutor,
         clock: Callable[[], int],
+        budgets: Budgets = BASELINE_BUDGETS,
+        provider: ModelProvider | None = None,
     ) -> None:
         self.plan = plan
+        self.budgets = budgets
+        self.provider = provider
         self.recorder = recorder
         self.decisions = decisions
         self.tools = tools
@@ -491,10 +512,14 @@ class _Driver:
     def execute(self) -> tuple[dict[str, Any], RunReport]:
         self._run = BoundedRun(
             run_id=self.plan.run_id,
-            budgets=BASELINE_BUDGETS,
+            budgets=self.budgets,
+            provider=self.provider,
             tools=self.world_tools,
             clock=self.clock,
         )
+        bind = getattr(self.decisions, "bind", None)
+        if callable(bind):  # a model planner makes its model calls through this run
+            bind(self._run)
         report = self._run.execute(self._logic)
         if self.world_tools.diverged is not None:
             raise self.world_tools.diverged
@@ -736,12 +761,18 @@ def run_case(
     candidate: tuple[str, int] | None = None,
     bodies: Mapping[str, SkillBody] | None = None,
     selector: DecisionSource | None = None,
+    planner_id: str | None = None,
+    budgets: Budgets = BASELINE_BUDGETS,
+    provider: ModelProvider | None = None,
 ) -> CaseRun:
     """Execute one case against a fresh environment built by ``environment``.
 
-    ``selector`` replaces the rule (or trial) selector, for tests of decision validation only.
+    ``selector`` replaces the rule (or trial) selector: a model planner (with ``planner_id``, model
+    ``budgets`` and its ``provider``), or a test double for decision validation.
     """
-    plan = plan_case(case.case_id, snapshot, candidate=candidate, bodies=bodies)
+    plan = plan_case(
+        case.case_id, snapshot, candidate=candidate, bodies=bodies, planner_id=planner_id
+    )
     env = environment(case)
     backend = FixtureBackend(env.world, env.evaluator)
     recorder = EventRecorder(
@@ -756,7 +787,8 @@ def run_case(
         selector = RuleSelector()
     elif selector is None:
         selector = TrialSelector()
-    bundle, report = _Driver(plan, recorder, selector, backend, env.clock).execute()
+    driver = _Driver(plan, recorder, selector, backend, env.clock, budgets, provider)
+    bundle, report = driver.execute()
     trial_verdict: CandidateVerdict | None = None
     if plan.trial is not None:
         trial_verdict = env.evaluator.candidate_verdict(
@@ -802,6 +834,8 @@ def replay_case(
     *,
     candidate: tuple[str, int] | None = None,
     bodies: Mapping[str, SkillBody] | None = None,
+    planner_id: str | None = None,
+    budgets: Budgets = BASELINE_BUDGETS,
 ) -> ReplayReport:
     """Recorded-decision replay of a case bundle through the same harness logic.
 
@@ -810,12 +844,19 @@ def replay_case(
     ``ReplayDivergence`` when the logic asks for something that was not recorded.
     """
     validate_bundle(bundle)
-    plan = plan_case(bundle["manifest"]["task_id"], snapshot, candidate=candidate, bodies=bodies)
+    plan = plan_case(
+        bundle["manifest"]["task_id"],
+        snapshot,
+        candidate=candidate,
+        bodies=bodies,
+        planner_id=planner_id,
+    )
 
     def runner(
         recorder: EventRecorder, decisions: DecisionSource, tools: ToolExecutor
     ) -> dict[str, Any]:
-        replayed, _report = _Driver(plan, recorder, decisions, tools, _Counter()).execute()
+        driver = _Driver(plan, recorder, decisions, tools, _Counter(), budgets)
+        replayed, _report = driver.execute()
         return replayed
 
     return replay(
@@ -827,8 +868,13 @@ def replay_case(
     )
 
 
-def correctness_failures(case: FixtureCase, run: CaseRun) -> list[str]:
-    """Names (from ``CORRECTNESS_CHECKS``) of the frozen checks this run fails; empty if none."""
+def correctness_failures(
+    case: FixtureCase, run: CaseRun, *, model_calls: int | None = 0
+) -> list[str]:
+    """Names (from ``CORRECTNESS_CHECKS``) of the frozen checks this run fails; empty if none.
+
+    ``model_calls`` is the expected model-call count; ``None`` skips that check (model planner).
+    """
     try:
         validate_bundle(run.bundle)
         semantic = semantic_outcome(run.bundle)
@@ -849,7 +895,10 @@ def correctness_failures(case: FixtureCase, run: CaseRun) -> list[str]:
             dict(expected["admitted"]),
         ),
         "violations": (verdict["violations"], 0),
-        "model_calls": (run.report.usage["model_calls"]["used"], 0),
+        "model_calls": (
+            run.report.usage["model_calls"]["used"],
+            run.report.usage["model_calls"]["used"] if model_calls is None else model_calls,
+        ),
         "bundle_outcome": (semantic.outcome, (verdict["primary"], verdict["progress"])),
         "bundle_state": (semantic.status, run.report.state),
     }

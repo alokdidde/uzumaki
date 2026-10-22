@@ -237,3 +237,38 @@ def test_inverse_kinematics_reaches_its_target(sim: None) -> None:
     frame = kin.data.site_xmat[kin.site].reshape(3, 3)
     assert frame[2, 0] < -0.999  # fingers point straight down
     assert kin.solve((0.0, 0.30, 0.03), 0.0) is None  # beyond reach
+
+
+@pytest.mark.parametrize("case_id", ["nominal", "failed-grasp", "unreachable-goal"])
+def test_model_planner_drives_the_so101(sim: None, case_id: str, tmp_path: Path) -> None:
+    """A (fake) model chooses the skills; recorded exchanges replay the same run offline."""
+    from model_fakes import CompetentModel
+    from uzumaki.baseline import BASELINE_SKILL_BODIES, MODEL_BUDGETS
+    from uzumaki.gateway import RecordingProvider
+    from uzumaki.planner import ModelPlanner
+    from uzumaki.providers import RecordedProvider
+    from uzumaki.sim.run import run_sim_case
+
+    registry = snapshot()
+    case = case_named(case_id)
+
+    def run_with(provider: Any) -> Any:
+        planner = ModelPlanner(registry, "fake/model", frozenset(BASELINE_SKILL_BODIES))
+        run, _world = run_sim_case(
+            case,
+            registry,
+            selector=planner,
+            planner_id=planner.model_version,
+            budgets=MODEL_BUDGETS,
+            provider=provider,
+        )
+        return run
+
+    recording = RecordingProvider(CompetentModel())
+    live = run_with(recording)
+    assert correctness_failures(case, live, model_calls=None) == []
+    assert live.report.usage["model_calls"]["used"] >= 1
+    path = tmp_path / "exchanges.json"
+    path.write_text(json.dumps(recording.document()), encoding="utf-8")
+    again = run_with(RecordedProvider.from_path(path))
+    assert json.dumps(again.bundle, sort_keys=True) == json.dumps(live.bundle, sort_keys=True)
