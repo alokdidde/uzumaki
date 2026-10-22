@@ -20,8 +20,15 @@ from uzumaki.sim import SimUnavailable
 class VideoRecorder:
     """Frame hook for ``SimWorld``: samples the scene at ``fps`` from a fixed overview camera."""
 
-    def __init__(self, fps: int = 20, width: int = 640, height: int = 480) -> None:
+    def __init__(
+        self,
+        fps: int = 20,
+        width: int = 640,
+        height: int = 480,
+        camera: tuple[float, ...] = (0.0, -0.05, 0.09, 0.85, -90.0, -32.0),
+    ) -> None:
         self.fps = fps
+        self.view = camera
         self.width = width
         self.height = height
         self.frames: list[bytes] = []
@@ -33,10 +40,11 @@ class VideoRecorder:
         if self._renderer is None:
             self._renderer = mujoco.Renderer(model, self.height, self.width)
             camera = mujoco.MjvCamera()
-            camera.lookat[:] = [0.0, -0.05, 0.09]
-            camera.distance = 0.85
-            camera.azimuth = -90.0
-            camera.elevation = -32.0
+            x, y, z, distance, azimuth, elevation = self.view
+            camera.lookat[:] = [x, y, z]
+            camera.distance = distance
+            camera.azimuth = azimuth
+            camera.elevation = elevation
             self._camera = camera
             self._next_time = data.time
         if data.time + 1e-9 < self._next_time:

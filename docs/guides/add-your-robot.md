@@ -58,6 +58,8 @@ An adapter (see `uzumaki.embodiments.EnvironmentAdapter`) gives, for a task pack
 
 The adapter also enforces your robot's physical limits and safety envelope. Skills are never trusted with them. The SO-101's adapter is `uzumaki/sim/adapter.py`; its world, kinematics and scene are in `uzumaki/sim/`.
 
+**A single arm in MuJoCo needs no adapter code.** Write an `ArmRig` (`uzumaki/sim/arm.py`) and add it to `RIGS`; the shared engine supplies the scene, kinematics, world, evaluator and adapter (`ArmAdapter`). The Panda took one file, `uzumaki/sim/panda.py`, about 100 lines: its pinned model, base placement, actuators, gripper control values, a tool-centre site (added to the model when it has none), finger pad bodies, IK seeds and, because it is heavy, gravity compensation. See [Panda simulation](../features/panda-simulation.md).
+
 ## 3. Register it
 
 Add one entry to `EMBODIMENTS` in `uzumaki/embodiments.py`: the name, the robot, the backend, the task packs, and `"module:Factory"` for the adapter. The adapter module is imported only when the embodiment is used, so its dependencies never reach the core.

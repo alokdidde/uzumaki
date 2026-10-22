@@ -1,9 +1,11 @@
-"""MuJoCo scene for one case: the pinned SO-101, a tabletop, one box and a target marker.
+"""MuJoCo scene for one case: a pinned arm, a tabletop, one box and a target marker.
 
 The tabletop frame is the ``pick-place-v1`` goal frame: right-handed metres, tabletop at z = 0,
-x/y bounds [-0.25, 0.25]. The arm base sits at ``BASE_XY`` facing +y. A floor 0.4 m below the
-tabletop catches anything that falls, so a drop shows up as a forbidden contact. The target marker
-is visual only (no collisions).
+x/y bounds [-0.25, 0.25]. The arm's root body is placed where its ``ArmRig`` says (the SO-101 at
+``BASE_XY`` facing +y), the rig's tool-centre site is added if the model has none, the model's
+keyframes are dropped (the scene adds a box joint) and the timestep is ``TIMESTEP_S``. A floor
+0.4 m below the tabletop catches anything that falls, so a drop shows up as a forbidden contact.
+The target marker is visual only (no collisions).
 """
 
 from __future__ import annotations
@@ -15,8 +17,9 @@ from typing import Any
 import mujoco
 
 from uzumaki.fixture_env import TABLE_BOUND_M, FixtureCase
-from uzumaki.sim.cases import BASE_XY, BASE_YAW_DEG
+from uzumaki.sim.arm import ArmRig, default_rig
 
+TIMESTEP_S = 0.005
 TABLE_THICKNESS_M = 0.02
 FLOOR_Z_M = -0.4
 BOX_DENSITY = 250.0  # kg/m^3: a 4.5 cm box weighs about 23 g
@@ -29,14 +32,30 @@ def _yaw_quat(yaw_rad: float) -> list[float]:
     return [math.cos(yaw_rad / 2), 0.0, 0.0, math.sin(yaw_rad / 2)]
 
 
-def build_model(case: FixtureCase, assets: Path) -> Any:
-    """Compile the scene for ``case`` from verified assets (see ``uzumaki.sim.assets``)."""
-    spec = mujoco.MjSpec.from_file(str(assets / "so101.xml"))
+def build_model(case: FixtureCase, assets: Path, rig: ArmRig | None = None) -> Any:
+    """Compile the scene for ``case`` from verified assets (see ``uzumaki.sim.assets``); the
+    default rig is the SO-101."""
+    rig = rig or default_rig()
+    spec = mujoco.MjSpec.from_file(str(assets / rig.assets.entry))
+    spec.option.timestep = TIMESTEP_S
     spec.visual.global_.offwidth = 1280
     spec.visual.global_.offheight = 960
-    base = spec.body("base")
-    base.pos = [BASE_XY[0], BASE_XY[1], 0.0]
-    base.quat = _yaw_quat(math.radians(BASE_YAW_DEG))
+    for key in list(spec.keys):
+        spec.delete(key)
+    base = spec.body(rig.root_body)
+    base.pos = [rig.base_xy[0], rig.base_xy[1], rig.base_z_m]
+    base.quat = _yaw_quat(math.radians(rig.base_yaw_deg))
+    if rig.gravity_compensation:
+        stack = [base]
+        while stack:
+            body = stack.pop()
+            body.gravcomp = 1.0
+            stack.extend(body.bodies)
+    if rig.site_body is not None:
+        site = spec.body(rig.site_body).add_site()
+        site.name = rig.site
+        site.pos = list(rig.site_pos)
+        site.quat = list(rig.site_quat)
     world = spec.worldbody
 
     floor = world.add_geom()
@@ -76,6 +95,17 @@ def build_model(case: FixtureCase, assets: Path) -> Any:
     geom.density = BOX_DENSITY
     geom.friction = list(BOX_FRICTION)
     geom.rgba = [0.12, 0.7, 0.25, 1.0]
+
+    if rig.pedestal_radius_m > 0:
+        pedestal = world.add_geom()
+        pedestal.name = "pedestal"
+        pedestal.type = mujoco.mjtGeom.mjGEOM_CYLINDER
+        height = rig.base_z_m - FLOOR_Z_M
+        pedestal.size = [rig.pedestal_radius_m, height / 2, 0.0]
+        pedestal.pos = [rig.base_xy[0], rig.base_xy[1], FLOOR_Z_M + height / 2]
+        pedestal.rgba = [0.3, 0.32, 0.36, 1.0]
+        pedestal.contype = 0
+        pedestal.conaffinity = 0
 
     light = world.add_light()
     light.pos = [0.0, -0.1, 1.5]

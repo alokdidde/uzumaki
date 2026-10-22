@@ -68,6 +68,13 @@ SO101 = SingleArm(
     arm=Arm(("shoulder_pan", "shoulder_lift", "elbow_flex", "wrist_flex", "wrist_roll")),
     gripper=Gripper(("gripper",), site="gripperframe"),
 )
+#: The Franka Emika Panda as a ``SingleArm``; its ``tcp`` site is added by the MuJoCo scene.
+PANDA = SingleArm(
+    "panda",
+    model="franka_emika_panda/panda.xml",
+    arm=Arm(tuple(f"joint{i}" for i in range(1, 8))),
+    gripper=Gripper(("finger_joint1", "finger_joint2"), site="tcp"),
+)
 #: The scripted fixture arm of the offline baseline: exact kinematics, no model file.
 FIXTURE_ARM = SingleArm("fixture_arm", arm=Arm(("arm",)), gripper=Gripper(("gripper",)))
 
@@ -117,6 +124,14 @@ EMBODIMENTS: Mapping[str, Embodiment] = MappingProxyType(
             "Robot Studio SO-101 arm in MuJoCo (needs requirements-sim.txt and assets)",
             ("pick-place",),
             "uzumaki.sim.adapter:SO101Adapter",
+        ),
+        "panda": Embodiment(
+            "panda",
+            PANDA,
+            "mujoco",
+            "Franka Emika Panda arm in MuJoCo (needs requirements-sim.txt and assets)",
+            ("pick-place",),
+            "uzumaki.sim.adapter:PandaAdapter",
         ),
     }
 )

@@ -1,11 +1,12 @@
-"""Run SO-101 cases through the unchanged harness: same driver, selector, skills and evidence.
+"""Run simulated arm cases (SO-101 or Panda) through the unchanged harness: same driver, selector,
+skills and evidence.
 
 ``run_sim_case`` is ``uzumaki.baseline.run_case`` with a MuJoCo environment, so every bundle is a
 normal ``uzumaki.events/1.0`` bundle and replays with ``uzumaki.baseline.replay_case``.
 
 Command line (after ``pip install -r requirements-sim.txt`` and fetching assets)::
 
-    python -m uzumaki.sim [--case ID ...] [--out DIR] [--video]
+    python -m uzumaki.sim [--robot so101|panda] [--case ID ...] [--out DIR] [--video]
         [--planner rule|model] [--provider NAME] [--model ID]
         [--record FILE | --replay FILE]
 
@@ -51,31 +52,32 @@ from uzumaki.fixture_env import FixtureCase, FixtureClock
 from uzumaki.planner import PROMPT_VERSION, ModelPlanner
 from uzumaki.registry import RegistrySnapshot, load_skill_set, seal_skill
 from uzumaki.sim import SimUnavailable, assets
-from uzumaki.sim.cases import CASE_SET, CASES_FILE, load_so101_cases
+from uzumaki.sim.arm import RIGS, ArmRig, default_rig, rig_named
 from uzumaki.sim.world import FrameHook, SimEvaluator, SimWorld, new_world
 
 DEFAULT_SKILLS = Path("tests/fixtures/skills_pick_place_v1.json")
 
 
-def simulator_identity() -> dict[str, str]:
+def simulator_identity(rig: ArmRig | None = None) -> dict[str, str]:
     """Versions and hashes that pin a simulated run (recorded in ``summary.json``)."""
+    rig = rig or default_rig()
     return {
         "simulator": f"mujoco-{mujoco.__version__}",
-        "robot": f"menagerie/{assets.MODEL_DIR}@{assets.MENAGERIE_COMMIT}",
-        "assets_manifest_sha256": assets.manifest_sha256(),
-        "case_set": CASE_SET,
-        "cases_sha256": hashlib.sha256(CASES_FILE.read_bytes()).hexdigest(),
+        "robot": f"menagerie/{rig.assets.directory}@{assets.MENAGERIE_COMMIT}",
+        "assets_manifest_sha256": rig.assets.manifest_sha256(),
+        "case_set": rig.case_set,
+        "cases_sha256": hashlib.sha256(rig.cases_file.read_bytes()).hexdigest(),
     }
 
 
 def sim_environment(
-    asset_dir: Path, frame_hook: FrameHook | None = None
+    asset_dir: Path, frame_hook: FrameHook | None = None, rig: ArmRig | None = None
 ) -> Callable[[FixtureCase], CaseEnvironment]:
     """Environment factory for ``run_case``: a fresh physics world and evaluator per case."""
 
     def build(case: FixtureCase) -> CaseEnvironment:
         clock = FixtureClock()
-        world = new_world(case, clock, asset_dir, frame_hook)
+        world = new_world(case, clock, asset_dir, frame_hook, rig)
         return CaseEnvironment(clock, world, SimEvaluator(world))
 
     return build
@@ -93,11 +95,12 @@ def run_sim_case(
     planner_id: str | None = None,
     budgets: Budgets = BASELINE_BUDGETS,
     provider: Any = None,
+    rig: ArmRig | None = None,
 ) -> tuple[CaseRun, SimWorld]:
     """Run one case in simulation; also returns the world for its true final state."""
-    root = assets.verify_assets(asset_dir)
+    root = (rig.assets.verify if rig else assets.verify_assets)(asset_dir)
     worlds: list[SimWorld] = []
-    factory = sim_environment(root, frame_hook)
+    factory = sim_environment(root, frame_hook, rig)
 
     def build(case: FixtureCase) -> CaseEnvironment:
         env = factory(case)
@@ -134,6 +137,7 @@ def load_snapshot(path: Path) -> RegistrySnapshot:
 
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(prog="python -m uzumaki.sim", description=__doc__)
+    parser.add_argument("--robot", choices=sorted(RIGS), default="so101", help="arm to simulate")
     parser.add_argument("--case", action="append", help="case ID to run (default: all)")
     parser.add_argument("--skills", type=Path, default=DEFAULT_SKILLS)
     parser.add_argument("--out", type=Path, default=Path("build/sim"))
@@ -148,12 +152,13 @@ def main(argv: list[str]) -> int:
             return 1
     elif options.record or options.replay:
         parser.error("--record and --replay need --planner model")
+    rig = rig_named(options.robot)
     try:
-        asset_dir = assets.verify_assets()
+        asset_dir = rig.assets.verify()
     except SimUnavailable as error:
         print(error, file=sys.stderr)
         return 1
-    cases = load_so101_cases()
+    cases = rig.cases()
     if options.case:
         unknown = set(options.case) - {case.case_id for case in cases}
         if unknown:
@@ -175,7 +180,7 @@ def main(argv: list[str]) -> int:
         if options.video:
             from uzumaki.sim.video import VideoRecorder
 
-            recorder = VideoRecorder()
+            recorder = VideoRecorder(camera=rig.camera)
         started = time.monotonic()
         planner: ModelPlanner | None = None
         if provider is not None:
@@ -190,6 +195,7 @@ def main(argv: list[str]) -> int:
                 planner_id=None if planner is None else planner.model_version,
                 budgets=BASELINE_BUDGETS if planner is None else MODEL_BUDGETS,
                 provider=provider,
+                rig=rig,
             )
         finally:
             save_exchanges(options, provider)
@@ -222,7 +228,7 @@ def main(argv: list[str]) -> int:
     digests = export_evidence(runs, options.out)
     for row in rows:
         row["bundle_sha256"] = digests[row["case_id"]]
-    identity = simulator_identity()
+    identity = simulator_identity(rig)
     identity["planner"] = (
         "rule-selector-v1" if provider is None else f"{options.model}+{PROMPT_VERSION}"
     )

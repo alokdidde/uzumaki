@@ -1,13 +1,19 @@
-"""Pinned SO-101 model from MuJoCo Menagerie, fetched on demand and verified by SHA-256.
+"""Pinned robot models from MuJoCo Menagerie, fetched on demand and verified by SHA-256.
 
-The model is ``robotstudio_so101`` (Apache-2.0) at a fixed Menagerie commit. Files are never
-committed to this repository: ``fetch`` downloads them into a cache directory and every load
-verifies each file against ``FILES`` first, so a changed or partial download is refused instead of
-silently simulating a different robot.
+Each ``PinnedModel`` is one Menagerie directory at a fixed commit, with the SHA-256 of every file
+its scene loads and of its LICENSE:
 
-The cache is ``$UZUMAKI_SO101_ASSETS`` if set, otherwise ``~/.cache/uzumaki/so101-<commit>``.
+- ``so101``: ``robotstudio_so101`` (Apache-2.0);
+- ``panda``: ``franka_emika_panda`` (Apache-2.0);
+- ``aloha``: ``aloha`` (BSD-3-Clause; the notice ships in its LICENSE file).
 
-Usage: ``python -m uzumaki.sim.assets fetch`` or ``python -m uzumaki.sim.assets verify``.
+Files are never committed to this repository: ``fetch`` downloads them into a cache directory and
+every load verifies each file first, so a changed or partial download is refused instead of
+silently simulating a different robot. The cache is ``$UZUMAKI_<NAME>_ASSETS`` if set (for
+example ``UZUMAKI_SO101_ASSETS``), otherwise ``~/.cache/uzumaki/<name>-<commit>``.
+
+Usage: ``python -m uzumaki.sim.assets fetch|verify [NAME ...]`` (default: ``so101``). The
+module-level ``FILES``, ``verify_assets`` and friends are the SO-101's, as before.
 """
 
 from __future__ import annotations
@@ -18,6 +24,7 @@ import sys
 import tempfile
 import urllib.request
 from collections.abc import Mapping
+from dataclasses import dataclass
 from pathlib import Path
 from types import MappingProxyType
 
@@ -98,69 +105,246 @@ FILES: Mapping[str, str] = MappingProxyType(
 )
 
 
-def manifest_sha256() -> str:
-    """One digest over the commit and every pinned file hash (recorded with sim evidence)."""
-    lines = [MENAGERIE_COMMIT, *(f"{name} {digest}" for name, digest in sorted(FILES.items()))]
-    return hashlib.sha256("\n".join(lines).encode("utf-8")).hexdigest()
+PANDA_FILES: Mapping[str, str] = MappingProxyType(
+    {
+        "LICENSE": "a6cba85bc92e0cff7a450b1d873c0eaa2e9fc96bf472df0247a26bec77bf3ff9",
+        "assets/finger_0.obj": "215098c0fcdf7192f6c503a37cf49e3efecf8a9e1320f02b17c5584d89cc5b2c",
+        "assets/finger_1.obj": "cf239e9aca26bba09dbbf1c544c47d87cfc9a2f0637c8bb786af750b6d4eca44",
+        "assets/hand.stl": "94493e94f30fe940f2c8ca2f155c3bbe67bbff406d3edf5e261670d2f0f6e2ed",
+        "assets/hand_0.obj": "b94aab901086f85df04c019b30f43bf9aa23a7ad0443ec80a8c14662a41cabd2",
+        "assets/hand_1.obj": "cd76f7494bb314406a1819c46eb826ee254894f87235714f604a470653d9badb",
+        "assets/hand_2.obj": "e0f44a71712afa5b98eb20355eff17763d3e2e19f459b2bef19abed3727e64b3",
+        "assets/hand_3.obj": "a431a06d99e88a1b322b3122a01424ee7704daeaad0bc343b90b9604f014ad0c",
+        "assets/hand_4.obj": "21f96ef6a8de082e41b1ea9834f1043de359e5d60305541bcb63539581f53bff",
+        "assets/link0.stl": "dfc6d94330de8ddb005b311bfdba9f3b8e1aa7c256b71592ee7ff32cb9a9a5aa",
+        "assets/link0_0.obj": "6b9f41a4c203540daaeb7a33cc3d0d6c6a32dc8bba187074eeaf97b3e36b3f9c",
+        "assets/link0_1.obj": "57673d2ee2a9db2e10c8986ae57c56a7c39c012b60fd26d7d8549553b664a5ed",
+        "assets/link0_10.obj": "c9198b9d8534d628d097b0f2b239bb30343353182df098ce0d9db6bc13326848",
+        "assets/link0_11.obj": "f0adec78d6677b7799d25121981270e8bfe119b5c18d08a91ee37a54ad75f65c",
+        "assets/link0_2.obj": "1ca435a2a87a9608a146a47955724d43dd7ce10fc3dd3018800aa98f8ba86e05",
+        "assets/link0_3.obj": "3e9c6334d2b3b47944af3458ee5f20519abc20fe7ee23063bb53405ccab28046",
+        "assets/link0_4.obj": "215d25789704936120f119c0bc1cc7f68516dd3f8f1df61457b71acac3873f26",
+        "assets/link0_5.obj": "9361b104e93743045107aa5b15fb1a0835ba9c1f355aae71f56403cf6a9c33f6",
+        "assets/link0_7.obj": "2dc0b8ebbbc80e4c065d71e195adbc384f673438641fac82b07b801b4d2837cb",
+        "assets/link0_8.obj": "3b8c436999db5586b8eb47bed2b0aa7de6993868b2681b4c04246eeac42fdb7a",
+        "assets/link0_9.obj": "45178f97d2b5da6bce11f610212c4ef7d08c73db33a4fc38e1b7f66b93d023f5",
+        "assets/link1.obj": "51091e776b16babdbe2f3849b5c041f921d1f11dd94ac19a0f1c81abf496fbae",
+        "assets/link1.stl": "e41a39a94108fcf56aacff603fc91ec80541f4c1af17b51a0de5617f5566e6d2",
+        "assets/link2.obj": "5c9f8e715de52c3eb71b475de35993b3b96081e02abea9f28c414768877fc59b",
+        "assets/link2.stl": "370f7605a0fae3529db169ded50f52f171024aa792d4d773bc84197301f6a039",
+        "assets/link3.stl": "0a8d638b9349c6c0eefc4e888636ac4838c4b27170f18a51699321118af709c1",
+        "assets/link3_0.obj": "ce2da87f51708e11b189249d41401065dabe89a06e251185a06cef4d5ff27178",
+        "assets/link3_1.obj": "2880b7753a7173f38fa87ee21da4dfc7fa7be46fbe07bac5aef9e128513cb118",
+        "assets/link3_2.obj": "670cff81ae84693769ca4ae658c154cf909d81167e7c8d22b70ea977f2504efa",
+        "assets/link3_3.obj": "30ede0c812efd0e0b767d134a4eae0b84e0fa407bb6325a5a555e0569b3a3ffd",
+        "assets/link4.stl": "0180ebb5772ec9840cb049750cffb29a9ddc90311752a16ea34757782ef9e48d",
+        "assets/link4_0.obj": "443bf6d178177cf347951ecf107ccd10ca444e605e375b67304579e5f948806f",
+        "assets/link4_1.obj": "ca935ec7cc8b3f0e86aa079c76b0b3bf593b1e9830bab0fa7131ac51577c74f0",
+        "assets/link4_2.obj": "c89caf26d379c35bb9e191ee2d91d09ab29ecc792b48d8bc10b39e5b38222175",
+        "assets/link4_3.obj": "1495d17f45bdb230cf58b0beef9da4e8c9cfe76a3d2d38da89017efe5e093136",
+        "assets/link5_0.obj": "a3238b8f2af0f2eb66d9fe63dc5d41ac52d5d38507241b5ed10e3cb019ab3e71",
+        "assets/link5_1.obj": "9d994bbf83ec241e301b5197a6846da13f2a4a0582edb2c0f76962c5549649d6",
+        "assets/link5_2.obj": "83b4ffe9f772cd7fe182e98640650eebc899aaf01842656574b0416c90dd40a4",
+        "assets/link5_collision_0.obj": (
+            "3e5aa75fb13f193555c3dfb999df91d81df25006a5c3af5338297d78137c129b"
+        ),
+        "assets/link5_collision_1.obj": (
+            "87cd8f621071df010f774cbde789282b8463840dfe704f8bdfa2e29be0142e15"
+        ),
+        "assets/link5_collision_2.obj": (
+            "823ab6c8f7b1d79e0844fa071d82a03499ff68e34fddb1ba3451032c22736040"
+        ),
+        "assets/link6.stl": "20b768e99a0e0440b5754dcca108016434e57937cc356acd9c352ccd3cb27f77",
+        "assets/link6_0.obj": "0504c70ebf1b284ee8faae7dcb896b8830bc672a6552015dd5dbd121fa031fb9",
+        "assets/link6_1.obj": "45f7ca77695198b6d86ec2417ad4e42e6275044f0f96266699ee8e1057757ac1",
+        "assets/link6_10.obj": "365f26c21d10332cab8d8704645cb46930c30b3085956f2d097498c793f24db4",
+        "assets/link6_11.obj": "8ae61e08b3ad064f25bbf03b22e59cc15d65883b5a7ce92711aff29df2493901",
+        "assets/link6_12.obj": "f28d1bfd62b0244ffd19fb35fe9edefdf583d3c9167db944e87185d919e1d021",
+        "assets/link6_13.obj": "0a55fa92dccb261d07200e6565fca4c850fd17f0c1ecf38821c0b97d51796c7d",
+        "assets/link6_14.obj": "750ae3ee4781e62e3a045c662195247b03f6642b05aa93104f08258e5f6eba26",
+        "assets/link6_15.obj": "5999c1c2497a004a7c4bbe034cdf13744f839d85ae7a11b1bc386c48a3e642e6",
+        "assets/link6_16.obj": "551d7a8b37c53e7a152d008b4e36992e5b5abe74a4be18b57ee6319c27def09f",
+        "assets/link6_2.obj": "e54eee4d8232947ee8af65afd5a067e09dac2da6e7e585cb1dccb65496457da0",
+        "assets/link6_3.obj": "d4f6a25ef32fa1fa4734146981994ee760232cb077c80fea6487d78a077c7f27",
+        "assets/link6_4.obj": "be353480fe71d46f7a96f0a3cbb7e112caaf8d88368826f321a36a253c8749b2",
+        "assets/link6_5.obj": "7c87664623c3e1a6cb330db273227a69626dc5e53b4caff1d4ee7911eb3340c6",
+        "assets/link6_6.obj": "8fbc031e0d07b795ebf99115c75223141caaba317cab569159f3d477a7821681",
+        "assets/link6_7.obj": "7dc5ebb799fe281aab27d6e84e7a4efa0a8e42da2369ec83de3ea3f206f62d73",
+        "assets/link6_8.obj": "e3f77381817a341030f9dcc4c4aa7c559f80411b453fd87eb0fefecca82151bf",
+        "assets/link6_9.obj": "25a56ea9b02a03b6cb5a81f31c54f54d0185e1a0b3937c37e4289d896e50215a",
+        "assets/link7.stl": "92ac6afcf7574c034d3170d8a68e95ac9048ab9d0dd5bbd8311b86e551b9ab1c",
+        "assets/link7_0.obj": "04586b0bde011715cfc22072ac72fe0717eb4d4817bcf665987ce6cd88eb2b93",
+        "assets/link7_1.obj": "c3f72289f394c9d6749a4a327fb11f05b203c37c95032c92f28019b40ebe7e00",
+        "assets/link7_2.obj": "d2faecedb304d0989040d082410378dc949dbbda23bd18c05134f08aae984db5",
+        "assets/link7_3.obj": "b62d87c4d4bdb7b281ed341d347c39dad0e50bf36aed8ac11d050073701d5f70",
+        "assets/link7_4.obj": "cb78ccb61fd4ad6c7bff4c4d2e6cb41e1964a5a3e1a28e67c0c6202371cfc018",
+        "assets/link7_5.obj": "099071d3090b51471ba52f4f90814fd3089f4975d196e4d488117073d0bfe491",
+        "assets/link7_6.obj": "99469e2d95ab74ce0292f2f16954c87a8a7dc16652e62e970fe37c94330a81bb",
+        "assets/link7_7.obj": "426c3db8a19373f3dc73d4bec672e948121b2914c10e2e7b9c7ea80643a19e54",
+        "panda.xml": "96ad67da03710f17f798c9478fd9e9efdf24a3bf8359f05e456dd9fb158ea273",
+    }
+)
+
+ALOHA_FILES: Mapping[str, str] = MappingProxyType(
+    {
+        "LICENSE": "21868447315ac2b10e592d08958c1035b19a32cf39e9165b23033f68390098cb",
+        "aloha.xml": "68430b29719bda1b75e63f540953f81991bc3fd136bdf0a43bbe3e04393b78d3",
+        "assets/d405_solid.stl": "8a9a84dd9c9a67687e5ad0b37a7ed334dbfea6b0f995fef28524cc8da5f21ed2",
+        "assets/vx300s_1_base.stl": (
+            "d100cafe656671ca8fde98fb6a4cf2d1b746995c51c61c25ad9ea2715635d146"
+        ),
+        "assets/vx300s_2_shoulder.stl": (
+            "139745a74055cb0b23430bb5bc032bf68cf7bea5e4975c8f4c04107ae005f7f0"
+        ),
+        "assets/vx300s_3_upper_arm.stl": (
+            "900f236320dd3d500870c5fde763b2d47502d51e043a5c377875e70237108729"
+        ),
+        "assets/vx300s_4_upper_forearm.stl": (
+            "4104fc54bbfb8a9b533029f1e7e3ade3d54d638372b3195daa0c98f57e0295b5"
+        ),
+        "assets/vx300s_5_lower_forearm.stl": (
+            "66814e27fa728056416e25e02e89eb7d34c51d51c51e7c3df873829037ddc6b8"
+        ),
+        "assets/vx300s_6_wrist.stl": (
+            "90eb145c85627968c3776ae6de23ccff7e112c9dd713c46bc9acdfdaa859a048"
+        ),
+        "assets/vx300s_7_gripper_bar.stl": (
+            "b76420544e84102b1cd30745f3c6c2675f9bf08a656808101f32b6466a33f2ee"
+        ),
+        "assets/vx300s_7_gripper_prop.stl": (
+            "4536e8975278953841f25391dccef10907859e69c71b9f06f794fef6dfc5959c"
+        ),
+        "assets/vx300s_7_gripper_wrist_mount.stl": (
+            "50c54e0486d3e349785163dbce209313f7b4b3feadc252ab2e2c9e55a5d0e7ef"
+        ),
+        "assets/vx300s_8_custom_finger_left.stl": (
+            "5853af5b66dd9fc954b6705a883d8569c96536d86775d094f3670befaff67a93"
+        ),
+        "assets/vx300s_8_custom_finger_right.stl": (
+            "9a1bbd942b887f27e2680b4c99dd3b3d2f73578fa9a87cc0f4dd1da3cf88b2e2"
+        ),
+        "joint_position_actuators.xml": (
+            "ce843cf0cfecea5ec1f117eb4257d4249dc2296e92e5f2ffb40f2e0178109bc6"
+        ),
+        "keyframe_ctrl.xml": "960481d23320fb45cd1cdaa75fb48ec69fa0dec46851dabcfac7f00a583c8a45",
+    }
+)
 
 
-def asset_dir() -> Path:
-    """The configured asset cache directory (it may not exist yet)."""
-    configured = os.environ.get(ENV_VAR)
-    if configured:
-        return Path(configured)
-    return Path.home() / ".cache" / "uzumaki" / f"so101-{MENAGERIE_COMMIT[:12]}"
+@dataclass(frozen=True)
+class PinnedModel:
+    """One Menagerie model directory at ``MENAGERIE_COMMIT`` with its pinned files."""
+
+    name: str
+    directory: str
+    files: Mapping[str, str]
+    entry: str
+
+    @property
+    def env_var(self) -> str:
+        return f"UZUMAKI_{self.name.upper()}_ASSETS"
+
+    @property
+    def source_url(self) -> str:
+        return (
+            "https://raw.githubusercontent.com/google-deepmind/mujoco_menagerie/"
+            f"{MENAGERIE_COMMIT}/{self.directory}/"
+        )
+
+    def manifest_sha256(self) -> str:
+        lines = [MENAGERIE_COMMIT, *(f"{n} {d}" for n, d in sorted(self.files.items()))]
+        return hashlib.sha256("\n".join(lines).encode("utf-8")).hexdigest()
+
+    def asset_dir(self) -> Path:
+        configured = os.environ.get(self.env_var)
+        if configured:
+            return Path(configured)
+        return Path.home() / ".cache" / "uzumaki" / f"{self.name}-{MENAGERIE_COMMIT[:12]}"
+
+    def verify(self, directory: Path | None = None) -> Path:
+        """The asset directory if every pinned file is present and matches its hash; raises
+        ``SimUnavailable`` naming the first missing or mismatched file otherwise."""
+        root = self.asset_dir() if directory is None else directory
+        for name, digest in self.files.items():
+            path = root / name
+            if not path.is_file():
+                raise SimUnavailable(
+                    f"{self.label} asset missing: {name} "
+                    f"(run: python -m uzumaki.sim.assets fetch {self.name})"
+                )
+            if _sha256(path) != digest:
+                raise SimUnavailable(f"{self.label} asset does not match its pinned hash: {name}")
+        return root
+
+    def fetch(self, directory: Path | None = None) -> Path:
+        """Download every pinned file that is missing or wrong, verify it, then the set."""
+        root = self.asset_dir() if directory is None else directory
+        for name, digest in self.files.items():
+            path = root / name
+            if path.is_file() and _sha256(path) == digest:
+                continue
+            with urllib.request.urlopen(self.source_url + name, timeout=60) as response:  # noqa: S310
+                data = response.read(MAX_FILE_BYTES + 1)
+            if len(data) > MAX_FILE_BYTES or hashlib.sha256(data).hexdigest() != digest:
+                raise SimUnavailable(
+                    f"downloaded {self.label} asset does not match its pinned hash: {name}"
+                )
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with tempfile.NamedTemporaryFile(dir=path.parent, delete=False) as handle:
+                handle.write(data)
+            os.replace(handle.name, path)
+        return self.verify(root)
+
+    @property
+    def label(self) -> str:
+        return {"so101": "SO-101", "panda": "Panda", "aloha": "ALOHA"}.get(self.name, self.name)
+
+
+SO101_MODEL = PinnedModel("so101", MODEL_DIR, FILES, "so101.xml")
+PANDA_MODEL = PinnedModel("panda", "franka_emika_panda", PANDA_FILES, "panda.xml")
+ALOHA_MODEL = PinnedModel("aloha", "aloha", ALOHA_FILES, "aloha.xml")
+MODELS: Mapping[str, PinnedModel] = MappingProxyType(
+    {m.name: m for m in (SO101_MODEL, PANDA_MODEL, ALOHA_MODEL)}
+)
 
 
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def verify_assets(directory: Path | None = None) -> Path:
-    """Return the asset directory if every pinned file is present and matches its hash.
+def manifest_sha256() -> str:
+    """One digest over the commit and every pinned SO-101 file hash (recorded with evidence)."""
+    return SO101_MODEL.manifest_sha256()
 
-    Raises ``SimUnavailable`` naming the first missing or mismatched file otherwise.
-    """
-    root = asset_dir() if directory is None else directory
-    for name, digest in FILES.items():
-        path = root / name
-        if not path.is_file():
-            raise SimUnavailable(
-                f"SO-101 asset missing: {name} (run: python -m uzumaki.sim.assets fetch)"
-            )
-        if _sha256(path) != digest:
-            raise SimUnavailable(f"SO-101 asset does not match its pinned hash: {name}")
-    return root
+
+def asset_dir() -> Path:
+    """The configured SO-101 asset cache directory (it may not exist yet)."""
+    return SO101_MODEL.asset_dir()
+
+
+def verify_assets(directory: Path | None = None) -> Path:
+    """The SO-101 asset directory if every pinned file is present and matches its hash."""
+    return SO101_MODEL.verify(directory)
 
 
 def fetch_assets(directory: Path | None = None) -> Path:
-    """Download every pinned file that is missing or wrong, verify it, then verify the set."""
-    root = asset_dir() if directory is None else directory
-    for name, digest in FILES.items():
-        path = root / name
-        if path.is_file() and _sha256(path) == digest:
-            continue
-        with urllib.request.urlopen(SOURCE_URL + name, timeout=60) as response:  # noqa: S310
-            data = response.read(MAX_FILE_BYTES + 1)
-        if len(data) > MAX_FILE_BYTES or hashlib.sha256(data).hexdigest() != digest:
-            raise SimUnavailable(f"downloaded SO-101 asset does not match its pinned hash: {name}")
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with tempfile.NamedTemporaryFile(dir=path.parent, delete=False) as handle:
-            handle.write(data)
-        os.replace(handle.name, path)
-    return verify_assets(root)
+    """Download and verify the SO-101 assets."""
+    return SO101_MODEL.fetch(directory)
 
 
 def main(argv: list[str]) -> int:
-    if argv not in (["fetch"], ["verify"]):
-        print("usage: python -m uzumaki.sim.assets fetch|verify", file=sys.stderr)
+    if not argv or argv[0] not in ("fetch", "verify") or not set(argv[1:]) <= set(MODELS):
+        names = "|".join(MODELS)
+        print(f"usage: python -m uzumaki.sim.assets fetch|verify [{names} ...]", file=sys.stderr)
         return 2
-    try:
-        root = fetch_assets() if argv == ["fetch"] else verify_assets()
-    except SimUnavailable as error:
-        print(error, file=sys.stderr)
-        return 1
-    print(f"SO-101 assets verified in {root} (menagerie {MENAGERIE_COMMIT[:12]})")
+    for name in argv[1:] or ["so101"]:
+        model = MODELS[name]
+        try:
+            root = model.fetch() if argv[0] == "fetch" else model.verify()
+        except SimUnavailable as error:
+            print(error, file=sys.stderr)
+            return 1
+        print(f"{model.label} assets verified in {root} (menagerie {MENAGERIE_COMMIT[:12]})")
     return 0
 
 

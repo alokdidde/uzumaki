@@ -4,6 +4,15 @@ Documentary changes to canonical contracts and protocols. Entries describe speci
 
 ## Unreleased
 
+### Added — Franka Panda: a second arm on a shared simulation engine
+
+- `uzumaki.sim.arm`: the SO-101's kinematics, planning, scene and world code as one engine driven by an `ArmRig` (robot description, pinned model, base placement, actuators, gripper, tool-centre site, pads, IK seeds). All 28 SO-101 cases give byte-identical bundles after the move.
+- `uzumaki.sim.panda` and the `panda` embodiment: the Franka Emika Panda from MuJoCo Menagerie at `cda5236f` (SHA-256 pinned with its license). It runs the frozen `pick-place-v1` geometry unchanged: case set `panda-dev-v1` is the eight frozen fault cases plus nominal cases on `dev-001` to `dev-020`. 28/28 meet their expectations, conformance passes, and 200 extra geometries all complete.
+- `uzumaki.sim.assets.PinnedModel`: one pinned Menagerie directory per robot (`so101`, `panda`, `aloha`); `python -m uzumaki.sim.assets fetch so101 panda aloha`.
+- `python -m uzumaki.sim --robot panda`, `make sim-demo-panda`, `tests/test_panda.py`, [feature note](docs/features/panda-simulation.md), GIFs in `docs/media/`.
+
+Not claimed: held-out results, a physical Panda, the real robot's torque interface.
+
 ### Added — robot-neutral interfaces: body model, components, task packs, conformance
 
 - `uzumaki.body`: any robot as parts, effectors, sensors and capabilities (`locomote`, `reach`, `grasp`, `see`, implicit `stop`), validated, with a canonical document and SHA-256; `PartClaims` admits concurrent calls only on disjoint parts and lets `stop` preempt.

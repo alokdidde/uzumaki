@@ -4,9 +4,10 @@
 admission checks in the same order (inherited from ``FixtureWorld``), the same admission log and
 audit, the same observation fields and the same shared integer-millisecond clock, which advances
 by exactly one 5 ms physics step at a time. ``observe`` holds the arm for 100 ms. ``pick`` and
-``place`` are closed motion sequences planned by ``uzumaki.sim.so101`` from the tool arguments
-(estimated pose) and the goal; their duration is whatever the motion takes. Whether a pick holds
-the box is read from the gripper joint, as a real servo would report it.
+``place`` are closed motion sequences planned by ``uzumaki.sim.arm`` for the world's ``ArmRig``
+(the SO-101 by default) from the tool arguments (estimated pose) and the goal; their duration is
+whatever the motion takes. Whether a pick holds the box is read from the gripper joint, as a real
+servo would report it.
 
 The evaluator is privileged: it reads the true box pose, velocity and contacts from the physics
 state. Completion means the box is released (no pad contact), resting on the tabletop, within
@@ -44,7 +45,8 @@ from uzumaki.fixture_env import (
     FixtureEvaluator,
     FixtureWorld,
 )
-from uzumaki.sim import so101
+from uzumaki.sim import arm
+from uzumaki.sim.arm import ArmRig
 from uzumaki.sim.scene import build_model
 
 STEP_MS = 5
@@ -95,22 +97,23 @@ class SimWorld(FixtureWorld):
         clock: FixtureClock,
         model: Any,
         frame_hook: FrameHook | None = None,
+        rig: ArmRig | None = None,
     ) -> None:
         super().__init__(case, clock)
+        self.rig = rig = rig or arm.default_rig()
         if abs(model.opt.timestep * 1000 - STEP_MS) > 1e-9:
             raise ValueError("simulation timestep must be 5 ms")
         self.model = model
         self.data = mujoco.MjData(model)
-        self.kin = so101.Kinematics(model)
+        self.kin = arm.Kinematics(model, rig)
         self.frame_hook = frame_hook
-        self.grasp: so101.Grasp | None = None
+        self.grasp: arm.Grasp | None = None
         self.contact_events: list[dict[str, Any]] = []
         self.settled_since_ms: int | None = None
         self.ready = False
-        self._actuators = np.array(
-            [model.actuator(name).id for name in (*so101.ARM_JOINTS, so101.GRIPPER_JOINT)]
-        )
-        self._gripper_qpos = model.jnt_qposadr[model.joint(so101.GRIPPER_JOINT).id]
+        self._arm = np.array([model.actuator(name).id for name in rig.arm_actuators])
+        self._grip = model.actuator(rig.gripper_actuator).id
+        self._gripper_qpos = model.jnt_qposadr[model.joint(rig.gripper_joint).id]
         box_joint = model.body("box").jntadr[0]
         self._box_qpos = model.jnt_qposadr[box_joint]
         self._box_dof = model.jnt_dofadr[box_joint]
@@ -120,9 +123,10 @@ class SimWorld(FixtureWorld):
     # --------------------------------------------------------------------------- physics
     def _classify_geoms(self) -> None:
         model = self.model
-        base = model.body("base").id
-        robot_bodies = {b for b in range(model.nbody) if self._descends(b, base)}
-        pad_bodies = {model.body("gripper").id, model.body("moving_jaw_so101_v1").id}
+        root = model.body(self.rig.root_body).id
+        robot_bodies = {b for b in range(model.nbody) if self._descends(b, root)}
+        pad_bodies = {model.body(name).id for name in self.rig.pad_bodies}
+        priority = self.rig.pad_priority
         self._names: dict[int, str] = {}
         self._robot: set[int] = set()
         self._pads: set[int] = set()
@@ -131,7 +135,9 @@ class SimWorld(FixtureWorld):
             self._names[geom] = model.geom(geom).name or f"{model.body(body).name}:{geom}"
             if body in robot_bodies:
                 self._robot.add(geom)
-                if body in pad_bodies and int(model.geom_priority[geom]) == 1:
+                if body in pad_bodies and (
+                    priority is None or int(model.geom_priority[geom]) == priority
+                ):
                     self._pads.add(geom)
         self._box = model.geom("box").id
         self._table = model.geom("table").id
@@ -194,14 +200,14 @@ class SimWorld(FixtureWorld):
 
     def _move(self, target: Any, seconds: float, grip: float | None = None) -> None:
         """Smoothstep joint-space motion of the position actuators to ``target``."""
-        start = self.data.ctrl[self._actuators[:5]].copy()
-        grip_start = float(self.data.ctrl[self._actuators[5]])
+        start = self.data.ctrl[self._arm].copy()
+        grip_start = float(self.data.ctrl[self._grip])
         count = self._steps(seconds)
         for k in range(count):
             a = _smoothstep((k + 1) / count)
-            self.data.ctrl[self._actuators[:5]] = start + (np.asarray(target) - start) * a
+            self.data.ctrl[self._arm] = start + (np.asarray(target) - start) * a
             if grip is not None:
-                self.data.ctrl[self._actuators[5]] = grip_start + (grip - grip_start) * a
+                self.data.ctrl[self._grip] = grip_start + (grip - grip_start) * a
             self._step(1)
 
     def _hold(self, seconds: float) -> None:
@@ -209,11 +215,12 @@ class SimWorld(FixtureWorld):
 
     def _reset(self) -> None:
         """Ready pose, open gripper, box settled on the tabletop; the case clock does not run."""
-        ready = np.array(so101.READY)
+        ready = np.array(self.rig.ready)
         self.data.qpos[self.kin.qpos] = ready
-        self.data.ctrl[self._actuators[:5]] = ready
-        self.data.qpos[self._gripper_qpos] = so101.GRIP_OPEN
-        self.data.ctrl[self._actuators[5]] = so101.GRIP_OPEN
+        self.data.ctrl[self._arm] = ready
+        for adr, value in zip(self.kin.finger_qpos, self.kin.open_fingers, strict=True):
+            self.data.qpos[adr] = value
+        self.data.ctrl[self._grip] = self.rig.grip_open
         mujoco.mj_forward(self.model, self.data)
         clean = True
         for _ in range(round(RESET_SETTLE_S * 1000 / STEP_MS)):
@@ -253,8 +260,8 @@ class SimWorld(FixtureWorld):
         )
 
     def _gripper_holding(self) -> bool:
-        closed = float(self.data.ctrl[self._actuators[5]]) < so101.HOLDING_THRESHOLD
-        return closed and float(self.data.qpos[self._gripper_qpos]) > so101.HOLDING_THRESHOLD
+        closed = float(self.data.ctrl[self._grip]) < self.rig.closed_below
+        return closed and float(self.data.qpos[self._gripper_qpos]) > self.rig.opening_above
 
     def _goal(self) -> tuple[float, float, float, float] | None:
         x, y = self.case.target_xy_m
@@ -302,9 +309,9 @@ class SimWorld(FixtureWorld):
             reason = "unreachable_target"
         if reason is None and self.held:
             reason = "already_held"
-        grasp: so101.Grasp | None = None
+        grasp: arm.Grasp | None = None
         if reason is None:
-            grasp = so101.plan_grasp(
+            grasp = arm.plan_grasp(
                 self.kin,
                 args["x_m"],
                 args["y_m"],
@@ -320,12 +327,12 @@ class SimWorld(FixtureWorld):
         self.picks += 1
         before = self.box_pose()
         fumble = self.picks <= self.case.misgrasp_picks
-        self._move(so101.ready_toward(grasp.hover), APPROACH_S, grip=so101.GRIP_OPEN)
+        self._move(self.kin.ready_toward(grasp.hover), APPROACH_S, grip=self.rig.grip_open)
         self._move(grasp.hover, APPROACH_S)
         closing = grasp.hover if fumble else grasp.grasp
         if not fumble:
             self._move(grasp.grasp, DESCEND_S)
-        self._move(closing, CLOSE_S, grip=so101.GRIP_CLOSED)
+        self._move(closing, CLOSE_S, grip=self.rig.grip_closed)
         self._hold(GRIP_SETTLE_S)
         self._move(grasp.carry, LIFT_S)
         entry["effect"] = self.lifted or self._displaced(before)
@@ -345,9 +352,9 @@ class SimWorld(FixtureWorld):
             reason = "unreachable_target"
         if reason is None and (not self.held or self.grasp is None):
             reason = "not_held"
-        placement: so101.Placement | None = None
+        placement: arm.Placement | None = None
         if reason is None and self.grasp is not None:
-            placement = so101.plan_place(
+            placement = arm.plan_place(
                 self.kin, self.grasp, args["x_m"], args["y_m"], args["z_m"], args["yaw_deg"]
             )
             if placement is None:
@@ -358,7 +365,7 @@ class SimWorld(FixtureWorld):
         before = self.box_pose()
         self._move(placement.approach, CARRY_S)
         self._move(placement.release, DESCEND_S)
-        self._move(placement.release, RELEASE_S, grip=1.2)
+        self._move(placement.release, RELEASE_S, grip=self.rig.grip_open)
         self.held = False
         self.grasp = None
         self.released_ms = self.clock()
@@ -371,7 +378,7 @@ class SimWorld(FixtureWorld):
     def abort(self, args: dict[str, Any]) -> dict[str, Any]:
         if args:
             return self._reply("rejected", reason="malformed_arguments")
-        self.data.ctrl[self._actuators[:5]] = self.data.qpos[self.kin.qpos]
+        self.data.ctrl[self._arm] = self.data.qpos[self.kin.qpos]
         self._hold(ABORT_MS / 1000)
         self.aborted = True
         self._log("abort", None, {"observed": self._latest is not None, "fresh": True})
@@ -440,7 +447,11 @@ class SimEvaluator(FixtureEvaluator):
 
 
 def new_world(
-    case: FixtureCase, clock: FixtureClock, assets: Any, frame_hook: FrameHook | None = None
+    case: FixtureCase,
+    clock: FixtureClock,
+    assets: Any,
+    frame_hook: FrameHook | None = None,
+    rig: ArmRig | None = None,
 ) -> SimWorld:
     """Build the scene for ``case`` from verified assets and wrap it in a ``SimWorld``."""
-    return SimWorld(case, clock, build_model(case, assets), frame_hook)
+    return SimWorld(case, clock, build_model(case, assets, rig), frame_hook, rig)

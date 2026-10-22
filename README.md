@@ -49,15 +49,16 @@ The MVP ends at feature 18: one reproducible simulator-backed loop that selects 
 
 ![SO-101 in MuJoCo picking a box and placing it on the blue target](docs/media/so101-nominal.gif)
 
-The harness now runs in MuJoCo on a Robot Studio SO-101 arm: the same rule selector, hand-authored skills, budgets, independent evaluator and evidence bundles as the offline baseline, with physics underneath. All 28 SO-101 cases meet their frozen expectations. See [MuJoCo SO-101 simulation](docs/features/so101-simulation.md) and [decision 0002](docs/decisions/0002-so101-simulation.md). A Claude planner through the Vercel AI Gateway can replace the rule selector (`--planner model`, [feature note](docs/features/model-planner.md)); it is tested offline and has not yet made a live call. The generator role can also write a missing skill as a sandboxed program and repair it from execution traces in the simulator, then confirm it on cases it never saw (`python -m uzumaki.sim.generate`, [feature note](docs/features/skill-generation.md), [decision 0003](docs/decisions/0003-skill-program-representation.md)); this too is tested offline with a scripted model only.
+The harness now runs in MuJoCo on a Robot Studio SO-101 arm: the same rule selector, hand-authored skills, budgets, independent evaluator and evidence bundles as the offline baseline, with physics underneath. All 28 SO-101 cases meet their frozen expectations. See [MuJoCo SO-101 simulation](docs/features/so101-simulation.md) and [decision 0002](docs/decisions/0002-so101-simulation.md). A Franka Panda runs the same harness and skills unchanged, on the original frozen `pick-place-v1` geometry: 28 of 28 cases ([Panda simulation](docs/features/panda-simulation.md), [GIF](docs/media/panda-nominal.gif)). A Claude planner through the Vercel AI Gateway can replace the rule selector (`--planner model`, [feature note](docs/features/model-planner.md)); it is tested offline and has not yet made a live call. The generator role can also write a missing skill as a sandboxed program and repair it from execution traces in the simulator, then confirm it on cases it never saw (`python -m uzumaki.sim.generate`, [feature note](docs/features/skill-generation.md), [decision 0003](docs/decisions/0003-skill-program-representation.md)); this too is tested offline with a scripted model only.
 
 The whole loop also runs from one command: the planner abstains because no skill can move the box, the generator writes and repairs one, it is confirmed on withheld cases and promoted into a saved skill library, and the planner then completes the task with it (`python -m uzumaki.sim.demo`; `make demo-live PROVIDER=...` for a live run on any supported model; [feature note](docs/features/end-to-end-demo.md)). The model is configuration, not code: Anthropic, OpenAI, OpenRouter, the Vercel AI Gateway, a local Ollama or any OpenAI-compatible server, or the Codex CLI ([model backends](docs/features/model-backends.md)). The robot is configuration too: bodies are described as parts, effectors and capabilities, with ready-made configurations from a single arm to a humanoid or a quadruped with a jaw, and `python -m uzumaki.conformance` checks a new robot ([Add your robot](docs/guides/add-your-robot.md)).
 
 ```
 python -m pip install -r requirements-dev.txt -r requirements-sim.txt && python -m pip install --no-deps -e .
-make sim-assets   # fetch the pinned SO-101 model (SHA-256 verified)
+make sim-assets   # fetch the pinned SO-101, Panda and ALOHA models (SHA-256 verified)
 make sim          # simulator suite
 MUJOCO_GL=osmesa make sim-demo   # bundles, summary and MP4 videos in build/sim
+MUJOCO_GL=osmesa make sim-demo-panda   # the same on the Franka Panda
 ```
 
 ## Testing today
