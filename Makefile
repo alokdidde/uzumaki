@@ -1,4 +1,4 @@
-.PHONY: check containment baseline-evidence sim-assets sim sim-demo live-smoke live-smoke-codex generate-live generate-live-codex
+.PHONY: check containment baseline-evidence sim-assets sim sim-demo live-smoke live-smoke-codex generate-live generate-live-codex demo-live demo-live-codex
 # Offline check: no installs, network or live providers. Run after
 # `python -m pip install -r requirements-dev.txt` and `python -m pip install --no-deps -e .`.
 check:
@@ -12,7 +12,7 @@ check:
 # fails admission (see docs/features/restricted-worker.md) this exits non-zero instead of skipping.
 containment:
 	UZUMAKI_REQUIRE_CONTAINMENT=1 python -m pytest tests/test_sandbox_admission.py tests/test_broker.py tests/test_sandbox_containment.py \
-		tests/test_generator_worker.py
+		tests/test_generator_worker.py tests/test_promotion.py
 
 # Issue-08 offline baseline suite, also retaining the raw event bundles of every frozen case and
 # a hash manifest in build/evidence/baseline (ignored by Git; bundles are never committed).
@@ -58,3 +58,16 @@ generate-live:
 generate-live-codex:
 	rm -rf build/generate
 	MUJOCO_GL=osmesa python -m uzumaki.sim.generate --provider codex --video --out build/generate --record build/generate-exchanges.json
+
+# The whole loop from one command (never in CI): the planner abstains for lack of a skill, the
+# generator writes and repairs transfer-box, it is confirmed on withheld cases and promoted, and
+# the planner then completes the task with it. Bundles, library, summary and video in build/demo;
+# replays offline with `python -m uzumaki.sim.demo --replay build/demo-exchanges.json ...`.
+demo-live:
+	rm -rf build/demo
+	MUJOCO_GL=osmesa python -m uzumaki.sim.demo --video --out build/demo --record build/demo-exchanges.json
+
+# Same demo through the Codex CLI signed in with ChatGPT (`codex login --device-auth`).
+demo-live-codex:
+	rm -rf build/demo
+	MUJOCO_GL=osmesa python -m uzumaki.sim.demo --provider codex --video --out build/demo --record build/demo-exchanges.json

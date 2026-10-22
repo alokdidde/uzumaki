@@ -4,6 +4,14 @@ Documentary changes to canonical contracts and protocols. Entries describe speci
 
 ## Unreleased
 
+### Added — promotion with provenance and the one-command demo (features [17](https://github.com/alokdidde/uzumaki/issues/17) and [18](https://github.com/alokdidde/uzumaki/issues/18), slim)
+
+- `uzumaki.promotion`: `promote` (validates an accepted generated skill only with passing, non-overlapping confirmation evidence for that exact version; the record keeps digests, prompt, model, lineage and every bundle's SHA-256), `save_library`, `load_library` (checks each program against its skill's and record's digest) and `rollback` (deprecates, with an appended record).
+- `python -m uzumaki.sim.demo`: before-run with the planner abstaining, then generation, confirmation, promotion into `<out>/library`, and the after-run from the reloaded library. `make demo-live`, `make demo-live-codex`. `uzumaki.sim.generate` gains shared `--provider`/`--model`/`--record`/`--replay` helpers.
+- Tests: `tests/test_promotion.py` (in `make containment`), the demo end to end in `tests/test_sim.py`, and `DemoModel` in `tests/generated_programs.py`. [Feature note](docs/features/end-to-end-demo.md).
+
+Not claimed: a live run of the demo, held-out acceptance or physical-robot behaviour.
+
 ### Added — generated skills with trace-guided repair in simulation (features [12](https://github.com/alokdidde/uzumaki/issues/12), [13](https://github.com/alokdidde/uzumaki/issues/13) and [16](https://github.com/alokdidde/uzumaki/issues/16), first cut)
 
 - [Decision 0003](docs/decisions/0003-skill-program-representation.md): a generated skill is a Python program `run(tools, payload)` against the broker tools, wrapped in a harness-defined `CapabilitySpec`.

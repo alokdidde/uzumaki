@@ -51,6 +51,8 @@ The MVP ends at feature 18: one reproducible simulator-backed loop that selects 
 
 The harness now runs in MuJoCo on a Robot Studio SO-101 arm: the same rule selector, hand-authored skills, budgets, independent evaluator and evidence bundles as the offline baseline, with physics underneath. All 28 SO-101 cases meet their frozen expectations. See [MuJoCo SO-101 simulation](docs/features/so101-simulation.md) and [decision 0002](docs/decisions/0002-so101-simulation.md). A Claude planner through the Vercel AI Gateway can replace the rule selector (`--planner model`, [feature note](docs/features/model-planner.md)); it is tested offline and has not yet made a live call. The generator role can also write a missing skill as a sandboxed program and repair it from execution traces in the simulator, then confirm it on cases it never saw (`python -m uzumaki.sim.generate`, [feature note](docs/features/skill-generation.md), [decision 0003](docs/decisions/0003-skill-program-representation.md)); this too is tested offline with a scripted model only.
 
+The whole loop also runs from one command: the planner abstains because no skill can move the box, the generator writes and repairs one, it is confirmed on withheld cases and promoted into a saved skill library, and the planner then completes the task with it (`python -m uzumaki.sim.demo`, `make demo-live-codex` for a live run on a ChatGPT sign-in; [feature note](docs/features/end-to-end-demo.md)).
+
 ```
 python -m pip install -r requirements-dev.txt -r requirements-sim.txt && python -m pip install --no-deps -e .
 make sim-assets   # fetch the pinned SO-101 model (SHA-256 verified)

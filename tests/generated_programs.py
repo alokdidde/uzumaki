@@ -5,6 +5,7 @@ observes again before placing but always picks first, so a retry while holding i
 ``TRANSFER`` handles both and maps rejections to protocol diagnostics.
 """
 
+import json
 from typing import Any
 
 STALE_PLACE = """
@@ -134,3 +135,36 @@ class ScriptedGenerator:
         if isinstance(item, dict):
             return item
         return answer(item)
+
+
+class DemoModel:
+    """Both roles of one model for the end-to-end demo: the planner selects ``transfer-box``
+    when it is offered and otherwise abstains; the generator answers from ``programs``."""
+
+    def __init__(self, programs: list[Any]) -> None:
+        self.generator = ScriptedGenerator(programs)
+        self.requests: list[dict[str, Any]] = []
+
+    def request(self, request: dict[str, Any]) -> dict[str, Any]:
+        self.requests.append(request)
+        if request["role"] == "generator":
+            return self.generator.request(request)
+        content = request["messages"][0]["content"]
+        context = json.loads(content.split("```json\n", 1)[1].rsplit("\n```", 1)[0])
+        offered = {card["skill_id"]: card for card in context["eligible_skills"]}
+        if "transfer-box" in offered:
+            card = offered["transfer-box"]
+            decision = {
+                "action": "select",
+                "skill_id": "transfer-box",
+                "skill_version": card["skill_version"],
+                "parameters": {},
+                "reason": "transfer-box moves the box to the target",
+            }
+        else:
+            decision = {"action": "abstain", "reason": "no listed skill can move the box"}
+        return {
+            "text": json.dumps(decision),
+            "usage": {"input_tokens": 900, "output_tokens": 40},
+            "latency_ms": 5,
+        }

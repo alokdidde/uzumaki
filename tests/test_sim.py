@@ -310,3 +310,43 @@ def test_generated_skill_is_repaired_and_confirmed_on_the_so101(
     assert len(list((out / "round-1").glob("*.json"))) == 16
     assert len(list((out / "confirmation").glob("*.json"))) == 12
     assert len(json.loads(record.read_text(encoding="utf-8"))["records"]) == 3
+
+
+def test_one_command_demo_closes_the_loop_on_the_so101(
+    sim: None, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``python -m uzumaki.sim.demo`` with a scripted model for both roles: the planner abstains
+    for lack of a skill, the generator writes and repairs one, it is confirmed and promoted, and
+    the planner then completes the same task with it from the saved library."""
+    from generated_programs import NO_RESUME, STALE_PLACE, TRANSFER, DemoModel
+    from uzumaki.promotion import load_library
+    from uzumaki.sandbox import ContainmentUnavailable, admit, probe_platform
+    from uzumaki.sim import demo, generate
+
+    try:
+        admit(probe_platform())
+    except ContainmentUnavailable as error:
+        if os.environ.get("UZUMAKI_REQUIRE_CONTAINMENT") == "1":
+            raise
+        pytest.skip(f"unverified platform for the restricted worker: {error}")
+    model = DemoModel([STALE_PLACE, NO_RESUME, TRANSFER])
+    monkeypatch.setattr(generate, "GatewayProvider", lambda: model)
+    monkeypatch.setenv("AI_GATEWAY_API_KEY", "not-a-key")
+    out = tmp_path / "demo"
+    assert demo.main(["--out", str(out)]) == 0
+    summary = json.loads((out / "summary.json").read_text(encoding="utf-8"))
+    assert summary["task"] == demo.DEFAULT_CASE
+    assert summary["before"]["primary"] == "abstained"
+    assert summary["before"]["decisions"][0]["action"] == "abstain"
+    assert summary["generation"]["accepted"] == "transfer-box@3"
+    assert all(row["passed"] for row in summary["confirmation"])
+    assert summary["promotion"]["evidence_ref"] == "promotion.transfer-box.3"
+    after = summary["after"]
+    assert (after["primary"], after["status"], after["violations"]) == ("completed", "completed", 0)
+    assert after["decisions"][0]["skill_id"] == "transfer-box"
+    assert summary["result"] == "completed"
+    registry, bodies = load_library(out / "library")
+    assert registry.state("transfer-box", 3) == "validated"
+    assert list(bodies) == ["transfer-box@3"]
+    generator_requests = [r for r in model.requests if r["role"] == "generator"]
+    assert demo.DEFAULT_CASE not in json.dumps(generator_requests)

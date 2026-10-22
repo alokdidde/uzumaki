@@ -61,7 +61,41 @@ def load_registry(path: Path) -> SkillRegistry:
         return load_skill_set(sealed)
 
 
-def _rows(results: list[CaseResult]) -> list[dict[str, Any]]:
+def add_model_options(parser: argparse.ArgumentParser) -> None:
+    """``--provider``, ``--model`` and ``--record``/``--replay``, shared by the model CLIs."""
+    parser.add_argument("--provider", choices=("gateway", "codex"), default="gateway")
+    parser.add_argument("--model", help=f"model ID (gateway default: {DEFAULT_MODEL})")
+    exchanges = parser.add_mutually_exclusive_group()
+    exchanges.add_argument("--record", type=Path, help="keep model exchanges in this file")
+    exchanges.add_argument("--replay", type=Path, help="answer from recorded model exchanges")
+
+
+def model_provider(options: argparse.Namespace) -> Any:
+    """The provider the options ask for (``None`` after printing why it is unavailable). Fills in
+    the default ``options.model``."""
+    if options.model is None:
+        options.model = CODEX_DEFAULT_MODEL if options.provider == "codex" else DEFAULT_MODEL
+    provider: Any
+    if options.replay is not None:
+        return RecordedProvider.from_path(options.replay)
+    if options.provider == "codex":
+        provider = CodexProvider()
+    elif not os.environ.get(DEFAULT_KEY_ENV):
+        print(f"live model calls need {DEFAULT_KEY_ENV} in the environment", file=sys.stderr)
+        return None
+    else:
+        provider = GatewayProvider()
+    if options.record is not None:
+        provider = RecordingProvider(provider)
+    return provider
+
+
+def save_exchanges(options: argparse.Namespace, provider: Any) -> None:
+    if isinstance(provider, RecordingProvider) and options.record is not None:
+        options.record.write_text(json.dumps(provider.document(), indent=1) + "\n")
+
+
+def case_rows(results: list[CaseResult]) -> list[dict[str, Any]]:
     return [
         {
             "case_id": r.case_id,
@@ -74,7 +108,7 @@ def _rows(results: list[CaseResult]) -> list[dict[str, Any]]:
     ]
 
 
-def _write(out: Path, report: GenerationReport) -> None:
+def write_generation(out: Path, report: GenerationReport) -> None:
     for record in report.programs:
         (out / f"round-{record.round}.py").write_text(record.source, encoding="utf-8")
         if record.results:
@@ -87,29 +121,13 @@ def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(prog="python -m uzumaki.sim.generate", description=__doc__)
     parser.add_argument("--out", type=Path, default=Path("build/generate"))
     parser.add_argument("--skills", type=Path, default=DEFAULT_SKILLS)
-    parser.add_argument("--provider", choices=("gateway", "codex"), default="gateway")
-    parser.add_argument("--model", help=f"model ID (gateway default: {DEFAULT_MODEL})")
     parser.add_argument("--rounds", type=int, default=MAX_ROUNDS)
     parser.add_argument("--video", action="store_true", help="video of the accepted program")
-    exchanges = parser.add_mutually_exclusive_group()
-    exchanges.add_argument("--record", type=Path, help="keep model exchanges in this file")
-    exchanges.add_argument("--replay", type=Path, help="answer from recorded model exchanges")
+    add_model_options(parser)
     options = parser.parse_args(argv)
-    if options.model is None:
-        options.model = CODEX_DEFAULT_MODEL if options.provider == "codex" else DEFAULT_MODEL
-    provider: Any
-    if options.replay is not None:
-        provider = RecordedProvider.from_path(options.replay)
-    else:
-        if options.provider == "codex":
-            provider = CodexProvider()
-        elif not os.environ.get(DEFAULT_KEY_ENV):
-            print(f"the live generator needs {DEFAULT_KEY_ENV} in the environment", file=sys.stderr)
-            return 1
-        else:
-            provider = GatewayProvider()
-        if options.record is not None:
-            provider = RecordingProvider(provider)
+    provider = model_provider(options)
+    if provider is None:
+        return 1
     try:
         asset_dir = assets.verify_assets()
     except SimUnavailable as error:
@@ -137,13 +155,14 @@ def main(argv: list[str]) -> int:
             max_rounds=options.rounds,
         )
     finally:
-        if isinstance(provider, RecordingProvider) and options.record is not None:
-            options.record.write_text(json.dumps(provider.document(), indent=1) + "\n")
-    _write(options.out, report)
+        save_exchanges(options, provider)
+    write_generation(options.out, report)
     summary: dict[str, Any] = {
         "identity": {**simulator_identity(), "generator": f"{options.model}+generator-v1"},
         "generation": report.summary(),
-        "development": {f"round-{p.round}": _rows(p.results) for p in report.programs if p.results},
+        "development": {
+            f"round-{p.round}": case_rows(p.results) for p in report.programs if p.results
+        },
     }
     for record in report.programs:
         verdict = (
@@ -164,7 +183,7 @@ def main(argv: list[str]) -> int:
         )
         (options.out / "confirmation").mkdir()
         export_evidence([r.run for r in results], options.out / "confirmation")
-        summary["confirmation"] = _rows(results)
+        summary["confirmation"] = case_rows(results)
         passed = sum(r.passed for r in results)
         print(f"confirmation (frozen, no feedback): {passed}/{len(results)} cases")
         if options.video:
