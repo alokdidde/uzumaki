@@ -190,6 +190,11 @@ class SkillContext:
             self.observation = observation
         return observation
 
+    def fail(self, detail: str) -> NoReturn:
+        """End the run as ``failed`` because this skill's implementation broke (for example a
+        generated program that crashed in the restricted worker). ``detail`` is a fixed code."""
+        self._driver._stop(detail)
+
 
 def pick_box(ctx: SkillContext, parameters: Mapping[str, Any]) -> SkillResult:
     """``pick-box@1``: pick at the latest object pose estimate with the given grasp height."""

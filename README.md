@@ -2,7 +2,7 @@
 
 A robotics harness that uses execution feedback to develop and reuse robot skills.
 
-**Status: early implementation.** This repository contains the architecture, roadmap and testing strategy, an offline harness baseline, and an optional MuJoCo simulation of the SO-101 arm running that baseline. It does not yet contain a live model in the loop, a trained model, or hardware support.
+**Status: early implementation.** This repository contains the architecture, roadmap and testing strategy, an offline harness baseline, and an optional MuJoCo simulation of the SO-101 arm running that baseline. It does not yet contain a live model in the loop, a trained model, or hardware support. A model planner and a skill generator with trace-guided repair are implemented and tested offline.
 
 ## What we are building
 
@@ -49,7 +49,7 @@ The MVP ends at feature 18: one reproducible simulator-backed loop that selects 
 
 ![SO-101 in MuJoCo picking a box and placing it on the blue target](docs/media/so101-nominal.gif)
 
-The harness now runs in MuJoCo on a Robot Studio SO-101 arm: the same rule selector, hand-authored skills, budgets, independent evaluator and evidence bundles as the offline baseline, with physics underneath. All 28 SO-101 cases meet their frozen expectations. See [MuJoCo SO-101 simulation](docs/features/so101-simulation.md) and [decision 0002](docs/decisions/0002-so101-simulation.md). A Claude planner through the Vercel AI Gateway can replace the rule selector (`--planner model`, [feature note](docs/features/model-planner.md)); it is tested offline and has not yet made a live call.
+The harness now runs in MuJoCo on a Robot Studio SO-101 arm: the same rule selector, hand-authored skills, budgets, independent evaluator and evidence bundles as the offline baseline, with physics underneath. All 28 SO-101 cases meet their frozen expectations. See [MuJoCo SO-101 simulation](docs/features/so101-simulation.md) and [decision 0002](docs/decisions/0002-so101-simulation.md). A Claude planner through the Vercel AI Gateway can replace the rule selector (`--planner model`, [feature note](docs/features/model-planner.md)); it is tested offline and has not yet made a live call. The generator role can also write a missing skill as a sandboxed program and repair it from execution traces in the simulator, then confirm it on cases it never saw (`python -m uzumaki.sim.generate`, [feature note](docs/features/skill-generation.md), [decision 0003](docs/decisions/0003-skill-program-representation.md)); this too is tested offline with a scripted model only.
 
 ```
 python -m pip install -r requirements-dev.txt -r requirements-sim.txt && python -m pip install --no-deps -e .

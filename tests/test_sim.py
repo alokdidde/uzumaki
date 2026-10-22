@@ -272,3 +272,41 @@ def test_model_planner_drives_the_so101(sim: None, case_id: str, tmp_path: Path)
     path.write_text(json.dumps(recording.document()), encoding="utf-8")
     again = run_with(RecordedProvider.from_path(path))
     assert json.dumps(again.bundle, sort_keys=True) == json.dumps(live.bundle, sort_keys=True)
+
+
+def test_generated_skill_is_repaired_and_confirmed_on_the_so101(
+    sim: None, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The generator CLI end to end with a scripted model in place of the gateway: three rounds on
+    the 16 development cases, then the frozen program on the 12 confirmation cases."""
+    from generated_programs import NO_RESUME, STALE_PLACE, TRANSFER, ScriptedGenerator
+    from uzumaki.sandbox import ContainmentUnavailable, admit, probe_platform
+    from uzumaki.sim import generate
+
+    try:
+        admit(probe_platform())
+    except ContainmentUnavailable as error:
+        if os.environ.get("UZUMAKI_REQUIRE_CONTAINMENT") == "1":
+            raise
+        pytest.skip(f"unverified platform for the restricted worker: {error}")
+    model = ScriptedGenerator([STALE_PLACE, NO_RESUME, TRANSFER])
+    monkeypatch.setattr(generate, "GatewayProvider", lambda: model)
+    monkeypatch.setenv("AI_GATEWAY_API_KEY", "not-a-key")
+    out, record = tmp_path / "out", tmp_path / "exchanges.json"
+    assert generate.main(["--out", str(out), "--record", str(record)]) == 0
+    summary = json.loads((out / "summary.json").read_text(encoding="utf-8"))
+    generation = summary["generation"]
+    assert generation["status"] == "accepted"
+    assert generation["accepted"] == "transfer-box@3"
+    assert [p["passed"] for p in generation["programs"]] == [3, 15, 16]
+    assert generation["programs"][1]["failed"] == {"stale-after-pick": "planning"}
+    confirmation = summary["confirmation"]
+    assert [row["case_id"] for row in confirmation] == CASE_IDS[16:]
+    assert all(row["passed"] and row["violations"] == 0 for row in confirmation)
+    sent = json.dumps(model.requests)
+    for case_id in CASE_IDS[16:]:
+        assert case_id not in sent  # confirmation cases never reach the generator
+    assert (out / "round-3.py").read_text(encoding="utf-8") == TRANSFER.strip("\n") + "\n"
+    assert len(list((out / "round-1").glob("*.json"))) == 16
+    assert len(list((out / "confirmation").glob("*.json"))) == 12
+    assert len(json.loads(record.read_text(encoding="utf-8"))["records"]) == 3

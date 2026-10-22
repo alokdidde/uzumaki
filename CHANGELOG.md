@@ -4,6 +4,16 @@ Documentary changes to canonical contracts and protocols. Entries describe speci
 
 ## Unreleased
 
+### Added — generated skills with trace-guided repair in simulation (features [12](https://github.com/alokdidde/uzumaki/issues/12), [13](https://github.com/alokdidde/uzumaki/issues/13) and [16](https://github.com/alokdidde/uzumaki/issues/16), first cut)
+
+- [Decision 0003](docs/decisions/0003-skill-program-representation.md): a generated skill is a Python program `run(tools, payload)` against the broker tools, wrapped in a harness-defined `CapabilitySpec`.
+- `uzumaki.generator`: the generator role (prompt `generator-v1`), `check_program` static checks before registration, `SandboxedProgram` (a skill body that runs the program in `RestrictedWorker` with broker handlers that are the driver's recorded tool calls), `evaluate_program`, and `generate_skill`: a bounded session of generate, check, register, evaluate on development cases and repair from trace feedback, with lineage, repeated-program detection and `rejected` marking. The capability is `TRANSFER_BOX`.
+- `uzumaki.baseline.SkillContext.fail`: a skill body can fail the run with a fixed detail.
+- `python -m uzumaki.sim.generate [--record|--replay] [--video]`: 16 SO-101 development cases for repair, 12 withheld cases for a frozen confirmation run. `make generate-live`; `make containment` now also runs the worker tests of the generator.
+- Tests: `tests/test_generator.py`, `tests/test_generator_worker.py`, `tests/generated_programs.py` (scripted model) and an end-to-end generation test in `tests/test_sim.py`. [Feature note](docs/features/skill-generation.md).
+
+Not claimed: live generation by Claude (only a scripted model has been used), held-out acceptance, or promotion (feature 17).
+
 ### Added — Claude planner through the Vercel AI Gateway (features [09](https://github.com/alokdidde/uzumaki/issues/9) and [10](https://github.com/alokdidde/uzumaki/issues/10), first cut)
 
 - `uzumaki.gateway`: `GatewayProvider` (OpenAI-compatible chat completions, default Vercel AI Gateway, key from `AI_GATEWAY_API_KEY`, fixed-code errors, transient/timeout/rejected classification, usage only when reported) and `RecordingProvider` (live exchanges as `RecordedProvider` files).
