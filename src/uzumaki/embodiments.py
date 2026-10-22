@@ -31,11 +31,14 @@ from uzumaki.fixture_env import FixtureCase, load_cases
 from uzumaki.robots import (
     Arm,
     Gripper,
+    Hand,
+    Humanoid,
     Legs,
     MobileManipulator,
     QuadrupedWithArm,
     Robot,
     SingleArm,
+    Torso,
     TwoArms,
     WheeledBase,
 )
@@ -113,6 +116,22 @@ SPOT = QuadrupedWithArm(
     legs=Legs(tuple((f"{leg}_hx", f"{leg}_hy", f"{leg}_kn") for leg in ("fl", "fr", "hl", "hr"))),
     arm=Arm(("arm_sh0", "arm_sh1", "arm_el0", "arm_el1", "arm_wr0", "arm_wr1")),
     gripper=Gripper(("arm_f1x",), site="tcp"),
+)
+_G1_ARM = ("shoulder_pitch", "shoulder_roll", "shoulder_yaw", "elbow", "wrist_roll", "wrist_pitch",
+           "wrist_yaw")  # fmt: skip
+_G1_HAND = ("thumb_0", "thumb_1", "thumb_2", "index_0", "index_1", "middle_0", "middle_1")
+_G1_LEG = ("hip_pitch", "hip_roll", "hip_yaw", "knee", "ankle_pitch", "ankle_roll")
+#: Unitree G1 with Dex3 hands as a ``Humanoid``; the ``right_tcp`` and ``left_tcp`` sites in
+#: front of each palm are added by the MuJoCo scene.
+G1 = Humanoid(
+    "g1",
+    model="unitree_g1/g1_with_hands.xml",
+    torso=Torso(("waist_yaw_joint", "waist_roll_joint", "waist_pitch_joint")),
+    left=Arm(tuple(f"left_{j}_joint" for j in _G1_ARM)),
+    right=Arm(tuple(f"right_{j}_joint" for j in _G1_ARM)),
+    left_hand=Hand(tuple(f"left_hand_{j}_joint" for j in _G1_HAND), site="left_tcp"),
+    right_hand=Hand(tuple(f"right_hand_{j}_joint" for j in _G1_HAND), site="right_tcp"),
+    legs=Legs(tuple(tuple(f"{side}_{j}_joint" for j in _G1_LEG) for side in ("left", "right"))),
 )
 #: The scripted fixture arm of the offline baseline: exact kinematics, no model file.
 FIXTURE_ARM = SingleArm("fixture_arm", arm=Arm(("arm",)), gripper=Gripper(("gripper",)))
@@ -197,6 +216,15 @@ EMBODIMENTS: Mapping[str, Embodiment] = MappingProxyType(
             " requirements-sim.txt and assets)",
             ("pick-place",),
             "uzumaki.sim.adapter:SpotAdapter",
+        ),
+        "g1": Embodiment(
+            "g1",
+            G1,
+            "mujoco",
+            "Unitree G1 humanoid with Dex3 hands, its pelvis on a stand, in MuJoCo (needs"
+            " requirements-sim.txt and assets)",
+            ("pick-place",),
+            "uzumaki.sim.adapter:G1Adapter",
         ),
     }
 )

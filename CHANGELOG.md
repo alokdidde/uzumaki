@@ -4,6 +4,13 @@ Documentary changes to canonical contracts and protocols. Entries describe speci
 
 ## Unreleased
 
+### Added — Unitree G1: a humanoid at the table
+
+- `uzumaki.sim.g1` and the `g1` embodiment (`Humanoid`): the Unitree G1 with Dex3 hands from MuJoCo Menagerie at `cda5236f` (SHA-256 pinned with its BSD-3-Clause license), its pelvis on a stand. The waist and left arm place the hand; the seven finger joints follow one grip value, the middle finger is coupled to the index finger, and flat pads on the fingertips and thumb grip the box. It runs the frozen `pick-place-v1` geometry unchanged (case set `g1-dev-v1`). 28/28 meet their expectations, conformance passes, and 187 of 200 extra geometries complete (the other 13 are refused as out of the left hand's reach, with no contact).
+- `python -m uzumaki.sim --robot g1`, `make sim-demo-g1`, `tests/test_g1.py`, [feature note](docs/features/g1-simulation.md), GIFs in `docs/media/`.
+
+Not claimed: held-out results, standing free or walking, the right hand, Unitree's hand controller, a physical G1.
+
 ### Added — Spot with arm: a legged robot standing at the table
 
 - `uzumaki.sim.spot` and the `spot` embodiment (`QuadrupedWithArm`): Spot with its arm from MuJoCo Menagerie at `cda5236f` (SHA-256 pinned with its BSD-3-Clause license). It stands on its legs with a free body, and planning follows the stance the physics holds. It runs the frozen `pick-place-v1` geometry unchanged (case set `spot-dev-v1`). 28/28 meet their expectations, conformance passes, and 200 extra geometries all complete.

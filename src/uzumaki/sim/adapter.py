@@ -132,3 +132,7 @@ class TidybotAdapter:
 
 def SpotAdapter() -> ArmAdapter:  # noqa: N802
     return ArmAdapter("spot")
+
+
+def G1Adapter() -> ArmAdapter:  # noqa: N802
+    return ArmAdapter("g1")
