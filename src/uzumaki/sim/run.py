@@ -1,15 +1,16 @@
-"""Run simulated cases (SO-101, Panda, ALOHA or TidyBot) through the unchanged harness: same
-driver, selector, skills and evidence. The single arms run ``pick-place-v1``; ALOHA runs the
-two-arm ``handover-v1`` with its own skill set (``tests/fixtures/skills_handover_v1.json``), and
-TidyBot the mobile ``fetch-v1`` (``tests/fixtures/skills_fetch_v1.json``).
+"""Run simulated cases (SO-101, Panda, Spot, ALOHA or TidyBot) through the unchanged harness:
+same driver, selector, skills and evidence. The single arms and Spot's arm run
+``pick-place-v1``; ALOHA runs the two-arm ``handover-v1`` with its own skill set
+(``tests/fixtures/skills_handover_v1.json``), and TidyBot the mobile ``fetch-v1``
+(``tests/fixtures/skills_fetch_v1.json``).
 
 ``run_sim_case`` is ``uzumaki.baseline.run_case`` with a MuJoCo environment, so every bundle is a
 normal ``uzumaki.events/1.0`` bundle and replays with ``uzumaki.baseline.replay_case``.
 
 Command line (after ``pip install -r requirements-sim.txt`` and fetching assets)::
 
-    python -m uzumaki.sim [--robot so101|panda|aloha|tidybot] [--case ID ...] [--out DIR] [--video]
-        [--planner rule|model] [--provider NAME] [--model ID]
+    python -m uzumaki.sim [--robot so101|panda|spot|aloha|tidybot] [--case ID ...] [--out DIR]
+        [--video] [--planner rule|model] [--provider NAME] [--model ID]
         [--record FILE | --replay FILE]
 
 writes ``<case>.json`` bundles, optional ``<case>.mp4`` videos and ``summary.json`` with the

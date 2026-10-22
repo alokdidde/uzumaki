@@ -4,6 +4,14 @@ Documentary changes to canonical contracts and protocols. Entries describe speci
 
 ## Unreleased
 
+### Added — Spot with arm: a legged robot standing at the table
+
+- `uzumaki.sim.spot` and the `spot` embodiment (`QuadrupedWithArm`): Spot with its arm from MuJoCo Menagerie at `cda5236f` (SHA-256 pinned with its BSD-3-Clause license). It stands on its legs with a free body, and planning follows the stance the physics holds. It runs the frozen `pick-place-v1` geometry unchanged (case set `spot-dev-v1`). 28/28 meet their expectations, conformance passes, and 200 extra geometries all complete.
+- `uzumaki.sim.arm.ArmRig` gains `customize` (scene edits before compiling) and `world` (a `SimWorld` subclass per robot).
+- `python -m uzumaki.sim --robot spot`, `make sim-demo-spot`, `tests/test_spot.py`, [feature note](docs/features/spot-simulation.md), GIFs in `docs/media/`.
+
+Not claimed: held-out results, walking, Boston Dynamics' gripper force or controller, a physical Spot.
+
 ### Added — TidyBot and the `fetch` task pack: a body that moves
 
 - `fetch-v1` and the `fetch` task pack (`uzumaki.tasks.FETCH`): needs `reach` and `grasp` and also `locomote`; tools `observe`, `go_to` (base or legs), `pick`, `place`, `abort`; observation fields `base_pose` and `within_reach`; case fault `stopped_short_drives`. Budgets, outcomes, evaluator contract and evidence are `pick-place-v1`'s, with `go_to` counted as actuation.

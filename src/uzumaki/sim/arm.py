@@ -101,6 +101,11 @@ class ArmRig:
     protocol: str = TASK_PROTOCOL
     #: Overview camera for videos: look-at x, y, z (m), distance (m), azimuth, elevation (deg).
     camera: tuple[float, float, float, float, float, float] = (0.0, -0.05, 0.09, 0.85, -90.0, -32.0)
+    #: Robot-specific edits to the scene's ``MjSpec`` just before it compiles (contact priorities,
+    #: force limits, a floor for legs to stand on).
+    customize: Callable[[Any], None] | None = None
+    #: ``module:Class`` of the ``SimWorld`` subclass for this robot (``None``: ``SimWorld``).
+    world: str | None = None
 
     @property
     def arm_joints(self) -> tuple[str, ...]:
@@ -112,7 +117,11 @@ class ArmRig:
 
 #: Rig name -> ``module:attribute`` of its ``ArmRig`` (imported on demand).
 RIGS: Mapping[str, str] = MappingProxyType(
-    {"so101": "uzumaki.sim.so101:RIG", "panda": "uzumaki.sim.panda:RIG"}
+    {
+        "so101": "uzumaki.sim.so101:RIG",
+        "panda": "uzumaki.sim.panda:RIG",
+        "spot": "uzumaki.sim.spot:RIG",
+    }
 )
 
 

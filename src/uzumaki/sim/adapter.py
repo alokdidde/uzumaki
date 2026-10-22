@@ -128,3 +128,7 @@ class TidybotAdapter:
     def _only_fetch(task: str) -> None:
         if task != "fetch":
             raise KeyError(f"the TidyBot adapter supports only the fetch task, not {task!r}")
+
+
+def SpotAdapter() -> ArmAdapter:  # noqa: N802
+    return ArmAdapter("spot")

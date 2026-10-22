@@ -28,7 +28,17 @@ from types import MappingProxyType
 from typing import Any, Protocol
 
 from uzumaki.fixture_env import FixtureCase, load_cases
-from uzumaki.robots import Arm, Gripper, MobileManipulator, Robot, SingleArm, TwoArms, WheeledBase
+from uzumaki.robots import (
+    Arm,
+    Gripper,
+    Legs,
+    MobileManipulator,
+    QuadrupedWithArm,
+    Robot,
+    SingleArm,
+    TwoArms,
+    WheeledBase,
+)
 
 REPO = Path(__file__).resolve().parents[2]
 FIXTURE_CASES = REPO / "tests" / "fixtures" / "baseline_cases_v1.json"
@@ -94,6 +104,15 @@ TIDYBOT = MobileManipulator(
     base=WheeledBase(("joint_x", "joint_y", "joint_th")),
     arm=Arm(tuple(f"joint_{i}" for i in range(1, 8))),
     gripper=Gripper(("right_driver_joint", "left_driver_joint"), site="tcp"),
+)
+#: Boston Dynamics Spot with its arm as a ``QuadrupedWithArm``; the ``tcp`` site between the jaws
+#: is added by the MuJoCo scene.
+SPOT = QuadrupedWithArm(
+    "spot",
+    model="boston_dynamics_spot/spot_arm.xml",
+    legs=Legs(tuple((f"{leg}_hx", f"{leg}_hy", f"{leg}_kn") for leg in ("fl", "fr", "hl", "hr"))),
+    arm=Arm(("arm_sh0", "arm_sh1", "arm_el0", "arm_el1", "arm_wr0", "arm_wr1")),
+    gripper=Gripper(("arm_f1x",), site="tcp"),
 )
 #: The scripted fixture arm of the offline baseline: exact kinematics, no model file.
 FIXTURE_ARM = SingleArm("fixture_arm", arm=Arm(("arm",)), gripper=Gripper(("gripper",)))
@@ -169,6 +188,15 @@ EMBODIMENTS: Mapping[str, Embodiment] = MappingProxyType(
             " requirements-sim.txt and assets)",
             ("fetch",),
             "uzumaki.sim.adapter:TidybotAdapter",
+        ),
+        "spot": Embodiment(
+            "spot",
+            SPOT,
+            "mujoco",
+            "Boston Dynamics Spot with its arm, standing on its legs, in MuJoCo (needs"
+            " requirements-sim.txt and assets)",
+            ("pick-place",),
+            "uzumaki.sim.adapter:SpotAdapter",
         ),
     }
 )

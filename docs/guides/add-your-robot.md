@@ -64,6 +64,8 @@ The adapter also enforces your robot's physical limits and safety envelope. Skil
 
 **A body that moves is an arm on a base.** TidyBot is one `ArmRig` whose root is the mobile base (`uzumaki/sim/tidybot.py`); its world adds `go_to`, which drives the base's planar joints, and judges reach from where the base stands. A quadruped or humanoid carrying the same task binds `go_to` to its legs instead. See [TidyBot fetch](../features/tidybot-fetch.md).
 
+**A robot on legs reuses it too.** Spot is one `ArmRig` whose root is its free-floating body (`uzumaki/sim/spot.py`). The rig's `customize` edits the scene before it compiles (gripper pads, force limits), and its `world` names a `SimWorld` subclass that holds the leg stance, allows the feet on the floor and moves the planning model to the stance the physics holds. See [Spot simulation](../features/spot-simulation.md).
+
 ## 3. Register it
 
 Add one entry to `EMBODIMENTS` in `uzumaki/embodiments.py`: the name, the robot, the backend, the task packs (`pick-place`, `handover` for a body with two grippers, or `fetch` for a body that can move), and `"module:Factory"` for the adapter. The adapter module is imported only when the embodiment is used, so its dependencies never reach the core.

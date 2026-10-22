@@ -25,6 +25,7 @@ withdrawal are applied exactly as in the fixture.
 from __future__ import annotations
 
 import copy
+import importlib
 import math
 from collections.abc import Callable
 from typing import Any
@@ -492,5 +493,11 @@ def new_world(
     frame_hook: FrameHook | None = None,
     rig: ArmRig | None = None,
 ) -> SimWorld:
-    """Build the scene for ``case`` from verified assets and wrap it in a ``SimWorld``."""
-    return SimWorld(case, clock, build_model(case, assets, rig), frame_hook, rig)
+    """Build the scene for ``case`` from verified assets and wrap it in a ``SimWorld`` (or the
+    rig's own subclass of it)."""
+    rig = rig or arm.default_rig()
+    world_class: type[SimWorld] = SimWorld
+    if rig.world is not None:
+        module, _, name = rig.world.partition(":")
+        world_class = getattr(importlib.import_module(module), name)
+    return world_class(case, clock, build_model(case, assets, rig), frame_hook, rig)
